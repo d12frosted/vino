@@ -69,5 +69,22 @@
                   :tags '("wine" "grape")
                   :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))))
 
+(describe "vino-producer-select"
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "returns full information about selected producer"
+    (spy-on 'org-roam-completion--completing-read
+            :and-return-value "(wine,producer) Arianna Occhipinti")
+    (expect (vino-producer-select)
+            :to-equal
+            (list :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
+                  :title "Arianna Occhipinti"
+                  :tags '("wine" "producer")
+                  :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
+
 (provide 'vino-test)
 ;;; vino-test.el ends here

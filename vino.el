@@ -61,6 +61,21 @@ structure."
            (seq-contains-p (plist-get note :tags) "grape"))
          (vulpea-db-search-by-title title))))))
 
+;;; Producers
+
+(defun vino-producer-select ()
+  "Select a producer note.
+
+See `vulpea' documentation for more information on note
+structure."
+  (vulpea-select
+   "Producer"
+   nil nil
+   (lambda (note)
+     (let ((tags (plist-get (cdr note) :tags)))
+       (and (seq-contains-p tags "wine")
+            (seq-contains-p tags "producer"))))))
+
 ;;; Utilities
 
 (defun vino-resources-template ()
