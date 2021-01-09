@@ -86,5 +86,32 @@
                   :tags '("wine" "producer")
                   :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
 
+(describe "vino-region-select"
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "returns full information about selected region"
+    (spy-on 'org-roam-completion--completing-read
+            :and-return-value "(wine,region) Central Otago")
+    (expect (vino-region-select)
+            :to-equal
+            (list :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
+                  :title "Central Otago"
+                  :tags '("wine" "region")
+                  :id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))
+
+  (it "returns full information about selected appellation"
+    (spy-on 'org-roam-completion--completing-read
+            :and-return-value "(wine,appellation) Cerasuolo di Vittoria DOCG")
+    (expect (vino-region-select)
+            :to-equal
+            (list :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
+                  :title "Cerasuolo di Vittoria DOCG"
+                  :tags '("wine" "appellation")
+                  :id "6a0819f3-0770-4481-9754-754ca397800b"))))
+
 (provide 'vino-test)
 ;;; vino-test.el ends here

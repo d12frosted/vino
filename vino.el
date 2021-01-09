@@ -24,6 +24,23 @@
 (require 'vulpea)
 (require '+fun)
 
+;;; Regions and appellations
+;;
+
+(defun vino-region-select ()
+  "Select a wine region or appellation note.
+
+See `vulpea' documentation for more information on note
+structure."
+  (vulpea-select
+   "Region"
+   nil nil
+   (lambda (note)
+     (let ((tags (plist-get (cdr note) :tags)))
+       (and (seq-contains-p tags "wine")
+            (or (seq-contains-p tags "appellation")
+                (seq-contains-p tags "region")))))))
+
 ;;; Grapes
 ;;
 
