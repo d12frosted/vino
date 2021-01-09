@@ -1,1 +1,18 @@
 ; -*- mode: emacs-lisp; lexical-binding: t; no-byte-compile: t -*-
+
+(eldev-use-package-archive 'gnu)
+(eldev-use-package-archive 'melpa)
+
+(eldev-add-extra-dependencies 'compile 'quelpa)
+
+(add-hook 'eldev-load-dependencies-hook
+          (lambda (type additional-sets)
+            (unless (package-installed-p 'quelpa)
+              (with-temp-buffer
+                (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+                (eval-buffer)
+                (quelpa-self-upgrade)))
+            (unless (package-installed-p 'vulpea)
+              (quelpa '(vulpea :fetcher git
+                               :url "https://github.com/d12frosted/vulpea.git")))
+            (package-activate 'vulpea)))
