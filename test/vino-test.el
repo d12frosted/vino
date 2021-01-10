@@ -68,6 +68,7 @@
             (list :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
                   :title "Frappato"
                   :tags '("wine" "grape")
+                  :level 0
                   :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
 
   (it "creates a new grape note when selecting non-existing name"
@@ -83,6 +84,7 @@
                                           org-roam-directory)
                   :title "Slarina"
                   :tags '("wine" "grape")
+                  :level 0
                   :id generated-id))))
 
 (describe "vino-producer-select"
@@ -100,6 +102,7 @@
             (list :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
                   :title "Arianna Occhipinti"
                   :tags '("wine" "producer")
+                  :level 0
                   :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
 
 (describe "vino-region-select"
@@ -117,6 +120,7 @@
             (list :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
                   :title "Central Otago"
                   :tags '("wine" "region")
+                  :level 0
                   :id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))
 
   (it "returns full information about selected appellation"
@@ -127,6 +131,7 @@
             (list :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
                   :title "Cerasuolo di Vittoria DOCG"
                   :tags '("wine" "appellation")
+                  :level 0
                   :id "6a0819f3-0770-4481-9754-754ca397800b"))))
 
 (provide 'vino-test)
