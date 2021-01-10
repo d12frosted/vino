@@ -53,6 +53,7 @@
   (org-roam-db--close))
 
 (describe "vino-grape-select"
+  :var (generated-id)
   (before-all
     (vino-test--init))
 
@@ -67,7 +68,22 @@
             (list :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
                   :title "Frappato"
                   :tags '("wine" "grape")
-                  :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))))
+                  :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
+
+  (it "creates a new grape note when selecting non-existing name"
+    (setq generated-id (org-id-new))
+    (spy-on 'org-id-new :and-return-value generated-id)
+    (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
+    (spy-on 'read-string :and-return-value nil)
+    (expect (vino-grape-select)
+            :to-equal
+            (list :path (expand-file-name (format "wine/grape/%s-slarina.org"
+                                                  (format-time-string "%Y%m%d%H%M%S"
+                                                                      (current-time)))
+                                          org-roam-directory)
+                  :title "Slarina"
+                  :tags '("wine" "grape")
+                  :id generated-id))))
 
 (describe "vino-producer-select"
   (before-all

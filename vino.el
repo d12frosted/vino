@@ -45,13 +45,18 @@ structure."
 ;;
 
 (defvar vino-grape-template
-  '("d" "default" plain
-    #'org-roam-capture--get-point
-    "%(vino-resources-template)%?"
-    :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
-    :head "#+TITLE: ${title}\n#+TIME-STAMP: <>\n\n"
-    :unnarrowed t
-    :immediate-finish t)
+  `("d" "default" plain
+   #'org-roam-capture--get-point
+   "%(vino-resources-template)%?"
+   :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
+   :head ,(concat
+           ":PROPERTIES:\n"
+           ":ID:                     ${id}\n"
+           ":END:\n"
+           "#+TITLE: ${title}\n"
+           "#+TIME-STAMP: <>\n\n")
+   :unnarrowed t
+   :immediate-finish t)
   "Capture template for grape entry.")
 
 (defun vino-grape-select ()
@@ -69,14 +74,10 @@ structure."
                    (seq-contains-p tags "grape")))))))
     (if (plist-get result :id)
         result
-      (let ((org-roam-capture-immediate-template vino-grape-template)
-            (title (plist-get result :title)))
-        (org-roam-find-file-immediate title nil nil t)
+      (let* ((title (plist-get result :title))
+             (id (vulpea-create title vino-grape-template)))
         (org-roam-db-build-cache)
-        (seq-find
-         (lambda (note)
-           (seq-contains-p (plist-get note :tags) "grape"))
-         (vulpea-db-search-by-title title))))))
+        (vulpea-db-get-by-id id)))))
 
 ;;; Producers
 
