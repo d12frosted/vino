@@ -42,8 +42,7 @@
         (new-dir (expand-file-name (make-temp-name "note-files") temporary-file-directory)))
     (copy-directory original-dir new-dir)
     (setq org-roam-directory new-dir
-          org-roam-tag-sources '(prop all-directories)
-          vino-cellar-note-id "f886b932-c540-4a86-a895-5789b5f48aed")
+          org-roam-tag-sources '(prop all-directories))
     (org-roam-mode +1)
     (sleep-for 2)))
 
@@ -61,15 +60,15 @@
     (vino-test--teardown))
 
   (it "returns non-nil when used on wine entry"
-    (expect (vino-entry-p "25559fb4-3b4e-432e-9c58-1f7106a0b45e")
+    (expect (vino-entry-p "c9937e3e-c83d-4d8d-a612-6110e6706252")
             :to-be t))
 
-  (it "returns nil when used on file"
-    (expect (vino-entry-p "f886b932-c540-4a86-a895-5789b5f48aed")
+  (it "returns nil when used on some heading inside wine entry"
+    (expect (vino-entry-p "71715128-3d6f-4e36-8d70-d35fcb057609")
             :to-be nil))
 
-  (it "returns nil when used on other heading"
-    (expect (vino-entry-p "307abdad-f685-4c0d-a039-1cbf21853b28")
+  (it "returns nil when used on other entry"
+    (expect (vino-entry-p "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
             :to-be nil)))
 
 (describe "vino-grape-select"

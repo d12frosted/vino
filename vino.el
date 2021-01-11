@@ -27,19 +27,17 @@
 ;; Entry
 ;;
 
-(defvar vino-cellar-note-id nil
-  "ID of the cellar note.")
-
 (defun vino-entry-p (&optional id)
   "Return non-nil if ID represents vino entry.
 
 When ID is omitted, ID of the heading at point is taken."
   (when-let* ((id (or id (org-id-get)))
               (note (vulpea-db-get-by-id id))
-              (file-id (vulpea-db-get-id-by-file (plist-get note :path))))
-    (and
-     (string-equal file-id vino-cellar-note-id)
-     (equal 1 (plist-get note :level)))))
+              (tags (plist-get note :tags))
+              (level (plist-get note :level)))
+    (and (equal level 0)
+         (seq-contains-p tags "wine")
+         (seq-contains-p tags "cellar"))))
 
 ;;; Regions and appellations
 ;;
