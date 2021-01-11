@@ -11,10 +11,11 @@
 - vintage :: 2017
 - appellation :: [[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]
 - grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
-- price :: 50.00 EUR
 - alcohol :: 13
 - sugar :: 1
+- price :: 50.00 EUR
 - available :: 1
+- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 
 #+begin_quote
 Il Frappato stems from a dream which I had when I was a girl to make a wine that

@@ -27,6 +27,38 @@
 ;; Entry
 ;;
 
+;; TODO: resources
+;; TODO: validation
+;; TODO: inventory
+;; TODO: prices
+(cl-defstruct vino
+  carbonation
+  colour
+  sweetness
+  producer
+  name
+  vintage
+  appellation
+  region
+  grapes
+  alcohol
+  sugar)
+
+(defvar vino-entry-template
+  `("d" "default" plain
+   #'org-roam-capture--get-point
+   "%?"
+   :file-name "wine/cellar/${id}"
+   :head ,(concat
+           ":PROPERTIES:\n"
+           ":ID:                     ${id}\n"
+           ":END:\n"
+           "#+TITLE: ${title}\n"
+           "#+TIME-STAMP: <>\n\n")
+   :unnarrowed t
+   :immediate-finish t)
+  "Capture template for grape entry.")
+
 (defun vino-entry-p (&optional id)
   "Return non-nil if ID represents vino entry.
 
@@ -38,6 +70,43 @@ When ID is omitted, ID of the heading at point is taken."
     (and (equal level 0)
          (seq-contains-p tags "wine")
          (seq-contains-p tags "cellar"))))
+
+(defun vino--entry-create (vino)
+  "Create an entry for VINO."
+  (let* ((producer (vulpea-db-get-by-id (vino-producer vino)))
+         (vintage (vino-vintage vino))
+         (title (concat (plist-get producer :title)
+                        " "
+                        (vino-name vino)
+                        " "
+                        (if (numberp vintage)
+                            (number-to-string vintage)
+                          vintage)))
+         (id (vulpea-create title vino-entry-template)))
+    (org-roam-db-update-file
+     (expand-file-name (concat "wine/cellar/" id ".org")
+                       org-roam-directory))
+    ;; TODO: optimize multiple calls
+    (vulpea-meta-set id "carbonation" (vino-carbonation vino) 'append)
+    (vulpea-meta-set id "colour" (vino-colour vino) 'append)
+    (vulpea-meta-set id "sweetness" (vino-sweetness vino) 'append)
+    (vulpea-meta-set id "producer" (vino-producer vino) 'append)
+    (vulpea-meta-set id "name" (vino-name vino) 'append)
+    (vulpea-meta-set id "vintage" (vino-vintage vino) 'append)
+    (when-let ((appellation (vino-appellation vino)))
+      (vulpea-meta-set id "appellation" appellation 'append))
+    (when-let ((region (vino-region vino)))
+      (vulpea-meta-set id "region" region 'append))
+    (vulpea-meta-set id "grapes" (vino-grapes vino) 'append)
+    (let ((alcohol (vino-alcohol vino)))
+      (when (and alcohol
+                 (> alcohol 0))
+        (vulpea-meta-set id "alcohol" alcohol 'append)))
+    (let ((sugar (vino-sugar vino)))
+      (when (and sugar
+                 (>= sugar 0))
+        (vulpea-meta-set id "sugar" sugar 'append)))
+    id))
 
 ;;; Regions and appellations
 ;;

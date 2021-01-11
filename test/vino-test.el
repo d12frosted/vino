@@ -52,6 +52,29 @@
   (delete-file org-roam-db-location)
   (org-roam-db--close))
 
+(buttercup-define-matcher :to-contain-exactly (file value)
+  (cl-destructuring-bind
+      ((file-expr . file) (value-expr . value))
+      (mapcar #'buttercup--expr-and-value (list file value))
+    (let* ((content (vino-test--map-file
+                     (lambda (_)
+                       (buffer-substring-no-properties (point-min)
+                                                       (point-max)))
+                     file))
+           (spec (format-spec-make
+                  ?F (format "%S" file-expr)
+                  ?f (format "%S" file)
+                  ?V (format "%S" value-expr)
+                  ?v (format "%S" value)
+                  ?c (format "%S" content))))
+      (if (string-equal content value)
+          (cons t (buttercup-format-spec
+                   "Expected `%F' not to have content equal to `%v'"
+                   spec))
+        (cons nil (buttercup-format-spec
+                   "Expected `%F' to have content equal to `%v', but instead `%F' has content equal to `%c'"
+                   spec))))))
+
 (describe "vino-entry-p"
   (before-all
     (vino-test--init))
@@ -71,40 +94,86 @@
     (expect (vino-entry-p "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
             :to-be nil)))
 
-(describe "vino-grape-select"
-  :var (generated-id)
+(describe "vino--entry-create"
+  :var (vino id)
   (before-all
     (vino-test--init))
 
   (after-all
     (vino-test--teardown))
 
-  (it "returns full information about selected grape"
-    (spy-on 'org-roam-completion--completing-read
-            :and-return-value "(wine,grape) Frappato")
-    (expect (vino-grape-select)
-            :to-equal
-            (list :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
-                  :title "Frappato"
-                  :tags '("wine" "grape")
-                  :level 0
-                  :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
+  (it "creates a new entry with all information"
+    (setq vino (make-vino :carbonation "still"
+                          :colour "red"
+                          :sweetness "dry"
+                          :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+                          :name "Grotte Alte"
+                          :vintage 2014
+                          :appellation "6a0819f3-0770-4481-9754-754ca397800b"
+                          :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
+                                    "3b38917f-6065-42e8-87ca-33dd39a92fc0")
+                          :alcohol 13
+                          :sugar 0))
+    (setq id (vino--entry-create vino))
+    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+            :to-contain-exactly
+            (format
+             ":PROPERTIES:
+:ID:                     %s
+:END:
+#+TITLE: Arianna Occhipinti Grotte Alte 2014
+#+TIME-STAMP: <>
 
-  (it "creates a new grape note when selecting non-existing name"
-    (setq generated-id (org-id-new))
-    (spy-on 'org-id-new :and-return-value generated-id)
-    (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
-    (spy-on 'read-string :and-return-value nil)
-    (expect (vino-grape-select)
-            :to-equal
-            (list :path (expand-file-name (format "wine/grape/%s-slarina.org"
-                                                  (format-time-string "%Y%m%d%H%M%S"
-                                                                      (current-time)))
-                                          org-roam-directory)
-                  :title "Slarina"
-                  :tags '("wine" "grape")
-                  :level 0
-                  :id generated-id))))
+- carbonation :: still
+- colour :: red
+- sweetness :: dry
+- producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
+- name :: Grotte Alte
+- vintage :: 2014
+- appellation :: [[id:6a0819f3-0770-4481-9754-754ca397800b][Cerasuolo di Vittoria DOCG]]
+- grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
+- grapes :: [[id:3b38917f-6065-42e8-87ca-33dd39a92fc0][Nero d'Avola]]
+- alcohol :: 13
+- sugar :: 0
+
+
+"
+             id))))
+
+(describe "vino-grape-select"
+          :var (generated-id)
+          (before-all
+           (vino-test--init))
+
+          (after-all
+           (vino-test--teardown))
+
+          (it "returns full information about selected grape"
+              (spy-on 'org-roam-completion--completing-read
+                      :and-return-value "(wine,grape) Frappato")
+              (expect (vino-grape-select)
+                      :to-equal
+                      (list :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
+                            :title "Frappato"
+                            :tags '("wine" "grape")
+                            :level 0
+                            :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
+
+          (it "creates a new grape note when selecting non-existing name"
+              (setq generated-id (org-id-new))
+              (spy-on 'org-id-new :and-return-value generated-id)
+              (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
+              (spy-on 'read-string :and-return-value nil)
+              (expect (vino-grape-select)
+                      :to-equal
+                      (list :path (expand-file-name (format "wine/grape/%s-slarina.org"
+                                                            (format-time-string "%Y%m%d%H%M%S"
+                                                                                (current-time)))
+                                                    org-roam-directory)
+                            :title "Slarina"
+                            :tags '("wine" "grape")
+                            :level 0
+                            :id generated-id))))
 
 (describe "vino-producer-select"
   (before-all
