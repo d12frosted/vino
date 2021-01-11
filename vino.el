@@ -9,7 +9,7 @@
 ;;
 ;; Created: 09 Jan 2021
 ;;
-;; URL: https://github.com/d12frosted/vino.el
+;; URL: https://github.com/d12frosted/vino
 ;;
 ;; License: GPLv3
 ;;
