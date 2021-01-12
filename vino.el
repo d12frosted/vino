@@ -65,8 +65,8 @@
 When ID is omitted, ID of the heading at point is taken."
   (when-let* ((id (or id (org-id-get)))
               (note (vulpea-db-get-by-id id))
-              (tags (plist-get note :tags))
-              (level (plist-get note :level)))
+              (tags (vulpea-note-tags note))
+              (level (vulpea-note-level note)))
     (and (equal level 0)
          (seq-contains-p tags "wine")
          (seq-contains-p tags "cellar"))))
@@ -75,7 +75,7 @@ When ID is omitted, ID of the heading at point is taken."
   "Create an entry for VINO."
   (let* ((producer (vulpea-db-get-by-id (vino-producer vino)))
          (vintage (vino-vintage vino))
-         (title (concat (plist-get producer :title)
+         (title (concat (vulpea-note-title producer)
                         " "
                         (vino-name vino)
                         " "
@@ -121,7 +121,7 @@ structure."
    "Region"
    nil nil
    (lambda (note)
-     (let ((tags (plist-get (cdr note) :tags)))
+     (let ((tags (vulpea-note-tags (cdr note))))
        (and (seq-contains-p tags "wine")
             (or (seq-contains-p tags "appellation")
                 (seq-contains-p tags "region")))))))
@@ -131,17 +131,17 @@ structure."
 
 (defvar vino-grape-template
   `("d" "default" plain
-   #'org-roam-capture--get-point
-   "%(vino-resources-template)%?"
-   :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
-   :head ,(concat
-           ":PROPERTIES:\n"
-           ":ID:                     ${id}\n"
-           ":END:\n"
-           "#+TITLE: ${title}\n"
-           "#+TIME-STAMP: <>\n\n")
-   :unnarrowed t
-   :immediate-finish t)
+    #'org-roam-capture--get-point
+    "%(vino-resources-template)%?"
+    :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
+    :head ,(concat
+            ":PROPERTIES:\n"
+            ":ID:                     ${id}\n"
+            ":END:\n"
+            "#+TITLE: ${title}\n"
+            "#+TIME-STAMP: <>\n\n")
+    :unnarrowed t
+    :immediate-finish t)
   "Capture template for grape entry.")
 
 (defun vino-grape-select ()
@@ -154,12 +154,12 @@ structure."
           "Grape"
           nil nil
           (lambda (note)
-            (let ((tags (plist-get (cdr note) :tags)))
+            (let ((tags (vulpea-note-tags (cdr note))))
               (and (seq-contains-p tags "wine")
                    (seq-contains-p tags "grape")))))))
-    (if (plist-get result :id)
+    (if (vulpea-note-id result)
         result
-      (let* ((title (plist-get result :title))
+      (let* ((title (vulpea-note-title result))
              (id (vulpea-create title vino-grape-template)))
         (org-roam-db-build-cache)
         (vulpea-db-get-by-id id)))))
@@ -175,7 +175,7 @@ structure."
    "Producer"
    nil nil
    (lambda (note)
-     (let ((tags (plist-get (cdr note) :tags)))
+     (let ((tags (vulpea-note-tags (cdr note))))
        (and (seq-contains-p tags "wine")
             (seq-contains-p tags "producer"))))))
 

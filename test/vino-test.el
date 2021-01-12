@@ -157,11 +157,12 @@
                       :and-return-value "(wine,grape) Frappato")
               (expect (vino-grape-select)
                       :to-equal
-                      (list :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
-                            :title "Frappato"
-                            :tags '("wine" "grape")
-                            :level 0
-                            :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
+                      (make-vulpea-note
+                       :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
+                       :title "Frappato"
+                       :tags '("wine" "grape")
+                       :level 0
+                       :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
 
           (it "creates a new grape note when selecting non-existing name"
               (setq generated-id (org-id-new))
@@ -170,14 +171,15 @@
               (spy-on 'read-string :and-return-value nil)
               (expect (vino-grape-select)
                       :to-equal
-                      (list :path (expand-file-name (format "wine/grape/%s-slarina.org"
-                                                            (format-time-string "%Y%m%d%H%M%S"
-                                                                                (current-time)))
-                                                    org-roam-directory)
-                            :title "Slarina"
-                            :tags '("wine" "grape")
-                            :level 0
-                            :id generated-id))))
+                      (make-vulpea-note
+                       :path (expand-file-name (format "wine/grape/%s-slarina.org"
+                                                       (format-time-string "%Y%m%d%H%M%S"
+                                                                           (current-time)))
+                                               org-roam-directory)
+                       :title "Slarina"
+                       :tags '("wine" "grape")
+                       :level 0
+                       :id generated-id))))
 
 (describe "vino-producer-select"
   (before-all
@@ -191,11 +193,12 @@
             :and-return-value "(wine,producer) Arianna Occhipinti")
     (expect (vino-producer-select)
             :to-equal
-            (list :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
-                  :title "Arianna Occhipinti"
-                  :tags '("wine" "producer")
-                  :level 0
-                  :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
+            (make-vulpea-note
+             :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
+             :title "Arianna Occhipinti"
+             :tags '("wine" "producer")
+             :level 0
+             :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
 
 (describe "vino-region-select"
   (before-all
@@ -209,22 +212,24 @@
             :and-return-value "(wine,region) Central Otago")
     (expect (vino-region-select)
             :to-equal
-            (list :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
-                  :title "Central Otago"
-                  :tags '("wine" "region")
-                  :level 0
-                  :id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))
+            (make-vulpea-note
+             :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
+             :title "Central Otago"
+             :tags '("wine" "region")
+             :level 0
+             :id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))
 
   (it "returns full information about selected appellation"
     (spy-on 'org-roam-completion--completing-read
             :and-return-value "(wine,appellation) Cerasuolo di Vittoria DOCG")
     (expect (vino-region-select)
             :to-equal
-            (list :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
-                  :title "Cerasuolo di Vittoria DOCG"
-                  :tags '("wine" "appellation")
-                  :level 0
-                  :id "6a0819f3-0770-4481-9754-754ca397800b"))))
+            (make-vulpea-note
+             :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
+             :title "Cerasuolo di Vittoria DOCG"
+             :tags '("wine" "appellation")
+             :level 0
+             :id "6a0819f3-0770-4481-9754-754ca397800b"))))
 
 (provide 'vino-test)
 ;;; vino-test.el ends here
