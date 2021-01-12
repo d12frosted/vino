@@ -222,28 +222,5 @@
                   :level 0
                   :id "6a0819f3-0770-4481-9754-754ca397800b"))))
 
-(describe "vino--resource-format"
-  (before-all
-    (vino-test--init))
-
-  (after-all
-    (vino-test--teardown))
-
-  (it "formats an URL"
-    (expect (vino--resource-format "https://www.wikipedia.org/")
-            :to-equal "[[https://www.wikipedia.org/][wikipedia.org]]"))
-
-  (it "formats a note ID"
-    (expect (vino--resource-format "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
-            :to-equal "[[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]"))
-
-  (it "throw user-error for unknown note"
-    (expect (vino--resource-format "d36125b3-39e1-4bc3-8f7d-126159d8d60e")
-            :to-throw 'user-error '("Note with id \"d36125b3-39e1-4bc3-8f7d-126159d8d60e\" does not exist")))
-
-  (it "throw user-error for unsupported resource type"
-    (expect (vino--resource-format "123")
-            :to-throw 'user-error '("123 is not a valid resource"))))
-
 (provide 'vino-test)
 ;;; vino-test.el ends here

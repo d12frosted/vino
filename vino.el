@@ -187,23 +187,11 @@ structure."
      (concat r "- resources :: " a "\n"))
    (+repeat-fn
     (lambda ()
-      (let ((url (read-string "URL: ")))
-        (when (not (string-empty-p url))
-          (vino--resource-format url))))
+      (let ((resource (read-string "Resource: ")))
+        (when (not (string-empty-p resource))
+          (vulpea-meta-format resource))))
     (lambda (a) (not (null a))))
    ""))
-
-(defun vino--resource-format (value)
-  "Format a resource VALUE."
-  (if (string-match-p vulpea-uuid-regexp value)
-      (if-let* ((note (vulpea-db-get-by-id value))
-                (title (plist-get note :title)))
-          (org-link-make-string (concat "id:" value) title)
-        (user-error "Note with id \"%s\" does not exist" value))
-    (let ((domain (ignore-errors (url-domain (url-generic-parse-url value)))))
-      (if domain
-          (org-link-make-string value domain)
-        (user-error "%s is not a valid resource" value)))))
 
 (provide 'vino)
 ;;; vino.el ends here
