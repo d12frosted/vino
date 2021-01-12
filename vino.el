@@ -27,7 +27,6 @@
 ;; Entry
 ;;
 
-;; TODO: resources
 ;; TODO: validation
 ;; TODO: inventory
 ;; TODO: prices
@@ -42,7 +41,8 @@
   region
   grapes
   alcohol
-  sugar)
+  sugar
+  resources)
 
 (defvar vino-entry-template
   `("d" "default" plain
@@ -106,6 +106,7 @@ When ID is omitted, ID of the heading at point is taken."
       (when (and sugar
                  (>= sugar 0))
         (vulpea-meta-set id "sugar" sugar 'append)))
+    (vulpea-meta-set id "resources" (vino-resources vino) 'append)
     id))
 
 ;;; Regions and appellations
