@@ -145,41 +145,43 @@
              id))))
 
 (describe "vino-grape-select"
-          :var (generated-id)
-          (before-all
-           (vino-test--init))
+  :var (id ts)
+  (before-all
+    (vino-test--init))
 
-          (after-all
-           (vino-test--teardown))
+  (after-all
+    (vino-test--teardown))
 
-          (it "returns full information about selected grape"
-              (spy-on 'org-roam-completion--completing-read
-                      :and-return-value "(wine,grape) Frappato")
-              (expect (vino-grape-select)
-                      :to-equal
-                      (make-vulpea-note
-                       :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
-                       :title "Frappato"
-                       :tags '("wine" "grape")
-                       :level 0
-                       :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
+  (it "returns full information about selected grape"
+    (spy-on 'org-roam-completion--completing-read
+            :and-return-value "(wine,grape) Frappato")
+    (expect (vino-grape-select)
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
+             :title "Frappato"
+             :tags '("wine" "grape")
+             :level 0
+             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
 
-          (it "creates a new grape note when selecting non-existing name"
-              (setq generated-id (org-id-new))
-              (spy-on 'org-id-new :and-return-value generated-id)
-              (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
-              (spy-on 'read-string :and-return-value nil)
-              (expect (vino-grape-select)
-                      :to-equal
-                      (make-vulpea-note
-                       :path (expand-file-name (format "wine/grape/%s-slarina.org"
-                                                       (format-time-string "%Y%m%d%H%M%S"
-                                                                           (current-time)))
-                                               org-roam-directory)
-                       :title "Slarina"
-                       :tags '("wine" "grape")
-                       :level 0
-                       :id generated-id))))
+  (it "creates a new grape note when selecting non-existing name"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
+    (spy-on 'read-string :and-return-value nil)
+    (expect (vino-grape-select)
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/grape/%s-slarina.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Slarina"
+             :tags '("wine" "grape")
+             :level 0
+             :id id))))
 
 (describe "vino-producer-select"
   (before-all
