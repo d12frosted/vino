@@ -121,7 +121,7 @@ structure."
    "Region"
    nil nil
    (lambda (note)
-     (let ((tags (vulpea-note-tags (cdr note))))
+     (let ((tags (vulpea-note-tags note)))
        (and (seq-contains-p tags "wine")
             (or (seq-contains-p tags "appellation")
                 (seq-contains-p tags "region")))))))
@@ -154,7 +154,7 @@ structure."
           "Grape"
           nil nil
           (lambda (note)
-            (let ((tags (vulpea-note-tags (cdr note))))
+            (let ((tags (vulpea-note-tags note)))
               (and (seq-contains-p tags "wine")
                    (seq-contains-p tags "grape")))))))
     (if (vulpea-note-id result)
@@ -175,7 +175,7 @@ structure."
    "Producer"
    nil nil
    (lambda (note)
-     (let ((tags (vulpea-note-tags (cdr note))))
+     (let ((tags (vulpea-note-tags note)))
        (and (seq-contains-p tags "wine")
             (seq-contains-p tags "producer"))))))
 
