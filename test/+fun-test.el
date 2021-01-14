@@ -22,11 +22,12 @@
 (require 'buttercup)
 (require '+fun)
 
-(describe "+repeat-fn"
+(describe "+fun-collect-while"
   (it "repeats a function until filter returns nil"
     (let ((n 0))
-      (expect (+repeat-fn (lambda () (setq n (+ 1 n)))
-                          (lambda (v) (< v 5)))
+      (expect (+fun-collect-while
+               (lambda () (setq n (+ 1 n)))
+               (lambda (v) (< v 5)))
               :to-equal '(1 2 3 4)))))
 
 (provide '+fun-test)

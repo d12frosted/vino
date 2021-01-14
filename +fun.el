@@ -19,7 +19,7 @@
 ;;
 ;;; Code:
 
-(defun +repeat-fn (fn filter &rest args)
+(defun +fun-collect-while (fn filter &rest args)
   "Repeat FN and collect it's results until `C-g` is used.
 
 Repeat cycle stops when `C-g` is used or FILTER returns nil.

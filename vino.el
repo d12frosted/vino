@@ -194,7 +194,7 @@ structure."
   (seq-reduce
    (lambda (r a)
      (concat r "- resources :: " a "\n"))
-   (+repeat-fn
+   (+fun-collect-while
     (lambda ()
       (let ((resource (read-string "Resource: ")))
         (when (not (string-empty-p resource))
