@@ -103,6 +103,7 @@ When ID is omitted, ID of the heading at point is taken."
          (seq-contains-p tags "wine")
          (seq-contains-p tags "cellar"))))
 
+;;;###autoload
 (defun vino-entry-create ()
   "Create a `vino` entry."
   (interactive)
