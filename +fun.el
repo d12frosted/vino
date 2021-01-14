@@ -19,6 +19,7 @@
 ;;
 ;;; Code:
 
+;;;###autoload
 (defun +fun-collect-while (fn filter &rest args)
   "Repeat FN and collect it's results until `C-g` is used.
 
@@ -42,6 +43,25 @@ ARGS are passed to FN."
           (setq result (cons value result)))))
     (setq quit-flag nil)
     (seq-reverse result)))
+
+;;;###autoload
+(defun +fun-repeat-while (fn filter &rest args)
+  "Repeat FN and return the first unfiltered result.
+
+Repeat cycle stops when `C-g` is used or FILTER returns nil.
+
+ARGS are passed to FN."
+  (let (value
+        (continue t)
+        (inhibit-quit t))
+    (with-local-quit
+      (while continue
+        (setq value (apply fn args))
+        (when (null (funcall filter value))
+          (setq continue nil))))
+    (setq quit-flag nil)
+    (when (null continue)
+      value)))
 
 (provide '+fun)
 ;;; +fun.el ends here

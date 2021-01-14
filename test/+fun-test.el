@@ -30,5 +30,13 @@
                (lambda (v) (< v 5)))
               :to-equal '(1 2 3 4)))))
 
+(describe "+fun-repeat-while"
+  (it "repeats a function until filter returns nil"
+    (let ((n 0))
+      (expect (+fun-repeat-while
+               (lambda () (setq n (+ 1 n)))
+               (lambda (v) (< v 5)))
+              :to-equal 5))))
+
 (provide '+fun-test)
 ;;; +fun-test.el ends here
