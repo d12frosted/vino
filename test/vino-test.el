@@ -115,7 +115,8 @@
                           :alcohol 13
                           :sugar 0
                           :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
-                                       "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")))
+                                       "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
+                          :price "50 EUR"))
     (setq id (vino--entry-create vino))
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
@@ -137,6 +138,7 @@
 - grapes :: [[id:3b38917f-6065-42e8-87ca-33dd39a92fc0][Nero d'Avola]]
 - alcohol :: 13
 - sugar :: 0
+- price :: 50 EUR
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
 

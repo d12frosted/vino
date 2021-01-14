@@ -28,7 +28,6 @@
 ;; Entry
 
 ;; TODO: inventory
-;; TODO: prices
 ;;;###autoload
 (cl-defstruct vino
   carbonation
@@ -42,7 +41,8 @@
   grapes
   alcohol
   sugar
-  resources)
+  resources
+  price)
 
 ;;;###autoload
 (defvar vino-carbonation-types
@@ -157,7 +157,8 @@ When ID is omitted, ID of the heading at point is taken."
          (resources (+fun-collect-while
                      #'read-string
                      (lambda (v) (not (string-empty-p v)))
-                     "Resource: ")))
+                     "Resource: "))
+         (price (read-string "Price: ")))
     (make-vino
      :carbonation carbonation
      :colour colour
@@ -170,7 +171,8 @@ When ID is omitted, ID of the heading at point is taken."
      :grapes grapes
      :alcohol alcohol
      :sugar sugar
-     :resources resources)))
+     :resources resources
+     :price price)))
 
 (defun vino--entry-create (vino)
   "Create an entry for VINO."
@@ -210,6 +212,8 @@ When ID is omitted, ID of the heading at point is taken."
       (when (and sugar
                  (>= sugar 0))
         (vulpea-meta-set id "sugar" sugar 'append)))
+    (when (vino-price vino)
+      (vulpea-meta-set id "price" (vino-price vino) 'append))
     (vulpea-meta-set id "resources" (vino-resources vino) 'append)
     id))
 
