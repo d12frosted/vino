@@ -30,6 +30,7 @@
 ;; TODO: validation
 ;; TODO: inventory
 ;; TODO: prices
+;;;###autoload
 (cl-defstruct vino
   carbonation
   colour
@@ -44,21 +45,23 @@
   sugar
   resources)
 
+;;;###autoload
 (defvar vino-entry-template
   `("d" "default" plain
-   #'org-roam-capture--get-point
-   "%?"
-   :file-name "wine/cellar/${id}"
-   :head ,(concat
-           ":PROPERTIES:\n"
-           ":ID:                     ${id}\n"
-           ":END:\n"
-           "#+TITLE: ${title}\n"
-           "#+TIME-STAMP: <>\n\n")
-   :unnarrowed t
-   :immediate-finish t)
+    #'org-roam-capture--get-point
+    "%?"
+    :file-name "wine/cellar/${id}"
+    :head ,(concat
+            ":PROPERTIES:\n"
+            ":ID:                     ${id}\n"
+            ":END:\n"
+            "#+TITLE: ${title}\n"
+            "#+TIME-STAMP: <>\n\n")
+    :unnarrowed t
+    :immediate-finish t)
   "Capture template for grape entry.")
 
+;;;###autoload
 (defun vino-entry-p (&optional id)
   "Return non-nil if ID represents vino entry.
 
@@ -112,6 +115,7 @@ When ID is omitted, ID of the heading at point is taken."
 ;;; Regions and appellations
 ;;
 
+;;;###autoload
 (defun vino-region-select ()
   "Select a wine region or appellation note.
 
@@ -129,6 +133,7 @@ structure."
 ;;; Grapes
 ;;
 
+;;;###autoload
 (defvar vino-grape-template
   `("d" "default" plain
     #'org-roam-capture--get-point
@@ -144,6 +149,7 @@ structure."
     :immediate-finish t)
   "Capture template for grape entry.")
 
+;;;###autoload
 (defun vino-grape-select ()
   "Select a grape note.
 
@@ -166,6 +172,7 @@ structure."
 
 ;;; Producers
 
+;;;###autoload
 (defun vino-producer-select ()
   "Select a producer note.
 
@@ -181,6 +188,7 @@ structure."
 
 ;;; Utilities
 
+;;;###autoload
 (defun vino-resources-template ()
   "Query for resource URL and return it as a meta string."
   (seq-reduce
