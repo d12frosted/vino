@@ -24,10 +24,9 @@
 (require 'vulpea)
 (require '+fun)
 
+
 ;; Entry
-;;
 
-;; TODO: validation
 ;; TODO: inventory
 ;; TODO: prices
 ;;;###autoload
@@ -44,6 +43,36 @@
   alcohol
   sugar
   resources)
+
+;;;###autoload
+(defvar vino-carbonation-types
+  '(still
+    sparkling)
+  "List of valid carbonation types.")
+
+;;;###autoload
+(defvar vino-colour-types
+  '(red
+    white
+    rose)
+  "List of valid colour types.
+
+Orange wine is marked as white.")
+
+;;;###autoload
+(defvar vino-sweetness-levels
+  (list 'still '(dry
+                 semi-dry
+                 semi-sweet
+                 sweet)
+        'sparkling '(brut-nature
+                     extra-brut
+                     brut
+                     extra-dry
+                     dry
+                     demi-sec
+                     doux))
+  "List of valid sweetness levels per carbonation type.")
 
 ;;;###autoload
 (defvar vino-entry-template
@@ -74,9 +103,80 @@ When ID is omitted, ID of the heading at point is taken."
          (seq-contains-p tags "wine")
          (seq-contains-p tags "cellar"))))
 
+(defun vino-entry-create ()
+  "Create a `vino` entry."
+  (interactive)
+  (vino--entry-create (vino-entry-read)))
+
+(defun vino-entry-read ()
+  "Read a `vino` entry."
+  (let* ((producer (vino-producer-select))
+         (name (+fun-repeat-while
+                #'read-string
+                #'string-empty-p
+                "Name: "))
+         (vintage (or (+fun-repeat-while #'read-number
+                                       (lambda (v) (< v 1900))
+                                       "Vintage (C-g for NV): ")
+                    "NV"))
+         (rora (vino-region-select))
+         (region (when (seq-contains-p (vulpea-note-tags rora)
+                                       "region")
+                   rora))
+         (appellation (when (seq-contains-p (vulpea-note-tags rora)
+                                            "appellation")
+                        rora))
+         (grapes (+fun-collect-while #'vino-grape-select nil))
+         (alcohol (+fun-repeat-while #'read-number
+                                     (lambda (v) (< v 0))
+                                     "Alcohol: "))
+         (sugar (or (+fun-repeat-while #'read-number
+                                       (lambda (v) (< v 0))
+                                       "Sugar g/l (C-g for N/A): ")
+                    "N/A"))
+         (colour (intern
+                  (completing-read
+                   "Colour: "
+                   vino-colour-types
+                   nil
+                   'require-match)))
+         (carbonation (intern
+                       (completing-read
+                        "Carbonation: "
+                        vino-carbonation-types
+                        nil
+                        'require-match)))
+         (sweetness (intern
+                     (completing-read
+                      "Sweetness:"
+                      (plist-get vino-sweetness-levels
+                                 carbonation)
+                      nil
+                      'require-match)))
+         (resources (+fun-collect-while
+                     #'read-string
+                     (lambda (v) (not (string-empty-p v)))
+                     "Resource: ")))
+    (make-vino
+     :carbonation carbonation
+     :colour colour
+     :sweetness sweetness
+     :producer producer
+     :name name
+     :vintage vintage
+     :appellation appellation
+     :region region
+     :grapes grapes
+     :alcohol alcohol
+     :sugar sugar
+     :resources resources)))
+
 (defun vino--entry-create (vino)
   "Create an entry for VINO."
-  (let* ((producer (vulpea-db-get-by-id (vino-producer vino)))
+  (let* ((producer (vino-producer vino))
+         (producer (if (vulpea-note-p producer)
+                       producer
+                     (vulpea-db-get-by-id producer)))
          (vintage (vino-vintage vino))
          (title (concat (vulpea-note-title producer)
                         " "
@@ -112,8 +212,8 @@ When ID is omitted, ID of the heading at point is taken."
     (vulpea-meta-set id "resources" (vino-resources vino) 'append)
     id))
 
+
 ;;; Regions and appellations
-;;
 
 ;;;###autoload
 (defun vino-region-select ()
@@ -130,8 +230,8 @@ structure."
             (or (seq-contains-p tags "appellation")
                 (seq-contains-p tags "region")))))))
 
+
 ;;; Grapes
-;;
 
 ;;;###autoload
 (defvar vino-grape-template
@@ -170,6 +270,7 @@ structure."
         (org-roam-db-build-cache)
         (vulpea-db-get-by-id id)))))
 
+
 ;;; Producers
 
 ;;;###autoload
@@ -186,6 +287,7 @@ structure."
        (and (seq-contains-p tags "wine")
             (seq-contains-p tags "producer"))))))
 
+
 ;;; Utilities
 
 ;;;###autoload

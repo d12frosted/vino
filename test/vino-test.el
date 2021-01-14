@@ -103,9 +103,9 @@
     (vino-test--teardown))
 
   (it "creates a new entry with all information"
-    (setq vino (make-vino :carbonation "still"
-                          :colour "red"
-                          :sweetness "dry"
+    (setq vino (make-vino :carbonation 'still
+                          :colour 'red
+                          :sweetness 'dry
                           :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
                           :name "Grotte Alte"
                           :vintage 2014
