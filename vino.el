@@ -1,4 +1,4 @@
-;;; vino.el --- Wine tracking in Emacs -*- lexical-binding: t; -*-
+;;; vino.el --- Cellar tracking with vulpea    -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (c) 2021 Boris Buliga
 ;;

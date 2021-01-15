@@ -4,6 +4,8 @@
 ;;
 ;; Author: Boris Buliga <boris@d12frosted.io>
 ;; Maintainer: Boris Buliga <boris@d12frosted.io>
+;; Package-Version: 1.0
+;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; Created: 09 Jan 2021
 ;;
