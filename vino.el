@@ -42,7 +42,9 @@
   alcohol
   sugar
   resources
-  price)
+  price
+  acquired
+  consumed)
 
 ;;;###autoload
 (defvar vino-carbonation-types
@@ -173,7 +175,9 @@ When ID is omitted, ID of the heading at point is taken."
      :alcohol alcohol
      :sugar sugar
      :resources resources
-     :price price)))
+     :price price
+     :acquired 0
+     :consumed 0)))
 
 (defun vino--entry-create (vino)
   "Create an entry for VINO."
@@ -215,6 +219,11 @@ When ID is omitted, ID of the heading at point is taken."
         (vulpea-meta-set id "sugar" sugar 'append)))
     (when (vino-price vino)
       (vulpea-meta-set id "price" (vino-price vino) 'append))
+    (let ((acquired (or (vino-acquired vino) 0))
+          (consumed (or (vino-consumed vino) 0)))
+      (vulpea-meta-set id "acquired" acquired 'append)
+      (vulpea-meta-set id "consumed" consumed 'append)
+      (vulpea-meta-set id "available" (- acquired consumed) 'append))
     (vulpea-meta-set id "resources" (vino-resources vino) 'append)
     id))
 
@@ -234,6 +243,8 @@ When ID is omitted, ID of the heading at point is taken."
      :grapes (vulpea-meta-get-list id "grapes" 'link)
      :alcohol (vulpea-meta-get id "alcohol" 'number)
      :sugar (vulpea-meta-get id "sugar" 'number)
+     :acquired (vulpea-meta-get id "acquired" 'number)
+     :consumed (vulpea-meta-get id "consumed" 'number)
      :resources (vulpea-meta-get-list id "resources" 'link)
      :price (vulpea-meta-get-list id "price" 'string))))
 

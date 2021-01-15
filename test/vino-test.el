@@ -114,6 +114,8 @@
                                     "3b38917f-6065-42e8-87ca-33dd39a92fc0")
                           :alcohol 13
                           :sugar 0
+                          :acquired 0
+                          :consumed 0
                           :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
                                        "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
                           :price '("50.00 EUR")))
@@ -140,6 +142,9 @@
 - alcohol :: 13
 - sugar :: 0
 - price :: 50.00 EUR
+- acquired :: 0
+- consumed :: 0
+- available :: 0
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
 
@@ -167,6 +172,8 @@
                        :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
                        :alcohol 13
                        :sugar 1
+                       :acquired 2
+                       :consumed 1
                        :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
                        :price '("50.00 EUR"))))
 

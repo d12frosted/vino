@@ -14,6 +14,8 @@
 - alcohol :: 13
 - sugar :: 1
 - price :: 50.00 EUR
+- acquired :: 2
+- consumed :: 1
 - available :: 1
 - resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 
