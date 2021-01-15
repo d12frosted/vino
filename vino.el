@@ -210,12 +210,31 @@ When ID is omitted, ID of the heading at point is taken."
         (vulpea-meta-set id "alcohol" alcohol 'append)))
     (let ((sugar (vino-sugar vino)))
       (when (and sugar
-                 (>= sugar 0))
+                 (>= (string-to-number sugar) 0))
         (vulpea-meta-set id "sugar" sugar 'append)))
     (when (vino-price vino)
       (vulpea-meta-set id "price" (vino-price vino) 'append))
     (vulpea-meta-set id "resources" (vino-resources vino) 'append)
     id))
+
+(defun vino-entry-get-by-id (id)
+  "Get `vino' entry by ID."
+  ;; TODO: optimise multiple calls
+  (when (vulpea-db-get-by-id id)
+    (make-vino
+     :carbonation (vulpea-meta-get id "carbonation" 'symbol)
+     :colour (vulpea-meta-get id "colour" 'symbol)
+     :sweetness (vulpea-meta-get id "sweetness" 'symbol)
+     :producer (vulpea-meta-get id "producer" 'link)
+     :name (vulpea-meta-get id "name" 'string)
+     :vintage (vulpea-meta-get id "vintage" 'string)
+     :appellation (vulpea-meta-get id "appellation" 'link)
+     :region (vulpea-meta-get id "region" 'link)
+     :grapes (vulpea-meta-get-list id "grapes" 'link)
+     :alcohol (vulpea-meta-get id "alcohol" 'number)
+     :sugar (vulpea-meta-get id "sugar" 'string)
+     :resources (vulpea-meta-get-list id "resources" 'link)
+     :price (vulpea-meta-get-list id "price" 'string))))
 
 
 ;;; Regions and appellations

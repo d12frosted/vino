@@ -108,16 +108,17 @@
                           :sweetness 'dry
                           :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
                           :name "Grotte Alte"
-                          :vintage 2014
+                          :vintage "2014"
                           :appellation "6a0819f3-0770-4481-9754-754ca397800b"
                           :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
                                     "3b38917f-6065-42e8-87ca-33dd39a92fc0")
                           :alcohol 13
-                          :sugar 0
+                          :sugar "0"
                           :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
                                        "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
-                          :price "50 EUR"))
+                          :price '("50.00 EUR")))
     (setq id (vino--entry-create vino))
+    (expect (vino-entry-get-by-id id) :to-equal vino)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -138,13 +139,40 @@
 - grapes :: [[id:3b38917f-6065-42e8-87ca-33dd39a92fc0][Nero d'Avola]]
 - alcohol :: 13
 - sugar :: 0
-- price :: 50 EUR
+- price :: 50.00 EUR
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
 
 
 "
              id))))
+
+(describe "vino-entry-get-by-id"
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "returns an existing `vino'"
+    (expect (vino-entry-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+            :to-equal
+            (make-vino :carbonation 'still
+                       :colour 'red
+                       :sweetness 'dry
+                       :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+                       :name "Bombolieri BB"
+                       :vintage "2017"
+                       :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
+                       :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+                       :alcohol 13
+                       :sugar "1"
+                       :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
+                       :price '("50.00 EUR"))))
+
+  (it "returns nil for non-existing id"
+    (expect (vino-entry-get-by-id (org-id-new))
+            :to-equal nil)))
 
 (describe "vino-grape-select"
   :var (id ts)
