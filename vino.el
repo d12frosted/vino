@@ -340,5 +340,26 @@ structure."
     (lambda (a) (not (null a))))
    ""))
 
+
+;;; Availability
+
+(defvar vino-availability-fn nil
+  "Function to check availability of `vino' entry.
+
+Function takes an ID of the `vino' entry and returns a pair of
+acquired and consumed numbers.")
+
+(defun vino-availability-update (id)
+  "Update availability metadata of `vino' with ID."
+  (unless vino-availability-fn
+    (user-error "`vino-availability-fn' is nil"))
+  (let* ((res (funcall vino-availability-fn id))
+         (in (car res))
+         (out (cdr res))
+         (cur (- in out)))
+    (vulpea-meta-set id "acquired" in 'append)
+    (vulpea-meta-set id "consumed" out 'append)
+    (vulpea-meta-set id "available" cur 'append)))
+
 (provide 'vino)
 ;;; vino.el ends here
