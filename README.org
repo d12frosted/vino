@@ -1,0 +1,42 @@
+:PROPERTIES:
+:ID:                     e2554430-e28e-4b63-b598-5718bea73a62
+:END:
+
+* vino
+:PROPERTIES:
+:ID:                     d66cbe06-0cbb-4805-9696-9ca31850590b
+:END:
+
+*WARNING* This library is in very early stages of development. Functions come
+and functions go. See [[https://github.com/d12frosted/vulpea/milestone/1][v0.1 milestone]] for some kind of progress tracking. It
+should be the first stable release. The goal is to have feature parity with
+[[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
+
+=vino= is a collection of functions for cellar tracking and wine rating.
+
+It started as a rewrite of [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]] from [[https://github.com/Kungsgeten/org-brain][org-brain]] to [[https://github.com/org-roam/org-roam/][org-roam]] (of course,
+using [[https://github.com/d12frosted/vulpea][vulpea]]) in performance pursuit (it become critical as I have 1k+ of wine
+entries and around 2k of grape, producers, appellations, regions notes).
+
+Since =vino= is in early stages of development, README is basically empty. Stay
+tuned.
+
+** FAQ
+:PROPERTIES:
+:ID:                     299283b3-6f65-497c-9a87-7638bbc0f4ec
+:END:
+
+*** Why not generalise?
+:PROPERTIES:
+:ID:                     75f7f880-998b-4cb6-b047-e2f6473c412c
+:END:
+
+My experience shows that most of the code can be shared for other things, like
+tea (I have a decent collection of tea, that I also track and rate) and books.
+And I am sure there are many more uses cases.
+
+But since most of the time I write about wine, I wanted to focus solely on this
+topic and avoid making perfect an enemy of good.
+
+That being said, please contact me if you wish to use it for other things, I
+would love to hear your use case and help you with building solution for you.
