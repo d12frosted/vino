@@ -108,12 +108,12 @@
                           :sweetness 'dry
                           :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
                           :name "Grotte Alte"
-                          :vintage "2014"
+                          :vintage 2014
                           :appellation "6a0819f3-0770-4481-9754-754ca397800b"
                           :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
                                     "3b38917f-6065-42e8-87ca-33dd39a92fc0")
                           :alcohol 13
-                          :sugar "0"
+                          :sugar 0
                           :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
                                        "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
                           :price '("50.00 EUR")))
@@ -162,11 +162,11 @@
                        :sweetness 'dry
                        :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
                        :name "Bombolieri BB"
-                       :vintage "2017"
+                       :vintage 2017
                        :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
                        :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
                        :alcohol 13
-                       :sugar "1"
+                       :sugar 1
                        :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
                        :price '("50.00 EUR"))))
 

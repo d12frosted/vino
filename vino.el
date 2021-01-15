@@ -116,10 +116,10 @@ When ID is omitted, ID of the heading at point is taken."
                 #'read-string
                 #'string-empty-p
                 "Name: "))
-         (vintage (or (+fun-repeat-while #'read-number
-                                       (lambda (v) (< v 1900))
-                                       "Vintage (C-g for NV): ")
-                    "NV"))
+         (vintage (+fun-repeat-while
+                   #'read-number
+                   (lambda (v) (< v 1900))
+                   "Vintage (C-g for NV): "))
          (rora (vino-region-select))
          (region (when (seq-contains-p (vulpea-note-tags rora)
                                        "region")
@@ -128,13 +128,14 @@ When ID is omitted, ID of the heading at point is taken."
                                             "appellation")
                         rora))
          (grapes (+fun-collect-while #'vino-grape-select nil))
-         (alcohol (+fun-repeat-while #'read-number
-                                     (lambda (v) (< v 0))
-                                     "Alcohol: "))
-         (sugar (or (+fun-repeat-while #'read-number
-                                       (lambda (v) (< v 0))
-                                       "Sugar g/l (C-g for N/A): ")
-                    "N/A"))
+         (alcohol (+fun-repeat-while
+                   #'read-number
+                   (lambda (v) (< v 0))
+                   "Alcohol: "))
+         (sugar (+fun-repeat-while
+                 #'read-number
+                 (lambda (v) (< v 0))
+                 "Sugar g/l (C-g for N/A): "))
          (colour (intern
                   (completing-read
                    "Colour: "
@@ -198,7 +199,8 @@ When ID is omitted, ID of the heading at point is taken."
     (vulpea-meta-set id "sweetness" (vino-sweetness vino) 'append)
     (vulpea-meta-set id "producer" (vino-producer vino) 'append)
     (vulpea-meta-set id "name" (vino-name vino) 'append)
-    (vulpea-meta-set id "vintage" (vino-vintage vino) 'append)
+    (when-let ((vintage (vino-vintage vino)))
+      (vulpea-meta-set id "vintage" vintage 'append))
     (when-let ((appellation (vino-appellation vino)))
       (vulpea-meta-set id "appellation" appellation 'append))
     (when-let ((region (vino-region vino)))
@@ -209,8 +211,7 @@ When ID is omitted, ID of the heading at point is taken."
                  (> alcohol 0))
         (vulpea-meta-set id "alcohol" alcohol 'append)))
     (let ((sugar (vino-sugar vino)))
-      (when (and sugar
-                 (>= (string-to-number sugar) 0))
+      (when (and sugar (>= sugar 0))
         (vulpea-meta-set id "sugar" sugar 'append)))
     (when (vino-price vino)
       (vulpea-meta-set id "price" (vino-price vino) 'append))
@@ -227,12 +228,12 @@ When ID is omitted, ID of the heading at point is taken."
      :sweetness (vulpea-meta-get id "sweetness" 'symbol)
      :producer (vulpea-meta-get id "producer" 'link)
      :name (vulpea-meta-get id "name" 'string)
-     :vintage (vulpea-meta-get id "vintage" 'string)
+     :vintage (vulpea-meta-get id "vintage" 'number)
      :appellation (vulpea-meta-get id "appellation" 'link)
      :region (vulpea-meta-get id "region" 'link)
      :grapes (vulpea-meta-get-list id "grapes" 'link)
      :alcohol (vulpea-meta-get id "alcohol" 'number)
-     :sugar (vulpea-meta-get id "sugar" 'string)
+     :sugar (vulpea-meta-get id "sugar" 'number)
      :resources (vulpea-meta-get-list id "resources" 'link)
      :price (vulpea-meta-get-list id "price" 'string))))
 
