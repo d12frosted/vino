@@ -75,24 +75,100 @@
                    "Expected `%F' to have content equal to `%v', but instead `%F' has content equal to `%c'"
                    spec))))))
 
-(describe "vino-entry-p"
+(describe "vino-note-p"
   (before-all
     (vino-test--init))
 
   (after-all
     (vino-test--teardown))
 
-  (it "returns non-nil when used on wine entry"
-    (expect (vino-entry-p "c9937e3e-c83d-4d8d-a612-6110e6706252")
+  (it "returns non-nil when used on of wine entry"
+    (expect (vino-note-p (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
             :to-be t))
 
   (it "returns nil when used on some heading inside wine entry"
-    (expect (vino-entry-p "71715128-3d6f-4e36-8d70-d35fcb057609")
+    (expect (vino-note-p (vulpea-db-get-by-id "71715128-3d6f-4e36-8d70-d35fcb057609"))
             :to-be nil))
 
   (it "returns nil when used on other entry"
-    (expect (vino-entry-p "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+    (expect (vino-note-p (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
             :to-be nil)))
+
+(describe "vino-note-get"
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "returns a note when used on id of wine entry"
+    (expect (vino-note-get "c9937e3e-c83d-4d8d-a612-6110e6706252")
+            :to-equal
+            (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
+
+  (it "returns a note when used on wine note"
+    (expect (vino-note-get (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
+            :to-equal
+            (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
+
+  (it "returns a note when used inside a wine note"
+    (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+           (note (vulpea-db-get-by-id id)))
+      (expect
+       (vulpea-utils-with-file (vulpea-db-get-file-by-id id)
+         (goto-char (point-max))
+         (vino-note-get))
+       :to-equal note)))
+
+  (it "calls `vino-note-select' when called from non org-mode buffer"
+    (let ((note (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
+      (spy-on 'vino-note-select :and-return-value note)
+      (expect (vino-note-get) :to-equal note)))
+
+  (it "calls `vino-note-select' when current buffer does not represent wine"
+    (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+           (note (vulpea-db-get-by-id id)))
+      (spy-on 'vino-note-select :and-return-value note)
+      (expect
+       (vulpea-utils-with-file (vulpea-db-get-file-by-id id)
+         (vino-note-get))
+       :to-equal note)))
+
+  (it "throws an error when used on id of some heading inside wine entry"
+    (let ((id "71715128-3d6f-4e36-8d70-d35fcb057609"))
+      (expect (vino-note-get id)
+              :to-throw
+              'user-error
+              (list
+               (format "Note with id %s does not represent a vino entry"
+                       id)))))
+
+  (it "throws an error when used on some heading inside wine entry"
+    (let ((id "71715128-3d6f-4e36-8d70-d35fcb057609"))
+      (expect (vino-note-get (vulpea-db-get-by-id id))
+              :to-throw
+              'user-error
+              (list
+               (format "Note %s does not represent a vino entry"
+                       (vulpea-db-get-by-id id))))))
+
+  (it "throws an error when used on id of other note"
+    (let ((id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
+      (expect (vino-note-get id)
+              :to-throw
+              'user-error
+              (list
+               (format "Note with id %s does not represent a vino entry"
+                       id)))))
+
+  (it "throws an error when used on other note"
+    (let ((id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
+      (expect (vino-note-get (vulpea-db-get-by-id id))
+              :to-throw
+              'user-error
+              (list
+               (format "Note %s does not represent a vino entry"
+                       (vulpea-db-get-by-id id)))))))
 
 (describe "vino--entry-create"
   :var (vino id)
@@ -176,6 +252,10 @@
                        :consumed 1
                        :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
                        :price '("50.00 EUR"))))
+
+  (it "returns nil for non-wine note id"
+    (expect (vino-entry-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+            :to-equal nil))
 
   (it "returns nil for non-existing id"
     (expect (vino-entry-get-by-id (org-id-new))
@@ -289,7 +369,7 @@
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     c9937e3e-c83d-4d8d-a612-6110e6706252
+:ID:                     %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 

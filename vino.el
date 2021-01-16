@@ -93,19 +93,6 @@ Orange wine is marked as white.")
   "Capture template for grape entry.")
 
 ;;;###autoload
-(defun vino-entry-p (&optional id)
-  "Return non-nil if ID represents vino entry.
-
-When ID is omitted, ID of the heading at point is taken."
-  (when-let* ((id (or id (org-id-get)))
-              (note (vulpea-db-get-by-id id))
-              (tags (vulpea-note-tags note))
-              (level (vulpea-note-level note)))
-    (and (equal level 0)
-         (seq-contains-p tags "wine")
-         (seq-contains-p tags "cellar"))))
-
-;;;###autoload
 (defun vino-entry-create ()
   "Create a `vino` entry."
   (interactive)
@@ -229,24 +216,90 @@ When ID is omitted, ID of the heading at point is taken."
 
 (defun vino-entry-get-by-id (id)
   "Get `vino' entry by ID."
-  ;; TODO: optimise multiple calls
-  (when (vulpea-db-get-by-id id)
-    (make-vino
-     :carbonation (vulpea-meta-get id "carbonation" 'symbol)
-     :colour (vulpea-meta-get id "colour" 'symbol)
-     :sweetness (vulpea-meta-get id "sweetness" 'symbol)
-     :producer (vulpea-meta-get id "producer" 'link)
-     :name (vulpea-meta-get id "name" 'string)
-     :vintage (vulpea-meta-get id "vintage" 'number)
-     :appellation (vulpea-meta-get id "appellation" 'link)
-     :region (vulpea-meta-get id "region" 'link)
-     :grapes (vulpea-meta-get-list id "grapes" 'link)
-     :alcohol (vulpea-meta-get id "alcohol" 'number)
-     :sugar (vulpea-meta-get id "sugar" 'number)
-     :acquired (vulpea-meta-get id "acquired" 'number)
-     :consumed (vulpea-meta-get id "consumed" 'number)
-     :resources (vulpea-meta-get-list id "resources" 'link)
-     :price (vulpea-meta-get-list id "price" 'string))))
+  (let ((note (vulpea-db-get-by-id id)))
+    (when (and note (vino-note-p note))
+      ;; TODO: optimise multiple calls
+      (make-vino
+       :carbonation (vulpea-meta-get id "carbonation" 'symbol)
+       :colour (vulpea-meta-get id "colour" 'symbol)
+       :sweetness (vulpea-meta-get id "sweetness" 'symbol)
+       :producer (vulpea-meta-get id "producer" 'link)
+       :name (vulpea-meta-get id "name" 'string)
+       :vintage (vulpea-meta-get id "vintage" 'number)
+       :appellation (vulpea-meta-get id "appellation" 'link)
+       :region (vulpea-meta-get id "region" 'link)
+       :grapes (vulpea-meta-get-list id "grapes" 'link)
+       :alcohol (vulpea-meta-get id "alcohol" 'number)
+       :sugar (vulpea-meta-get id "sugar" 'number)
+       :acquired (vulpea-meta-get id "acquired" 'number)
+       :consumed (vulpea-meta-get id "consumed" 'number)
+       :resources (vulpea-meta-get-list id "resources" 'link)
+       :price (vulpea-meta-get-list id "price" 'string)))))
+
+
+;;; Note
+
+;;;###autoload
+(defun vino-note-p (note)
+  "Return non-nil if NOTE represents vino entry."
+  (when-let* ((tags (vulpea-note-tags note))
+              (level (vulpea-note-level note)))
+    (and (equal level 0)
+         (seq-contains-p tags "wine")
+         (seq-contains-p tags "cellar"))))
+
+;;;###autoload
+(defun vino-note-select ()
+  "Select a wine note.
+
+See `vulpea' documentation for more information on note
+structure."
+  (vulpea-select
+   "Wine"
+   nil nil
+   (lambda (note)
+     (let ((tags (vulpea-note-tags note)))
+       (and (seq-contains-p tags "wine")
+            (seq-contains-p tags "cellar"))))))
+
+;;;###autoload
+(defun vino-note-get (&optional note-or-id)
+  "Get a note representing `vino' entry in a dwim style.
+
+If NOTE-OR-ID is an ID, then get a note by that ID. Throws error
+if extracted note does not represent a `vino' entry.
+
+If NOTE-OR-ID is a note, then return it. Throws error
+if extracted note does not represent a `vino' entry.
+
+If NOTE-OR-ID is nil, try to extract a note from current buffer
+or ask for user to select a note."
+  (cond
+   ((null note-or-id)
+    (if (eq major-mode 'org-mode)
+        (let* ((id (save-excursion
+                     (goto-char (point-min))
+                     (org-id-get)))
+               (note (ignore-errors (vino-note-get id))))
+          (if note
+              note
+            (vino-note-select)))
+      (vino-note-select)))
+   ((stringp note-or-id)
+    (let ((note (vulpea-db-get-by-id note-or-id)))
+      (if (and note (vino-note-p note))
+          note
+        (user-error
+         "Note with id %s does not represent a vino entry"
+         note-or-id))))
+   ((vulpea-note-p note-or-id)
+    (if (vino-note-p note-or-id)
+        note-or-id
+      (user-error
+       "Note %s does not represent a vino entry"
+       note-or-id)))
+   (t
+    (user-error "Unsupported type of %s" note-or-id))))
 
 
 ;;; Regions and appellations
