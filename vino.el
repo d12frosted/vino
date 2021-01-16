@@ -377,6 +377,17 @@ structure."
             (seq-contains-p tags "producer"))))))
 
 
+;;; Price
+
+;;;###autoload
+(defun vino-price-read (vino)
+  "Read the price for VINO entry."
+  (if-let ((price (car (vino-price vino))))
+      (read-string (format "Price (default %s): " price)
+                   nil nil price)
+    (read-string "Price: ")))
+
+
 ;;; Utilities
 
 ;;;###autoload
@@ -399,8 +410,57 @@ structure."
 (defvar vino-availability-fn nil
   "Function to check availability of `vino' entry.
 
-Function takes an ID of the `vino' entry and returns a pair of
+Function is called with ID of `vino' entry and returns a cons of
 acquired and consumed numbers.")
+
+(defvar vino-availability-add-fn nil
+  "Function to add AMOUNT of `vino' to inventory.
+
+Function is called with ID of `vino' entry, AMOUNT, SOURCE and
+DATE arguments.")
+
+(defvar vino-availability-sub-fn nil
+  "Function to subtract AMOUNT of `vino' from inventory.
+
+Function is called with ID of `vino' entry, AMOUNT, ACTION and
+DATE arguments.")
+
+(defun vino-acquire (&optional id amount source price date)
+  "Acquire AMOUNT of vine with ID from SOURCE for PRICE at DATE."
+  (interactive)
+  (let* ((note (vino-note-get id))
+         (id (vulpea-note-id note))
+         (vino (vino-entry-get-by-id id))
+         (source (or source (read-string "Source: ")))
+         (amount (or amount (read-number "Amount: " 1)))
+         (price (or price (vino-price-read vino)))
+         (date (or date (org-read-date nil t))))
+    (funcall vino-availability-add-fn
+             id amount source date)
+    (let ((prices (vino-price vino)))
+      (unless (seq-contains-p prices price)
+        (vulpea-meta-set id "PRICE" (cons price prices) 'append)))
+    (vino-availability-update id)))
+
+(defun vino-consume (&optional id amount action date)
+  "Consume AMOUNT of ID because of ACTION at DATE."
+  (interactive)
+  (let* ((note (vino-note-get id))
+         (id (vulpea-note-id note))
+         (action (or action (read-string "Action: " "consume")))
+         (amount (or amount
+                     (read-number
+                      "Amount: "
+                      (or (vulpea-meta-get id "available" 'number)
+                          1))))
+         (date (or date (org-read-date nil t))))
+    (funcall vino-availability-sub-fn
+             id amount action date)
+    (vino-availability-update id)
+    (when (and (string-equal action "consume")
+               (y-or-n-p "Rate? "))
+      ;; (vino-rate date)
+      (message "not implemented"))))
 
 (defun vino-availability-update (id)
   "Update availability metadata of `vino' with ID."
