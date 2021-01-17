@@ -478,7 +478,8 @@ The process is simple:
                                'append))
             values)
     (vino-entry-update-rating rid)
-    (vino-entry-update id)))
+    (vino-entry-update id)
+    rid))
 
 
 ;;; Vino entry note
