@@ -462,8 +462,17 @@ The process is simple:
     (org-roam-db-update-file
      (expand-file-name (concat "wine/rating/" rid ".org")
                        org-roam-directory))
-    ;; TODO: performance
-    (vulpea-meta-set id "ratings" rid 'append)
+    ;; TODO: performance of multiple `vulpea-meta-set'
+    ;; TODO: performance of rating sorting
+    (vulpea-meta-set
+     id
+     "ratings"
+     (seq-sort-by (lambda (id)
+                    (vulpea-note-title (vulpea-db-get-by-id id)))
+                  #'string<
+                  (cons rid
+                        (vulpea-meta-get-list id "ratings" 'link)))
+     'append)
     (vulpea-meta-set rid "wine" id 'append)
     (vulpea-meta-set rid "date" date-str 'append)
     (vulpea-meta-set rid "version" version 'append)
