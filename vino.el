@@ -372,7 +372,7 @@ ID is generated unless passed."
              id amount source date)
     (let ((prices (vino-entry-price vino)))
       (unless (seq-contains-p prices price)
-        (vulpea-meta-set id "PRICE" (cons price prices) 'append)))
+        (vulpea-meta-set id "price" (cons price prices))))
     (vino-entry-update-availability id)))
 
 (defun vino-entry-consume (&optional id amount action date)
