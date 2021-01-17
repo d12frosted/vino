@@ -243,8 +243,10 @@ DATE arguments.")
   (interactive)
   (vino-entry--create (vino-entry-read)))
 
-(defun vino-entry--create (vino)
-  "Create an entry for VINO."
+(defun vino-entry--create (vino &optional id)
+  "Create an entry for VINO.
+
+ID is generated unless passed."
   (let* ((producer (vino-entry-producer vino))
          (producer (if (vulpea-note-p producer)
                        producer
@@ -257,7 +259,7 @@ DATE arguments.")
                         (if (numberp vintage)
                             (number-to-string vintage)
                           vintage)))
-         (id (vulpea-create title vino-entry-template)))
+         (id (vulpea-create title vino-entry-template id)))
     (org-roam-db-update-file
      (expand-file-name (concat "wine/cellar/" id ".org")
                        org-roam-directory))
