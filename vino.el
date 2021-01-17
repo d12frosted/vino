@@ -25,26 +25,7 @@
 (require '+fun)
 
 
-;; Entry
-
-;; TODO: rating
-;;;###autoload
-(cl-defstruct vino
-  carbonation
-  colour
-  sweetness
-  producer
-  name
-  vintage
-  appellation
-  region
-  grapes
-  alcohol
-  sugar
-  resources
-  price
-  acquired
-  consumed)
+;;; Configurations variables
 
 ;;;###autoload
 (defvar vino-carbonation-types
@@ -76,6 +57,52 @@ Orange wine is marked as white.")
                      doux))
   "List of valid sweetness levels per carbonation type.")
 
+
+;;; Availability
+
+(defvar vino-availability-fn nil
+  "Function to check availability of `vino-entry'.
+
+Function is called with ID of `vino-entry' and returns a cons of
+acquired and consumed numbers.")
+
+(defvar vino-availability-add-fn nil
+  "Function to add AMOUNT of `vino-entry' to inventory.
+
+Function is called with ID of `vino-entry', AMOUNT, SOURCE and
+DATE arguments.")
+
+(defvar vino-availability-sub-fn nil
+  "Function to subtract AMOUNT of `vino-entry' from inventory.
+
+Function is called with ID of `vino-entry', AMOUNT, ACTION and
+DATE arguments.")
+
+
+;;; Rating
+
+;;;###autoload
+(defvar vino-rating-template
+  `("d" "default" plain
+    #'org-roam-capture--get-point
+    "%?"
+    :file-name "wine/rating/${id}"
+    :head ,(concat
+            ":PROPERTIES:\n"
+            ":ID:                     ${id}\n"
+            ":END:\n"
+            "#+TITLE: ${title}\n"
+            "#+TIME-STAMP: <>\n\n")
+    :unnarrowed t
+    :immediate-finish t)
+  "Capture template for grape entry.")
+
+(defvar vino-rating-props nil
+  "Rating properties per version.")
+
+
+;;; Entry
+
 ;;;###autoload
 (defvar vino-entry-template
   `("d" "default" plain
@@ -93,30 +120,28 @@ Orange wine is marked as white.")
   "Capture template for grape entry.")
 
 ;;;###autoload
-(defun vino-entry-create ()
-  "Create a `vino` entry."
-  (interactive)
-  (vino--entry-create (vino-entry-read)))
-
-;;;###autoload
-(defun vino-entry-update (&optional note-or-id)
-  "Update `vino' entry represented by NOTE-OR-ID."
-  (let* ((note (vino-note-get note-or-id))
-         (id (vulpea-note-id note))
-         (ratings (vulpea-meta-get-list id "ratings" 'link))
-         (values (seq-map (lambda (rid)
-                            (vulpea-meta-get rid "total" 'number))
-                          ratings))
-         (rate (if (null values)
-                   0
-                 (/ (apply #'+ values)
-                    (float (length values))))))
-    ;; TODO: update title
-    (vulpea-meta-set id "rate" rate 'append)))
+(cl-defstruct vino-entry
+  carbonation
+  colour
+  sweetness
+  producer
+  name
+  vintage
+  appellation
+  region
+  grapes
+  alcohol
+  sugar
+  resources
+  price
+  acquired
+  consumed
+  rating
+  ratings)
 
 ;;;###autoload
 (defun vino-entry-read ()
-  "Read a `vino` entry."
+  "Read a `vino-entry'."
   (let* ((producer (vino-producer-select))
          (name (+fun-repeat-while
                 #'read-string
@@ -166,7 +191,7 @@ Orange wine is marked as white.")
                      (lambda (v) (not (string-empty-p v)))
                      "Resource: "))
          (price (read-string "Price: ")))
-    (make-vino
+    (make-vino-entry
      :carbonation carbonation
      :colour colour
      :sweetness sweetness
@@ -181,63 +206,17 @@ Orange wine is marked as white.")
      :resources resources
      :price price
      :acquired 0
-     :consumed 0)))
+     :consumed 0
+     :rating nil
+     :ratings nil)))
 
-(defun vino--entry-create (vino)
-  "Create an entry for VINO."
-  (let* ((producer (vino-producer vino))
-         (producer (if (vulpea-note-p producer)
-                       producer
-                     (vulpea-db-get-by-id producer)))
-         (vintage (vino-vintage vino))
-         (title (concat (vulpea-note-title producer)
-                        " "
-                        (vino-name vino)
-                        " "
-                        (if (numberp vintage)
-                            (number-to-string vintage)
-                          vintage)))
-         (id (vulpea-create title vino-entry-template)))
-    (org-roam-db-update-file
-     (expand-file-name (concat "wine/cellar/" id ".org")
-                       org-roam-directory))
-    ;; TODO: optimize multiple calls
-    (vulpea-meta-set id "carbonation" (vino-carbonation vino) 'append)
-    (vulpea-meta-set id "colour" (vino-colour vino) 'append)
-    (vulpea-meta-set id "sweetness" (vino-sweetness vino) 'append)
-    (vulpea-meta-set id "producer" (vino-producer vino) 'append)
-    (vulpea-meta-set id "name" (vino-name vino) 'append)
-    (when-let ((vintage (vino-vintage vino)))
-      (vulpea-meta-set id "vintage" vintage 'append))
-    (when-let ((appellation (vino-appellation vino)))
-      (vulpea-meta-set id "appellation" appellation 'append))
-    (when-let ((region (vino-region vino)))
-      (vulpea-meta-set id "region" region 'append))
-    (vulpea-meta-set id "grapes" (vino-grapes vino) 'append)
-    (let ((alcohol (vino-alcohol vino)))
-      (when (and alcohol
-                 (> alcohol 0))
-        (vulpea-meta-set id "alcohol" alcohol 'append)))
-    (let ((sugar (vino-sugar vino)))
-      (when (and sugar (>= sugar 0))
-        (vulpea-meta-set id "sugar" sugar 'append)))
-    (when (vino-price vino)
-      (vulpea-meta-set id "price" (vino-price vino) 'append))
-    (let ((acquired (or (vino-acquired vino) 0))
-          (consumed (or (vino-consumed vino) 0)))
-      (vulpea-meta-set id "acquired" acquired 'append)
-      (vulpea-meta-set id "consumed" consumed 'append)
-      (vulpea-meta-set id "available" (- acquired consumed) 'append))
-    (vulpea-meta-set id "resources" (vino-resources vino) 'append)
-    (vulpea-meta-set id "rate" 0 'append)
-    id))
-
+;;;###autoload
 (defun vino-entry-get-by-id (id)
-  "Get `vino' entry by ID."
+  "Get `vino-entry' by ID."
   (let ((note (vulpea-db-get-by-id id)))
-    (when (and note (vino-note-p note))
+    (when (and note (vino-entry-note-p note))
       ;; TODO: optimise multiple calls
-      (make-vino
+      (make-vino-entry
        :carbonation (vulpea-meta-get id "carbonation" 'symbol)
        :colour (vulpea-meta-get id "colour" 'symbol)
        :sweetness (vulpea-meta-get id "sweetness" 'symbol)
@@ -254,11 +233,243 @@ Orange wine is marked as white.")
        :resources (vulpea-meta-get-list id "resources" 'link)
        :price (vulpea-meta-get-list id "price" 'string)))))
 
-
-;;; Note
+;;;###autoload
+(defun vino-entry-create ()
+  "Create a `vino` entry."
+  (interactive)
+  (vino-entry--create (vino-entry-read)))
+
+(defun vino-entry--create (vino)
+  "Create an entry for VINO."
+  (let* ((producer (vino-entry-producer vino))
+         (producer (if (vulpea-note-p producer)
+                       producer
+                     (vulpea-db-get-by-id producer)))
+         (vintage (vino-entry-vintage vino))
+         (title (concat (vulpea-note-title producer)
+                        " "
+                        (vino-entry-name vino)
+                        " "
+                        (if (numberp vintage)
+                            (number-to-string vintage)
+                          vintage)))
+         (id (vulpea-create title vino-entry-template)))
+    (org-roam-db-update-file
+     (expand-file-name (concat "wine/cellar/" id ".org")
+                       org-roam-directory))
+    ;; TODO: optimize multiple calls
+    (vulpea-meta-set id "carbonation" (vino-entry-carbonation vino) 'append)
+    (vulpea-meta-set id "colour" (vino-entry-colour vino) 'append)
+    (vulpea-meta-set id "sweetness" (vino-entry-sweetness vino) 'append)
+    (vulpea-meta-set id "producer" (vino-entry-producer vino) 'append)
+    (vulpea-meta-set id "name" (vino-entry-name vino) 'append)
+    (when-let ((vintage (vino-entry-vintage vino)))
+      (vulpea-meta-set id "vintage" vintage 'append))
+    (when-let ((appellation (vino-entry-appellation vino)))
+      (vulpea-meta-set id "appellation" appellation 'append))
+    (when-let ((region (vino-entry-region vino)))
+      (vulpea-meta-set id "region" region 'append))
+    (vulpea-meta-set id "grapes" (vino-entry-grapes vino) 'append)
+    (let ((alcohol (vino-entry-alcohol vino)))
+      (when (and alcohol
+                 (> alcohol 0))
+        (vulpea-meta-set id "alcohol" alcohol 'append)))
+    (let ((sugar (vino-entry-sugar vino)))
+      (when (and sugar (>= sugar 0))
+        (vulpea-meta-set id "sugar" sugar 'append)))
+    (when (vino-entry-price vino)
+      (vulpea-meta-set id "price" (vino-entry-price vino) 'append))
+    (let ((acquired (or (vino-entry-acquired vino) 0))
+          (consumed (or (vino-entry-consumed vino) 0)))
+      (vulpea-meta-set id "acquired" acquired 'append)
+      (vulpea-meta-set id "consumed" consumed 'append)
+      (vulpea-meta-set id "available" (- acquired consumed) 'append))
+    (vulpea-meta-set id "resources" (vino-entry-resources vino) 'append)
+    (vulpea-meta-set id "rate" (or (vino-entry-rate vino) "NA") 'append)
+    id))
 
 ;;;###autoload
-(defun vino-note-p (note)
+(defun vino-entry-update (&optional note-or-id)
+  "Update `vino-entry' represented by NOTE-OR-ID."
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
+         (id (vulpea-note-id note))
+         (ratings (vulpea-meta-get-list id "ratings" 'link))
+         (values (seq-map (lambda (rid)
+                            (vulpea-meta-get rid "total" 'number))
+                          ratings))
+         (rate (if (null values)
+                   0
+                 (/ (apply #'+ values)
+                    (float (length values))))))
+    ;; TODO: update title
+    (vulpea-meta-set id "rate" rate 'append)))
+
+(defun vino-entry-update-availability (id)
+  "Update availability metadata of `vino-entry' with ID."
+  (unless vino-availability-fn
+    (user-error "`vino-availability-fn' is nil"))
+  (let* ((res (funcall vino-availability-fn id))
+         (in (car res))
+         (out (cdr res))
+         (cur (- in out)))
+    (vulpea-meta-set id "acquired" in 'append)
+    (vulpea-meta-set id "consumed" out 'append)
+    (vulpea-meta-set id "available" cur 'append)))
+
+(defun vino-entry-update-rating (id)
+  "Refresh rating represented by ID."
+  (let* ((version (vulpea-meta-get id "version" 'number))
+         (info (seq-find (lambda (x) (equal (car x) version))
+                         vino-rating-props))
+         (props (cdr info))
+         ;; TODO: performance
+         (score
+          (seq-reduce
+           #'+
+           (seq-map
+            (lambda (x)
+              (vulpea-meta-get id (downcase x) 'number))
+            (seq-map #'car props))
+           0))
+         (score-max
+          (seq-reduce
+           #'+
+           (seq-map
+            (lambda (x)
+              (vulpea-meta-get
+               id
+               (downcase (concat x "_MAX"))
+               'number))
+            (seq-map #'car props))
+           0))
+         (total (* 10.0 (/ (float score) (float score-max)))))
+    (vulpea-meta-set id "score" score 'append)
+    (vulpea-meta-set id "score_max" score-max 'append)
+    (vulpea-meta-set id "total" total 'append)))
+
+(defun vino-entry-acquire (&optional id amount source price date)
+  "Acquire AMOUNT of vine with ID from SOURCE for PRICE at DATE."
+  (interactive)
+  (let* ((note (vino-entry-note-get-dwim id))
+         (id (vulpea-note-id note))
+         (vino (vino-entry-get-by-id id))
+         (source (or source (read-string "Source: ")))
+         (amount (or amount (read-number "Amount: " 1)))
+         (price (or price (vino-price-read vino)))
+         (date (or date (org-read-date nil t))))
+    (funcall vino-availability-add-fn
+             id amount source date)
+    (let ((prices (vino-entry-price vino)))
+      (unless (seq-contains-p prices price)
+        (vulpea-meta-set id "PRICE" (cons price prices) 'append)))
+    (vino-entry-update-availability id)))
+
+(defun vino-entry-consume (&optional id amount action date)
+  "Consume AMOUNT of ID because of ACTION at DATE."
+  (interactive)
+  (let* ((note (vino-entry-note-get-dwim id))
+         (id (vulpea-note-id note))
+         (action (or action (read-string "Action: " "consume")))
+         (amount (or amount
+                     (read-number
+                      "Amount: "
+                      (or (vulpea-meta-get id "available" 'number)
+                          1))))
+         (date (or date (org-read-date nil t))))
+    (funcall vino-availability-sub-fn
+             id amount action date)
+    (vino-entry-update-availability id)
+    (when (and (string-equal action "consume")
+               (y-or-n-p "Rate? "))
+      (vino-entry-rate id date))))
+
+(defun vino-entry-rate (&optional id date)
+  "Rate a `vino-entry' with ID on DATE."
+  (interactive)
+  (when-let* ((note (vino-entry-note-get-dwim id))
+              (date (or date (org-read-date nil t)))
+              (info (car (last vino-rating-props))))
+    (vino-entry--rate
+     (vulpea-note-id note)
+     date
+     (car info)
+     (cdr info))))
+
+(defun vino-entry--rate (id date version props)
+  "Rate a `vino-entry' with ID.
+
+The process is simple:
+
+1. Create a new rating note.
+2. Set wine ID meta.
+3. Set DATE meta.
+4. set VERSION meta.
+5. Query rating marks based on PROPS."
+  (when-let*
+      ((vino (vino-entry-get-by-id id))
+       (producer (vulpea-db-get-by-id (vino-entry-producer vino)))
+       (date-str (format-time-string "%Y-%m-%d" date))
+       (title (format "%s %s %s - %s"
+                      (vulpea-note-title producer)
+                      (vino-entry-name vino)
+                      (or (vino-entry-vintage vino) "NV")
+                      date-str))
+       (values
+        (seq-map
+         (lambda (cfg)
+           (cond
+            ((functionp (cdr cfg))
+             (let ((res (funcall (cdr cfg))))
+               (list (car cfg)
+                     (car res)
+                     (cdr res))))
+
+            ((numberp (cdr cfg))
+             (list (car cfg)
+                   (read-number
+                    (format "%s: (0 to %i): "
+                            (vino--format-prop (car cfg))
+                            (cdr cfg)))
+                   (cdr cfg)))
+
+            ((listp (cdr cfg))
+             (let* ((ans (completing-read
+                          (concat (vino--format-prop (car cfg))
+                                  ": ")
+                          (seq-map #'car (cdr cfg))))
+                    (res (assoc ans (cdr cfg))))
+               (list (car cfg)
+                     (cdr res)
+                     (- (length (cdr cfg)) 1))))))
+         props))
+       (rid (vulpea-create title vino-rating-template)))
+    ;; TODO extract this to vulpea
+    (org-roam-db-update-file
+     (expand-file-name (concat "wine/rating/" rid ".org")
+                       org-roam-directory))
+    ;; TODO: performance
+    (vulpea-meta-set id "ratings" rid 'append)
+    (vulpea-meta-set rid "wine" id 'append)
+    (vulpea-meta-set rid "date" date-str 'append)
+    (vulpea-meta-set rid "version" version 'append)
+    (seq-do (lambda (data)
+              (vulpea-meta-set rid
+                               (downcase (nth 0 data))
+                               (nth 1 data)
+                               'append)
+              (vulpea-meta-set rid
+                               (downcase (concat (nth 0 data) "_MAX"))
+                               (nth 2 data)
+                               'append))
+            values)
+    (vino-entry-update-rating rid)
+    (vino-entry-update id)))
+
+
+;;; Vino entry note
+
+;;;###autoload
+(defun vino-entry-note-p (note)
   "Return non-nil if NOTE represents vino entry."
   (when-let* ((tags (vulpea-note-tags note))
               (level (vulpea-note-level note)))
@@ -267,11 +478,8 @@ Orange wine is marked as white.")
          (seq-contains-p tags "cellar"))))
 
 ;;;###autoload
-(defun vino-note-select ()
-  "Select a wine note.
-
-See `vulpea' documentation for more information on note
-structure."
+(defun vino-entry-note-select ()
+  "Select and return a `vulpea-note' representing `vino-entry'."
   (vulpea-select
    "Wine"
    nil nil
@@ -280,16 +488,15 @@ structure."
        (and (seq-contains-p tags "wine")
             (seq-contains-p tags "cellar"))))))
 
-;; TODO: rename as this is confusing
 ;;;###autoload
-(defun vino-note-get (&optional note-or-id)
-  "Get a note representing `vino' entry in a dwim style.
+(defun vino-entry-note-get-dwim (&optional note-or-id)
+  "Get a `vulpea-note' representing `vino-entry' in a dwim style.
 
 If NOTE-OR-ID is an ID, then get a note by that ID. Throws error
-if extracted note does not represent a `vino' entry.
+if extracted note does not represent a `vino-entry'.
 
 If NOTE-OR-ID is a note, then return it. Throws error
-if extracted note does not represent a `vino' entry.
+if extracted note does not represent a `vino-entry'.
 
 If NOTE-OR-ID is nil, try to extract a note from current buffer
 or ask for user to select a note."
@@ -299,20 +506,20 @@ or ask for user to select a note."
         (let* ((id (save-excursion
                      (goto-char (point-min))
                      (org-id-get)))
-               (note (ignore-errors (vino-note-get id))))
+               (note (ignore-errors (vino-entry-note-get-dwim id))))
           (if note
               note
-            (vino-note-select)))
-      (vino-note-select)))
+            (vino-entry-note-select)))
+      (vino-entry-note-select)))
    ((stringp note-or-id)
     (let ((note (vulpea-db-get-by-id note-or-id)))
-      (if (and note (vino-note-p note))
+      (if (and note (vino-entry-note-p note))
           note
         (user-error
          "Note with id %s does not represent a vino entry"
          note-or-id))))
    ((vulpea-note-p note-or-id)
-    (if (vino-note-p note-or-id)
+    (if (vino-entry-note-p note-or-id)
         note-or-id
       (user-error
        "Note %s does not represent a vino entry"
@@ -401,7 +608,7 @@ structure."
 ;;;###autoload
 (defun vino-price-read (vino)
   "Read the price for VINO entry."
-  (if-let ((price (car (vino-price vino))))
+  (if-let ((price (car (vino-entry-price vino))))
       (read-string (format "Price (default %s): " price)
                    nil nil price)
     (read-string "Price: ")))
@@ -423,211 +630,7 @@ structure."
     (lambda (a) (not (null a))))
    ""))
 
-
-;;; Availability
-
-(defvar vino-availability-fn nil
-  "Function to check availability of `vino' entry.
-
-Function is called with ID of `vino' entry and returns a cons of
-acquired and consumed numbers.")
-
-(defvar vino-availability-add-fn nil
-  "Function to add AMOUNT of `vino' to inventory.
-
-Function is called with ID of `vino' entry, AMOUNT, SOURCE and
-DATE arguments.")
-
-(defvar vino-availability-sub-fn nil
-  "Function to subtract AMOUNT of `vino' from inventory.
-
-Function is called with ID of `vino' entry, AMOUNT, ACTION and
-DATE arguments.")
-
-(defun vino-acquire (&optional id amount source price date)
-  "Acquire AMOUNT of vine with ID from SOURCE for PRICE at DATE."
-  (interactive)
-  (let* ((note (vino-note-get id))
-         (id (vulpea-note-id note))
-         (vino (vino-entry-get-by-id id))
-         (source (or source (read-string "Source: ")))
-         (amount (or amount (read-number "Amount: " 1)))
-         (price (or price (vino-price-read vino)))
-         (date (or date (org-read-date nil t))))
-    (funcall vino-availability-add-fn
-             id amount source date)
-    (let ((prices (vino-price vino)))
-      (unless (seq-contains-p prices price)
-        (vulpea-meta-set id "PRICE" (cons price prices) 'append)))
-    (vino-availability-update id)))
-
-(defun vino-consume (&optional id amount action date)
-  "Consume AMOUNT of ID because of ACTION at DATE."
-  (interactive)
-  (let* ((note (vino-note-get id))
-         (id (vulpea-note-id note))
-         (action (or action (read-string "Action: " "consume")))
-         (amount (or amount
-                     (read-number
-                      "Amount: "
-                      (or (vulpea-meta-get id "available" 'number)
-                          1))))
-         (date (or date (org-read-date nil t))))
-    (funcall vino-availability-sub-fn
-             id amount action date)
-    (vino-availability-update id)
-    (when (and (string-equal action "consume")
-               (y-or-n-p "Rate? "))
-      (vino-rate id date))))
-
-(defun vino-availability-update (id)
-  "Update availability metadata of `vino' with ID."
-  (unless vino-availability-fn
-    (user-error "`vino-availability-fn' is nil"))
-  (let* ((res (funcall vino-availability-fn id))
-         (in (car res))
-         (out (cdr res))
-         (cur (- in out)))
-    (vulpea-meta-set id "acquired" in 'append)
-    (vulpea-meta-set id "consumed" out 'append)
-    (vulpea-meta-set id "available" cur 'append)))
-
-
-;;; Rating
-
-;;;###autoload
-(defvar vino-rating-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/rating/${id}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
-    :unnarrowed t
-    :immediate-finish t)
-  "Capture template for grape entry.")
-
-(defvar vino-rating-props nil
-  "Rating properties per version.")
-
-(defun vino-rate (&optional id date)
-  "Rate a `vino' entry with ID on DATE."
-  (interactive)
-  (when-let* ((note (vino-note-get id))
-              (date (or date (org-read-date nil t)))
-              (info (car (last vino-rating-props))))
-    (vino--rate
-     (vulpea-note-id note)
-     date
-     (car info)
-     (cdr info))))
-
-(defun vino--rate (id date version props)
-  "Rate a `vino' entry with ID.
-
-The process is simple:
-
-1. Create a new rating note.
-2. Set wine ID meta.
-3. Set DATE meta.
-4. set VERSION meta.
-5. Query rating marks based on PROPS."
-  (when-let*
-      ((vino (vino-entry-get-by-id id))
-       (producer (vulpea-db-get-by-id (vino-producer vino)))
-       (date-str (format-time-string "%Y-%m-%d" date))
-       (title (format "%s %s %s - %s"
-                      (vulpea-note-title producer)
-                      (vino-name vino)
-                      (or (vino-vintage vino) "NV")
-                      date-str))
-       (values
-        (seq-map
-         (lambda (cfg)
-           (cond
-            ((functionp (cdr cfg))
-             (let ((res (funcall (cdr cfg))))
-               (list (car cfg)
-                     (car res)
-                     (cdr res))))
-
-            ((numberp (cdr cfg))
-             (list (car cfg)
-                   (read-number
-                    (format "%s: (0 to %i): "
-                            (vino--rate-format-prop (car cfg))
-                            (cdr cfg)))
-                   (cdr cfg)))
-
-            ((listp (cdr cfg))
-             (let* ((ans (completing-read
-                          (concat (vino--rate-format-prop (car cfg))
-                                  ": ")
-                          (seq-map #'car (cdr cfg))))
-                    (res (assoc ans (cdr cfg))))
-               (list (car cfg)
-                     (cdr res)
-                     (- (length (cdr cfg)) 1))))))
-         props))
-       (rid (vulpea-create title vino-rating-template)))
-    ;; TODO extract this to vulpea
-    (org-roam-db-update-file
-     (expand-file-name (concat "wine/rating/" rid ".org")
-                       org-roam-directory))
-    ;; TODO: performance
-    (vulpea-meta-set id "ratings" rid 'append)
-    (vulpea-meta-set rid "wine" id 'append)
-    (vulpea-meta-set rid "date" date-str 'append)
-    (vulpea-meta-set rid "version" version 'append)
-    (seq-do (lambda (data)
-              (vulpea-meta-set rid
-                               (downcase (nth 0 data))
-                               (nth 1 data)
-                               'append)
-              (vulpea-meta-set rid
-                               (downcase (concat (nth 0 data) "_MAX"))
-                               (nth 2 data)
-                               'append))
-            values)
-    (vino--rate-update rid)
-    (vino-entry-update id)))
-
-(defun vino--rate-update (id)
-  "Refresh rating represented by ID."
-  (let* ((version (vulpea-meta-get id "version" 'number))
-         (info (seq-find (lambda (x) (equal (car x) version))
-                         vino-rating-props))
-         (props (cdr info))
-         ;; TODO: performance
-         (score
-          (seq-reduce
-           #'+
-           (seq-map
-            (lambda (x)
-              (vulpea-meta-get id (downcase x) 'number))
-            (seq-map #'car props))
-           0))
-         (score-max
-          (seq-reduce
-           #'+
-           (seq-map
-            (lambda (x)
-              (vulpea-meta-get
-               id
-               (downcase (concat x "_MAX"))
-               'number))
-            (seq-map #'car props))
-           0))
-         (total (* 10.0 (/ (float score) (float score-max)))))
-    (vulpea-meta-set id "score" score 'append)
-    (vulpea-meta-set id "score_max" score-max 'append)
-    (vulpea-meta-set id "total" total 'append)))
-
-(defun vino--rate-format-prop (prop)
+(defun vino--format-prop (prop)
   "Create a pretty prompt from PROP."
   (capitalize (replace-regexp-in-string "_" " " prop)))
 

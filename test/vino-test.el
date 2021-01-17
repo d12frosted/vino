@@ -75,7 +75,7 @@
                    "Expected `%F' to have content equal to `%v', but instead `%F' has content equal to `%c'"
                    spec))))))
 
-(describe "vino-note-p"
+(describe "vino-entry-note-p"
   (before-all
     (vino-test--init))
 
@@ -83,18 +83,24 @@
     (vino-test--teardown))
 
   (it "returns non-nil when used on of wine entry"
-    (expect (vino-note-p (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
-            :to-be t))
+    (expect
+     (vino-entry-note-p
+      (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
+     :to-be t))
 
   (it "returns nil when used on some heading inside wine entry"
-    (expect (vino-note-p (vulpea-db-get-by-id "71715128-3d6f-4e36-8d70-d35fcb057609"))
-            :to-be nil))
+    (expect
+     (vino-entry-note-p
+      (vulpea-db-get-by-id "71715128-3d6f-4e36-8d70-d35fcb057609"))
+     :to-be nil))
 
   (it "returns nil when used on other entry"
-    (expect (vino-note-p (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-            :to-be nil)))
+    (expect
+     (vino-entry-note-p
+      (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
+     :to-be nil)))
 
-(describe "vino-note-get"
+(describe "vino-entry-note-get-dwim"
   (before-all
     (vino-test--init))
 
@@ -102,14 +108,17 @@
     (vino-test--teardown))
 
   (it "returns a note when used on id of wine entry"
-    (expect (vino-note-get "c9937e3e-c83d-4d8d-a612-6110e6706252")
-            :to-equal
-            (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
+    (expect
+     (vino-entry-note-get-dwim "c9937e3e-c83d-4d8d-a612-6110e6706252")
+     :to-equal
+     (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
 
   (it "returns a note when used on wine note"
-    (expect (vino-note-get (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
-            :to-equal
-            (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
+    (expect
+     (vino-entry-note-get-dwim
+      (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
+     :to-equal
+     (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
 
   (it "returns a note when used inside a wine note"
     (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
@@ -117,26 +126,26 @@
       (expect
        (vulpea-utils-with-file (vulpea-db-get-file-by-id id)
          (goto-char (point-max))
-         (vino-note-get))
+         (vino-entry-note-get-dwim))
        :to-equal note)))
 
-  (it "calls `vino-note-select' when called from non org-mode buffer"
+  (it "calls `vino-entry-note-select' when called from non org-mode buffer"
     (let ((note (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
-      (spy-on 'vino-note-select :and-return-value note)
-      (expect (vino-note-get) :to-equal note)))
+      (spy-on 'vino-entry-note-select :and-return-value note)
+      (expect (vino-entry-note-get-dwim) :to-equal note)))
 
-  (it "calls `vino-note-select' when current buffer does not represent wine"
+  (it "calls `vino-entry-note-select' when current buffer does not represent wine"
     (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
            (note (vulpea-db-get-by-id id)))
-      (spy-on 'vino-note-select :and-return-value note)
+      (spy-on 'vino-entry-note-select :and-return-value note)
       (expect
        (vulpea-utils-with-file (vulpea-db-get-file-by-id id)
-         (vino-note-get))
+         (vino-entry-note-get-dwim))
        :to-equal note)))
 
   (it "throws an error when used on id of some heading inside wine entry"
     (let ((id "71715128-3d6f-4e36-8d70-d35fcb057609"))
-      (expect (vino-note-get id)
+      (expect (vino-entry-note-get-dwim id)
               :to-throw
               'user-error
               (list
@@ -145,7 +154,7 @@
 
   (it "throws an error when used on some heading inside wine entry"
     (let ((id "71715128-3d6f-4e36-8d70-d35fcb057609"))
-      (expect (vino-note-get (vulpea-db-get-by-id id))
+      (expect (vino-entry-note-get-dwim (vulpea-db-get-by-id id))
               :to-throw
               'user-error
               (list
@@ -154,7 +163,7 @@
 
   (it "throws an error when used on id of other note"
     (let ((id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-      (expect (vino-note-get id)
+      (expect (vino-entry-note-get-dwim id)
               :to-throw
               'user-error
               (list
@@ -163,14 +172,14 @@
 
   (it "throws an error when used on other note"
     (let ((id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-      (expect (vino-note-get (vulpea-db-get-by-id id))
+      (expect (vino-entry-note-get-dwim (vulpea-db-get-by-id id))
               :to-throw
               'user-error
               (list
                (format "Note %s does not represent a vino entry"
                        (vulpea-db-get-by-id id)))))))
 
-(describe "vino--entry-create"
+(describe "vino-entry--create"
   :var (vino id)
   (before-all
     (vino-test--init))
@@ -179,23 +188,24 @@
     (vino-test--teardown))
 
   (it "creates a new entry with all information"
-    (setq vino (make-vino :carbonation 'still
-                          :colour 'red
-                          :sweetness 'dry
-                          :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
-                          :name "Grotte Alte"
-                          :vintage 2014
-                          :appellation "6a0819f3-0770-4481-9754-754ca397800b"
-                          :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
-                                    "3b38917f-6065-42e8-87ca-33dd39a92fc0")
-                          :alcohol 13
-                          :sugar 0
-                          :acquired 0
-                          :consumed 0
-                          :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
-                                       "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
-                          :price '("50.00 EUR")))
-    (setq id (vino--entry-create vino))
+    (setq vino (make-vino-entry
+                :carbonation 'still
+                :colour 'red
+                :sweetness 'dry
+                :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+                :name "Grotte Alte"
+                :vintage 2014
+                :appellation "6a0819f3-0770-4481-9754-754ca397800b"
+                :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
+                          "3b38917f-6065-42e8-87ca-33dd39a92fc0")
+                :alcohol 13
+                :sugar 0
+                :acquired 0
+                :consumed 0
+                :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
+                             "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
+                :price '("50.00 EUR")))
+    (setq id (vino-entry--create vino))
     (expect (vino-entry-get-by-id id) :to-equal vino)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
@@ -223,6 +233,7 @@
 - available :: 0
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
+- rate :: NA
 
 
 "
@@ -238,20 +249,21 @@
   (it "returns an existing `vino'"
     (expect (vino-entry-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")
             :to-equal
-            (make-vino :carbonation 'still
-                       :colour 'red
-                       :sweetness 'dry
-                       :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
-                       :name "Bombolieri BB"
-                       :vintage 2017
-                       :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
-                       :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
-                       :alcohol 13
-                       :sugar 1
-                       :acquired 2
-                       :consumed 1
-                       :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
-                       :price '("50.00 EUR"))))
+            (make-vino-entry
+             :carbonation 'still
+             :colour 'red
+             :sweetness 'dry
+             :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+             :name "Bombolieri BB"
+             :vintage 2017
+             :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
+             :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+             :alcohol 13
+             :sugar 1
+             :acquired 2
+             :consumed 1
+             :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
+             :price '("50.00 EUR"))))
 
   (it "returns nil for non-wine note id"
     (expect (vino-entry-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
@@ -350,7 +362,7 @@
              :level 0
              :id "6a0819f3-0770-4481-9754-754ca397800b"))))
 
-(describe "vino-consume"
+(describe "vino-entry-consume"
   :var (id vino initial-in initial-out extra-out)
   (before-all
     (vino-test--init))
@@ -367,11 +379,11 @@
                                      (setq  extra-out amount))
           vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out))))
     (spy-on 'y-or-n-p :and-return-value nil)
-    (vino-consume id 3 "consume" (current-time))
+    (vino-entry-consume id 3 "consume" (current-time))
     (setq vino (vino-entry-get-by-id id))
     (expect 'y-or-n-p :to-have-been-called-times 1)
-    (expect (vino-acquired vino) :to-equal 5)
-    (expect (vino-consumed vino) :to-equal 5)
+    (expect (vino-entry-acquired vino) :to-equal 5)
+    (expect (vino-entry-consumed vino) :to-equal 5)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -425,7 +437,7 @@ pretium eros dui eu eros. Vestibulum at turpis lacus. Donec tempor nec ipsum sed
 dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 "
              id))))
-(describe "vino-acquire"
+(describe "vino-entry-acquire"
   :var (id vino initial-in extra-in)
   (before-all
     (vino-test--init))
@@ -440,10 +452,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
           vino-availability-add-fn (lambda (_id amount _source _date)
                                      (setq  extra-in amount))
           vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2)))
-    (vino-acquire id 3 "some source" "50.00 EUR" (current-time))
+    (vino-entry-acquire id 3 "some source" "50.00 EUR" (current-time))
     (setq vino (vino-entry-get-by-id id))
-    (expect (vino-acquired vino) :to-equal 5)
-    (expect (vino-consumed vino) :to-equal 2)
+    (expect (vino-entry-acquired vino) :to-equal 5)
+    (expect (vino-entry-consumed vino) :to-equal 2)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -498,7 +510,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 "
              id))))
 
-(describe "vino-availability-update"
+(describe "vino-entry-update-availability"
   :var (id vino)
   (before-all
     (vino-test--init))
@@ -509,10 +521,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   (it "updates availability based on vino-availability-fn result"
     (setq vino-availability-fn (lambda (_) (cons 10 8))
           id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-    (vino-availability-update id)
+    (vino-entry-update-availability id)
     (setq vino (vino-entry-get-by-id id))
-    (expect (vino-acquired vino) :to-equal 10)
-    (expect (vino-consumed vino) :to-equal 8)
+    (expect (vino-entry-acquired vino) :to-equal 10)
+    (expect (vino-entry-consumed vino) :to-equal 8)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
