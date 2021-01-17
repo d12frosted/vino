@@ -262,9 +262,11 @@ DATE arguments.")
      (expand-file-name (concat "wine/cellar/" id ".org")
                        org-roam-directory))
     ;; TODO: optimize multiple calls
-    (vulpea-meta-set id "carbonation" (vino-entry-carbonation vino) 'append)
+    (vulpea-meta-set
+     id "carbonation" (vino-entry-carbonation vino) 'append)
     (vulpea-meta-set id "colour" (vino-entry-colour vino) 'append)
-    (vulpea-meta-set id "sweetness" (vino-entry-sweetness vino) 'append)
+    (vulpea-meta-set
+     id "sweetness" (vino-entry-sweetness vino) 'append)
     (vulpea-meta-set id "producer" (vino-entry-producer vino) 'append)
     (vulpea-meta-set id "name" (vino-entry-name vino) 'append)
     (when-let ((vintage (vino-entry-vintage vino)))
@@ -288,8 +290,10 @@ DATE arguments.")
       (vulpea-meta-set id "acquired" acquired 'append)
       (vulpea-meta-set id "consumed" consumed 'append)
       (vulpea-meta-set id "available" (- acquired consumed) 'append))
-    (vulpea-meta-set id "resources" (vino-entry-resources vino) 'append)
-    (vulpea-meta-set id "rating" (or (vino-entry-rating vino) "NA") 'append)
+    (vulpea-meta-set
+     id "resources" (vino-entry-resources vino) 'append)
+    (vulpea-meta-set
+     id "rating" (or (vino-entry-rating vino) "NA") 'append)
     (vulpea-meta-set id "ratings" (vino-entry-ratings vino) 'append)
     id))
 
