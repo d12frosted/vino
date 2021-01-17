@@ -399,14 +399,44 @@ ID is generated unless passed."
   (interactive)
   (when-let* ((note (vino-entry-note-get-dwim id))
               (date (or date (org-read-date nil t)))
-              (info (car (last vino-rating-props))))
-    (vino-entry--rate
-     (vulpea-note-id note)
-     date
-     (car info)
-     (cdr info))))
+              (info (car (last vino-rating-props)))
+              (version (car info))
+              (props (cdr info))
+              (values (vino-entry-rate--read props)))
+    (vino-entry-rate--create
+     (vulpea-note-id note) date version values)))
 
-(defun vino-entry--rate (id date version props)
+(defun vino-entry-rate--read (props)
+  "Read rating values from PROPS."
+  (seq-map
+   (lambda (cfg)
+     (cond
+      ((functionp (cdr cfg))
+       (let ((res (funcall (cdr cfg))))
+         (list (car cfg)
+               (car res)
+               (cdr res))))
+
+      ((numberp (cdr cfg))
+       (list (car cfg)
+             (read-number
+              (format "%s: (0 to %i): "
+                      (vino--format-prop (car cfg))
+                      (cdr cfg)))
+             (cdr cfg)))
+
+      ((listp (cdr cfg))
+       (let* ((ans (completing-read
+                    (concat (vino--format-prop (car cfg))
+                            ": ")
+                    (seq-map #'car (cdr cfg))))
+              (res (assoc ans (cdr cfg))))
+         (list (car cfg)
+               (cdr res)
+               (- (length (cdr cfg)) 1))))))
+   props))
+
+(defun vino-entry-rate--create (id date version values)
   "Rate a `vino-entry' with ID.
 
 The process is simple:
@@ -414,45 +444,19 @@ The process is simple:
 1. Create a new rating note.
 2. Set wine ID meta.
 3. Set DATE meta.
-4. set VERSION meta.
-5. Query rating marks based on PROPS."
+4. Set VERSION meta.
+5. Set VALUES"
   (when-let*
       ((vino (vino-entry-get-by-id id))
        (producer (vulpea-db-get-by-id (vino-entry-producer vino)))
-       (date-str (format-time-string "%Y-%m-%d" date))
+       (date-str (if (stringp date)
+                     date
+                   (format-time-string "%Y-%m-%d" date)))
        (title (format "%s %s %s - %s"
                       (vulpea-note-title producer)
                       (vino-entry-name vino)
                       (or (vino-entry-vintage vino) "NV")
                       date-str))
-       (values
-        (seq-map
-         (lambda (cfg)
-           (cond
-            ((functionp (cdr cfg))
-             (let ((res (funcall (cdr cfg))))
-               (list (car cfg)
-                     (car res)
-                     (cdr res))))
-
-            ((numberp (cdr cfg))
-             (list (car cfg)
-                   (read-number
-                    (format "%s: (0 to %i): "
-                            (vino--format-prop (car cfg))
-                            (cdr cfg)))
-                   (cdr cfg)))
-
-            ((listp (cdr cfg))
-             (let* ((ans (completing-read
-                          (concat (vino--format-prop (car cfg))
-                                  ": ")
-                          (seq-map #'car (cdr cfg))))
-                    (res (assoc ans (cdr cfg))))
-               (list (car cfg)
-                     (cdr res)
-                     (- (length (cdr cfg)) 1))))))
-         props))
        (rid (vulpea-create title vino-rating-template)))
     ;; TODO extract this to vulpea
     (org-roam-db-update-file
