@@ -311,7 +311,7 @@ DATE arguments.")
                  (/ (apply #'+ values)
                     (float (length values))))))
     ;; TODO: update title
-    (vulpea-meta-set id "rate" rate 'append)))
+    (vulpea-meta-set id "rating" rate 'append)))
 
 (defun vino-entry-update-availability (id)
   "Update availability metadata of `vino-entry' with ID."
