@@ -233,7 +233,7 @@
 - available :: 0
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
-- rate :: NA
+- rating :: NA
 
 
 "

@@ -231,7 +231,11 @@ DATE arguments.")
        :acquired (vulpea-meta-get id "acquired" 'number)
        :consumed (vulpea-meta-get id "consumed" 'number)
        :resources (vulpea-meta-get-list id "resources" 'link)
-       :price (vulpea-meta-get-list id "price" 'string)))))
+       :price (vulpea-meta-get-list id "price" 'string)
+       :rating (vino--parse-opt-number
+                (vulpea-meta-get "rating" 'string)
+                "NA")
+       :ratings (vulpea-meta-get-list id "ratings" 'link)))))
 
 ;;;###autoload
 (defun vino-entry-create ()
@@ -285,7 +289,8 @@ DATE arguments.")
       (vulpea-meta-set id "consumed" consumed 'append)
       (vulpea-meta-set id "available" (- acquired consumed) 'append))
     (vulpea-meta-set id "resources" (vino-entry-resources vino) 'append)
-    (vulpea-meta-set id "rate" (or (vino-entry-rate vino) "NA") 'append)
+    (vulpea-meta-set id "rating" (or (vino-entry-rating vino) "NA") 'append)
+    (vulpea-meta-set id "ratings" (vino-entry-ratings vino) 'append)
     id))
 
 ;;;###autoload
@@ -633,6 +638,13 @@ structure."
 (defun vino--format-prop (prop)
   "Create a pretty prompt from PROP."
   (capitalize (replace-regexp-in-string "_" " " prop)))
+
+(defun vino--parse-opt-number (str nil-str)
+  "Parse an optional number from STR.
+
+If STR is equal to NIL-STR, then nil is the result."
+  (when (and str (not (string-equal str nil-str)))
+    (string-to-number str)))
 
 (provide 'vino)
 ;;; vino.el ends here
