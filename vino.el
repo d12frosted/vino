@@ -427,25 +427,37 @@ ID is generated unless passed."
 ;;;###autoload
 (defun vino-entry-update (&optional note-or-id)
   "Update `vino-entry' represented by NOTE-OR-ID."
+  (interactive)
+  (let* ((note (vino-entry-note-get-dwim note-or-id)))
+    (vino-entry-update-rating note)
+    (vino-entry-update-availability note)))
+
+;;;###autoload
+(defun vino-entry-update-rating (note-or-id)
+  "Update rating metadata of `vino-entry'.
+
+NOTE-OR-ID represents `vino-entry'."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
          (ratings (vulpea-meta-get-list note "ratings" 'link))
          (values (seq-map (lambda (rid)
+                            (vino-rating-update rid)
                             (vulpea-meta-get rid "total" 'number))
                           ratings))
          (rate (if (null values)
                    0
                  (/ (apply #'+ values)
                     (float (length values))))))
-    ;; TODO: update title
     (vulpea-meta-set note "rating" rate 'append)))
 
 ;;;###autoload
-(defun vino-entry-update-availability (id)
-  "Update availability metadata of `vino-entry' with ID."
+(defun vino-entry-update-availability (note-or-id)
+  "Update available metadata of `vino-entry'.
+
+NOTE-OR-ID represents `vino-entry'."
   (unless vino-availability-fn
     (user-error "`vino-availability-fn' is nil"))
-  (let* ((note (vino-entry-note-get-dwim id))
-         (res (funcall vino-availability-fn id))
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
+         (res (funcall vino-availability-fn (vulpea-note-id note)))
          (in (car res))
          (out (cdr res))
          (cur (- in out)))
