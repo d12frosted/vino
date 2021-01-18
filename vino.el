@@ -101,10 +101,12 @@ DATE arguments.")
   "Rating properties per version.")
 
 ;;;###autoload
-(defun vino-rating-update (id)
-  "Refresh rating represented by ID."
-  (let* ((note (vulpea-db-get-by-id id))
-         (version (vulpea-meta-get id "version" 'number))
+(defun vino-rating-update (note-or-id)
+  "Refresh rating represented by NOTE-OR-ID."
+  (let* ((note (if (stringp note-or-id)
+                   (vulpea-db-get-by-id note-or-id)
+                 note-or-id))
+         (version (vulpea-meta-get note "version" 'number))
          (info (seq-find (lambda (x) (equal (car x) version))
                          vino-rating-props))
          (props (cdr info))
@@ -190,15 +192,11 @@ The process is simple:
      (expand-file-name (concat "wine/rating/" rid ".org")
                        org-roam-directory))
     ;; TODO: performance of multiple `vulpea-meta-set'
-    ;; TODO: performance of rating sorting
     (vulpea-meta-set
      id
      "ratings"
-     (seq-sort-by (lambda (id)
-                    (vulpea-note-title (vulpea-db-get-by-id id)))
-                  #'string<
-                  (cons rid
-                        (vulpea-meta-get-list id "ratings" 'link)))
+     (cons rid
+           (vulpea-meta-get-list id "ratings" 'link))
      'append)
     (vulpea-meta-set rid "wine" id 'append)
     (vulpea-meta-set rid "date" date-str 'append)
@@ -213,7 +211,6 @@ The process is simple:
                                (nth 2 data)
                                'append))
             values)
-    (vino-rating-update rid)
     (vino-entry-update id)
     rid))
 
@@ -438,16 +435,27 @@ ID is generated unless passed."
 
 NOTE-OR-ID represents `vino-entry'."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (ratings (vulpea-meta-get-list note "ratings" 'link))
-         (values (seq-map (lambda (rid)
-                            (vino-rating-update rid)
-                            (vulpea-meta-get rid "total" 'number))
-                          ratings))
-         (rate (if (null values)
-                   0
-                 (/ (apply #'+ values)
-                    (float (length values))))))
-    (vulpea-meta-set note "rating" rate 'append)))
+         ;; TODO use 'note type from vulpea-meta
+         (ratings (seq-map
+                   #'vulpea-db-get-by-id
+                   (vulpea-meta-get-list note "ratings" 'link)))
+         (values (seq-map
+                  (lambda (rn)
+                    (vino-rating-update rn)
+                    (vulpea-meta-get rn "total" 'number))
+                  ratings))
+         (rating (if (null values)
+                     0
+                   (/ (apply #'+ values)
+                      (float (length values))))))
+    (vulpea-meta-set note "rating" rating 'append)
+    (vulpea-meta-set
+     note
+     "ratings"
+     (seq-sort-by #'vulpea-note-title
+                  #'string<
+                  ratings)
+     'append)))
 
 ;;;###autoload
 (defun vino-entry-update-availability (note-or-id)
