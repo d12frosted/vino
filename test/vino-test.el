@@ -363,21 +363,23 @@
              :id "6a0819f3-0770-4481-9754-754ca397800b"))))
 
 (describe "vino-entry-consume"
-  :var (id vino initial-in initial-out extra-out)
+  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+        (initial-in 5)
+        (initial-out 2)
+        (extra-out 0)
+        vino)
   (before-all
-    (vino-test--init))
+    (vino-test--init)
+    (setq vino-availability-sub-fn (lambda (_id amount _source _date)
+                                     (setq  extra-out amount))
+          vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out)))))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test--teardown)
+    (setq vino-availability-sub-fn nil
+          vino-availability-fn nil))
 
   (it "updates availability based on vino-availability-sub-fn result"
-    (setq id "c9937e3e-c83d-4d8d-a612-6110e6706252"
-          initial-in 5
-          initial-out 2
-          extra-out 0
-          vino-availability-sub-fn (lambda (_id amount _source _date)
-                                     (setq  extra-out amount))
-          vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out))))
     (spy-on 'y-or-n-p :and-return-value nil)
     (vino-entry-consume id 3 "consume" (current-time))
     (setq vino (vino-entry-get-by-id id))
@@ -440,20 +442,22 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              id))))
 
 (describe "vino-entry-acquire"
-  :var (id vino initial-in extra-in)
+  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+        (initial-in 2)
+        (extra-in 0)
+        vino)
   (before-all
-    (vino-test--init))
+    (vino-test--init)
+    (setq vino-availability-add-fn (lambda (_id amount _source _date)
+                                     (setq  extra-in amount))
+          vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2))))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test--teardown)
+    (setq vino-availability-add-fn nil
+          vino-availability-fn nil))
 
   (it "updates availability based on vino-availability-add-fn result"
-    (setq id "c9937e3e-c83d-4d8d-a612-6110e6706252"
-          initial-in 2
-          extra-in 0
-          vino-availability-add-fn (lambda (_id amount _source _date)
-                                     (setq  extra-in amount))
-          vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2)))
     (vino-entry-acquire id 3 "some source" "50.00 EUR" (current-time))
     (setq vino (vino-entry-get-by-id id))
     (expect (vino-entry-acquired vino) :to-equal 5)
@@ -514,16 +518,17 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              id))))
 
 (describe "vino-entry-update-availability"
-  :var (id vino)
+  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+        vino)
   (before-all
-    (vino-test--init))
+    (vino-test--init)
+    (setq vino-availability-fn (lambda (_) (cons 10 8))))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test--teardown)
+    (setq vino-availability-fn nil))
 
   (it "updates availability based on vino-availability-fn result"
-    (setq vino-availability-fn (lambda (_) (cons 10 8))
-          id "c9937e3e-c83d-4d8d-a612-6110e6706252")
     (vino-entry-update-availability id)
     (setq vino (vino-entry-get-by-id id))
     (expect (vino-entry-acquired vino) :to-equal 10)
@@ -586,14 +591,18 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 (describe "vino-entry-update"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
   (before-all
-    (vino-test--init))
+    (vino-test--init)
+    (setq vino-rating-props '((1 . (("score" 20))))
+          vino-availability-fn (lambda (_) (cons 5 2))))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test--teardown)
+    (setq vino-rating-props nil
+          vino-availability-fn nil))
 
   (it "should update rating to average of ratings"
-    (vulpea-meta-set id "ratings" '("be7777a9-7993-44cf-be9e-0ae65297a35d"
-                                    "f1ecb856-c009-4a65-a8d0-8191a9de66dd"))
+    (vulpea-meta-set id "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
+                                    "be7777a9-7993-44cf-be9e-0ae65297a35d"))
     (vino-entry-update id)
     (expect (vino-entry-get-by-id id)
             :to-equal
@@ -608,8 +617,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
              :alcohol 13
              :sugar 1
-             :acquired 2
-             :consumed 1
+             :acquired 5
+             :consumed 2
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
@@ -622,18 +631,21 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
          (date-str (format-time-string "%Y-%m-%d" date))
          rid)
   (before-all
-    (vino-test--init))
-
-  (after-all
-    (vino-test--teardown))
-
-  (it "should create rating note and update vino note"
+    (vino-test--init)
     (setq vino-rating-props '((4 . (("property_1" 3)
                                     ("property_2" 4)
                                     ("property_3" 2)
                                     ("property_4" 5)
                                     ("property_5" 6))))
-          rid (vino-rating--create
+          vino-availability-fn (lambda (_) (cons 5 2))))
+
+  (after-all
+    (vino-test--teardown)
+    (setq vino-rating-props nil
+          vino-availability-fn nil))
+
+  (it "should create rating note and update vino note"
+    (setq rid (vino-rating--create
                id date 4
                '(("property_1" 3 3)
                  ("property_2" 3 4)
@@ -653,8 +665,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
              :alcohol 13
              :sugar 1
-             :acquired 2
-             :consumed 1
+             :acquired 5
+             :consumed 2
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
@@ -678,9 +690,9 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - alcohol :: 13
 - sugar :: 1
 - price :: 50.00 EUR
-- acquired :: 2
-- consumed :: 1
-- available :: 1
+- acquired :: 5
+- consumed :: 2
+- available :: 3
 - resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: 8.0
 - ratings :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017 - %s]]
