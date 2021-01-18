@@ -616,7 +616,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :ratings '("be7777a9-7993-44cf-be9e-0ae65297a35d"
                         "f1ecb856-c009-4a65-a8d0-8191a9de66dd")))))
 
-(describe "vino-entry-rate--create"
+(describe "vino-rating--create"
   :var* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
          (date (current-time))
          (date-str (format-time-string "%Y-%m-%d" date))
@@ -633,7 +633,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                                     ("property_3" 2)
                                     ("property_4" 5)
                                     ("property_5" 6))))
-          rid (vino-entry-rate--create
+          rid (vino-rating--create
                id date 4
                '(("property_1" 3 3)
                  ("property_2" 3 4)
