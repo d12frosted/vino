@@ -106,17 +106,17 @@ DATE arguments.")
   (let* ((note (if (stringp note-or-id)
                    (vulpea-db-get-by-id note-or-id)
                  note-or-id))
-         (version (vulpea-meta-get note "version" 'number))
+         (meta (vulpea-meta note))
+         (version (vulpea-meta-get! meta "version" 'number))
          (info (seq-find (lambda (x) (equal (car x) version))
                          vino-rating-props))
          (props (cdr info))
-         ;; TODO: performance
          (score
           (seq-reduce
            #'+
            (seq-map
             (lambda (x)
-              (vulpea-meta-get note (downcase x) 'number))
+              (vulpea-meta-get! meta (downcase x) 'number))
             (seq-map #'car props))
            0))
          (score-max
@@ -124,8 +124,8 @@ DATE arguments.")
            #'+
            (seq-map
             (lambda (x)
-              (vulpea-meta-get
-               note
+              (vulpea-meta-get!
+               meta
                (downcase (concat x "_MAX"))
                'number))
             (seq-map #'car props))
@@ -329,27 +329,27 @@ The process is simple:
   "Get `vino-entry' by ID."
   (let ((note (vulpea-db-get-by-id id)))
     (when (and note (vino-entry-note-p note))
-      ;; TODO: optimise multiple calls
-      (make-vino-entry
-       :carbonation (vulpea-meta-get note "carbonation" 'symbol)
-       :colour (vulpea-meta-get note "colour" 'symbol)
-       :sweetness (vulpea-meta-get note "sweetness" 'symbol)
-       :producer (vulpea-meta-get note "producer" 'link)
-       :name (vulpea-meta-get note "name" 'string)
-       :vintage (vulpea-meta-get note "vintage" 'number)
-       :appellation (vulpea-meta-get note "appellation" 'link)
-       :region (vulpea-meta-get note "region" 'link)
-       :grapes (vulpea-meta-get-list note "grapes" 'link)
-       :alcohol (vulpea-meta-get note "alcohol" 'number)
-       :sugar (vulpea-meta-get note "sugar" 'number)
-       :acquired (vulpea-meta-get note "acquired" 'number)
-       :consumed (vulpea-meta-get note "consumed" 'number)
-       :resources (vulpea-meta-get-list note "resources" 'link)
-       :price (vulpea-meta-get-list note "price" 'string)
-       :rating (vino--parse-opt-number
-                (vulpea-meta-get note "rating" 'string)
-                "NA")
-       :ratings (vulpea-meta-get-list note "ratings" 'link)))))
+      (let ((meta (vulpea-meta note)))
+        (make-vino-entry
+         :carbonation (vulpea-meta-get! meta "carbonation" 'symbol)
+         :colour (vulpea-meta-get! meta "colour" 'symbol)
+         :sweetness (vulpea-meta-get! meta "sweetness" 'symbol)
+         :producer (vulpea-meta-get! meta "producer" 'link)
+         :name (vulpea-meta-get! meta "name" 'string)
+         :vintage (vulpea-meta-get! meta "vintage" 'number)
+         :appellation (vulpea-meta-get! meta "appellation" 'link)
+         :region (vulpea-meta-get! meta "region" 'link)
+         :grapes (vulpea-meta-get-list! meta "grapes" 'link)
+         :alcohol (vulpea-meta-get! meta "alcohol" 'number)
+         :sugar (vulpea-meta-get! meta "sugar" 'number)
+         :acquired (vulpea-meta-get! meta "acquired" 'number)
+         :consumed (vulpea-meta-get! meta "consumed" 'number)
+         :resources (vulpea-meta-get-list! meta "resources" 'link)
+         :price (vulpea-meta-get-list! meta "price" 'string)
+         :rating (vino--parse-opt-number
+                  (vulpea-meta-get! meta "rating" 'string)
+                  "NA")
+         :ratings (vulpea-meta-get-list! meta "ratings" 'link))))))
 
 ;;;###autoload
 (defun vino-entry-create ()
@@ -435,14 +435,15 @@ ID is generated unless passed."
   (interactive)
   ;; TODO: vulpea-meta performance
   (let* ((note (vino-entry-note-get-dwim note-or-id))
+         (meta (vulpea-meta note))
          (title (format
                  "%s %s %s"
                  ;; TODO use 'note type from vulpea-meta
                  (vulpea-note-title
                   (vulpea-db-get-by-id
-                   (vulpea-meta-get note "producer" 'link)))
-                 (vulpea-meta-get note "name")
-                 (or (vulpea-meta-get note "vintage" 'number)
+                   (vulpea-meta-get! meta "producer" 'link)))
+                 (vulpea-meta-get! meta "name")
+                 (or (vulpea-meta-get! meta "vintage" 'number)
                      "NV"))))
     (vulpea-utils-with-file (vulpea-note-path note)
       (org-roam--set-global-prop "TITLE" title)
