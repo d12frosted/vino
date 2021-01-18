@@ -430,6 +430,51 @@ ID is generated unless passed."
     (vino-entry-update-availability note)))
 
 ;;;###autoload
+(defun vino-entry-update-title (&optional note-or-id)
+  "Update title of `vino-entry' represented by NOTE-OR-ID."
+  (interactive)
+  ;; TODO: vulpea-meta performance
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
+         (title (format
+                 "%s %s %s"
+                 ;; TODO use 'note type from vulpea-meta
+                 (vulpea-note-title
+                  (vulpea-db-get-by-id
+                   (vulpea-meta-get note "producer" 'link)))
+                 (vulpea-meta-get note "name")
+                 (or (vulpea-meta-get note "vintage" 'number)
+                     "NV"))))
+    (vulpea-utils-with-file (vulpea-note-path note)
+      (org-roam--set-global-prop "TITLE" title)
+      (save-buffer))
+    (org-roam-db-update-file
+     (expand-file-name
+      (concat "wine/cellar/" (vulpea-note-id note) ".org")
+      org-roam-directory))
+    (setq note (vulpea-db-get-by-id (vulpea-note-id note)))
+    (vulpea-meta-set
+     note
+     "ratings"
+     (seq-map
+      (lambda (rn)
+        (vulpea-utils-with-file (vulpea-note-path rn)
+          (org-roam--set-global-prop
+           "TITLE"
+           (format "%s - %s"
+                   title
+                   (vulpea-meta-get rn "date")))
+          (save-buffer))
+        (org-roam-db-update-file
+         (expand-file-name
+          (concat "wine/rating/" (vulpea-note-id rn) ".org")
+          org-roam-directory))
+        (vulpea-meta-set rn "wine" note)
+        (vulpea-db-get-by-id (vulpea-note-id rn)))
+      (seq-map
+       #'vulpea-db-get-by-id
+       (vulpea-meta-get-list note "ratings" 'link))))))
+
+;;;###autoload
 (defun vino-entry-update-rating (note-or-id)
   "Update rating metadata of `vino-entry'.
 
