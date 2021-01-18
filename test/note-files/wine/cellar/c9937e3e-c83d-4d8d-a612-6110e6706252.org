@@ -18,6 +18,7 @@
 - consumed :: 1
 - available :: 1
 - resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
+- rating :: NA
 
 #+begin_quote
 Il Frappato stems from a dream which I had when I was a girl to make a wine that

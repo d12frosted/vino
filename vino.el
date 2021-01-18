@@ -311,7 +311,6 @@ ID is generated unless passed."
 (defun vino-entry-update (&optional note-or-id)
   "Update `vino-entry' represented by NOTE-OR-ID."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (id (vulpea-note-id note))
          (ratings (vulpea-meta-get-list note "ratings" 'link))
          (values (seq-map (lambda (rid)
                             (vulpea-meta-get rid "total" 'number))
