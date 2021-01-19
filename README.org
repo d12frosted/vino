@@ -290,6 +290,8 @@ Optional variables (with their default values):
 - =vino-entry-rate= - rate a visiting (or selected) =vino-entry=. Reads a date,
   props defined by =vino-rating-props=, creates a new rating note according to
   =vino-rating-template= and creates a link between wine and rating.
+- =vino-grape-create= - create a new =grape= note according to
+  =vino-grape-template=.
 
 ** Notes structure
 :PROPERTIES:

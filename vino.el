@@ -761,11 +761,24 @@ Variables in the capture context are provided by
 `vulpea-create'.")
 
 ;;;###autoload
+(defun vino-grape-create (&optional title)
+  "Create a grape note using `vino-grape-template'.
+
+Unless TITLE is specified, user is prompted to provide one.
+
+Return `vulpea-note'."
+  (interactive)
+  (let* ((title (or title (read-string "Grape: ")))
+         (id (vulpea-create title vino-grape-template)))
+    ;; TODO: optimize by moving cache refresh to vulpea
+    (org-roam-db-build-cache)
+    (vulpea-db-get-by-id id)))
+
+;;;###autoload
 (defun vino-grape-select ()
   "Select a grape note.
 
-See `vulpea' documentation for more information on note
-structure."
+Return `vulpea-note'."
   (let ((result
          (vulpea-select
           "Grape"
@@ -776,10 +789,7 @@ structure."
                    (seq-contains-p tags "grape")))))))
     (if (vulpea-note-id result)
         result
-      (let* ((title (vulpea-note-title result))
-             (id (vulpea-create title vino-grape-template)))
-        (org-roam-db-build-cache)
-        (vulpea-db-get-by-id id)))))
+      (vino-grape-create (vulpea-note-title result)))))
 
 
 ;;; Producers

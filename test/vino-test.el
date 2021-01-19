@@ -273,6 +273,32 @@
     (expect (vino-entry-get-by-id (org-id-new))
             :to-equal nil)))
 
+(describe "vino-grape-create"
+  :var (id ts)
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "creates a new grape note"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (spy-on 'read-string :and-return-value "")
+    (expect (vino-grape-create "Slarina")
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/grape/%s-slarina.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Slarina"
+             :tags '("wine" "grape")
+             :level 0
+             :id id))))
+
 (describe "vino-grape-select"
   :var (id ts)
   (before-all
