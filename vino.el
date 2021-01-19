@@ -95,10 +95,51 @@ DATE arguments.")
             "#+TIME-STAMP: <>\n\n")
     :unnarrowed t
     :immediate-finish t)
-  "Capture template for rating entry.")
+  "Capture template for rating entry.
+
+Variables in the capture context are provided by
+`vulpea-create'.")
 
 (defvar vino-rating-props nil
-  "Rating properties per version.")
+  "Rating properties per version.
+
+`vino-entry-rate' uses the latest element from list to read the
+rating. Each rating contains the rating system version, so when
+the rating is updated/refreshed `vino' knows what properties to
+use and how to use them.
+
+This variable is a list of all rating systems, stating with the
+first version up to the current one. This variable has the
+following format:
+
+  '((1 . PROPS)
+    (2 . PROPS)
+    (3 . PROPS)
+    ...)
+
+And PROPS defines a specific version of rating system:
+
+  ((\"PROP_1\" . PROP)
+   (\"PROP_2\" . PROP)
+   (\"PROP_3\" . PROP)
+   ...)
+
+Each PROP can be of one of the following types:
+
+- NUMBER - then the property value is a number inclusively
+  between 0 and PROP, user is prompted for a number using
+  `read-number' during `vino-entry-rate';
+
+- LIST - then the property value is a number inclusively between
+  0 and the `length' of PROP, user is prompted to select one
+  element from the list `car's using `completing-read' during
+  `vino-entry-rate' and the `cdr' of selected element is used as
+  value;
+
+- FUNCTION - then the property value is a number between 0 and
+  `cdr' of PROP result, function is called with without arguments
+  during `vino-entry-rate' and `car' of the result is used as
+  value.")
 
 ;;;###autoload
 (defun vino-rating-update (note-or-id)
@@ -231,7 +272,10 @@ The process is simple:
             "#+TIME-STAMP: <>\n\n")
     :unnarrowed t
     :immediate-finish t)
-  "Capture template for wine entry.")
+  "Capture template for wine entry.
+
+Variables in the capture context are provided by
+`vulpea-create'.")
 
 ;;;###autoload
 (cl-defstruct vino-entry
@@ -423,7 +467,18 @@ ID is generated unless passed."
 
 ;;;###autoload
 (defun vino-entry-update (&optional note-or-id)
-  "Update `vino-entry' represented by NOTE-OR-ID."
+  "Update `vino-entry'.
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly.
+
+The following things are updated:
+
+- total score of each linked ratings;
+- rating of the `vino-entry';
+- availability of `vino-entry'."
   (interactive)
   (let* ((note (vino-entry-note-get-dwim note-or-id)))
     (vino-entry-update-rating note)
@@ -431,7 +486,18 @@ ID is generated unless passed."
 
 ;;;###autoload
 (defun vino-entry-update-title (&optional note-or-id)
-  "Update title of `vino-entry' represented by NOTE-OR-ID."
+  "Update title of `vino-entry'..
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly.
+
+The following things are updated:
+
+- link description of producer;
+- title of the `vino-entry';
+- title of every linked rating."
   (interactive)
   ;; TODO: vulpea-meta performance
   (let* ((note (vino-entry-note-get-dwim note-or-id))
@@ -479,7 +545,13 @@ ID is generated unless passed."
 (defun vino-entry-update-rating (note-or-id)
   "Update rating metadata of `vino-entry'.
 
-NOTE-OR-ID represents `vino-entry'."
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly.
+
+- total score of each linked ratings;
+- rating of the `vino-entry'."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
          ;; TODO use 'note type from vulpea-meta
          (ratings (seq-map
@@ -507,7 +579,10 @@ NOTE-OR-ID represents `vino-entry'."
 (defun vino-entry-update-availability (note-or-id)
   "Update available metadata of `vino-entry'.
 
-NOTE-OR-ID represents `vino-entry'."
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly."
   (unless vino-availability-fn
     (user-error "`vino-availability-fn' is nil"))
   (let* ((note (vino-entry-note-get-dwim note-or-id))
@@ -519,10 +594,16 @@ NOTE-OR-ID represents `vino-entry'."
     (vulpea-meta-set note "consumed" out 'append)
     (vulpea-meta-set note "available" cur 'append)))
 
-(defun vino-entry-acquire (&optional id amount source price date)
-  "Acquire AMOUNT of vine with ID from SOURCE for PRICE at DATE."
+(defun vino-entry-acquire (&optional note-or-id
+                                     amount source price date)
+  "Acquire AMOUNT of `vino-entry' from SOURCE for PRICE at DATE.
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly."
   (interactive)
-  (let* ((note (vino-entry-note-get-dwim id))
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
          (id (vulpea-note-id note))
          (vino (vino-entry-get-by-id id))
          (source (or source (read-string "Source: ")))
@@ -536,10 +617,15 @@ NOTE-OR-ID represents `vino-entry'."
         (vulpea-meta-set note "price" (cons price prices))))
     (vino-entry-update-availability id)))
 
-(defun vino-entry-consume (&optional id amount action date)
-  "Consume AMOUNT of ID because of ACTION at DATE."
+(defun vino-entry-consume (&optional note-or-id amount action date)
+  "Consume AMOUNT of `vino-entry' because of ACTION at DATE.
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly."
   (interactive)
-  (let* ((note (vino-entry-note-get-dwim id))
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
          (id (vulpea-note-id note))
          (action (or action (read-string "Action: " "consume")))
          (amount (or amount
@@ -555,10 +641,15 @@ NOTE-OR-ID represents `vino-entry'."
                (y-or-n-p "Rate? "))
       (vino-entry-rate id date))))
 
-(defun vino-entry-rate (&optional id date)
-  "Rate a `vino-entry' with ID on DATE."
+(defun vino-entry-rate (&optional note-or-id date)
+  "Rate a `vino-entry' on DATE.
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly."
   (interactive)
-  (when-let* ((note (vino-entry-note-get-dwim id))
+  (when-let* ((note (vino-entry-note-get-dwim note-or-id))
               (date (or date (org-read-date nil t)))
               (info (car (last vino-rating-props)))
               (version (car info))
@@ -664,7 +755,10 @@ structure."
             "#+TIME-STAMP: <>\n\n")
     :unnarrowed t
     :immediate-finish t)
-  "Capture template for grape entry.")
+  "Capture template for grape entry.
+
+Variables in the capture context are provided by
+`vulpea-create'.")
 
 ;;;###autoload
 (defun vino-grape-select ()
