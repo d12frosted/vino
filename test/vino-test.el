@@ -382,6 +382,56 @@
              :level 0
              :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
 
+(describe "vino-region-create"
+  :var (id ts)
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "creates a new region note"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (expect (vino-region-create "Codru")
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/region/%s-codru.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Codru"
+             :tags '("wine" "region")
+             :level 0
+             :id id))))
+
+(describe "vino-appellation-create"
+  :var (id ts)
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "creates a new appellation note"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (expect (vino-appellation-create "Gattinara DOCG")
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/appellation/%s-gattinara_docg.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Gattinara DOCG"
+             :tags '("wine" "appellation")
+             :level 0
+             :id id))))
+
 (describe "vino-region-select"
   (before-all
     (vino-test--init))

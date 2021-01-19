@@ -164,9 +164,15 @@ Optionally you can configure the following variables:
   =vulpea-create=, which enriches context with variables like =id=, =title= and
   =slug=. Useful when selecting a grape for wine entry that does not exist or
   when calling =vulpea-grape-create=
-- =vino-producer-template= - =org-capture= template for new grape note. Passed
+- =vino-producer-template= - =org-capture= template for new producer note. Passed
   to =vulpea-create=, which enriches context with variables like =id=, =title=
   and =slug=. Used by =vulpea-producer-create=.
+- =vino-region-template= - =org-capture= template for new region note. Passed to
+  =vulpea-create=, which enriches context with variables like =id=, =title= and
+  =slug=. Used by =vulpea-region-create=.
+- =vino-appellation-template= - =org-capture= template for new appellation note.
+  Passed to =vulpea-create=, which enriches context with variables like =id=,
+  =title= and =slug=. Used by =vulpea-appellation-create=.
 
 **** Example configuration
 :PROPERTIES:

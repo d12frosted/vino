@@ -724,6 +724,72 @@ or ask for user to select a note."
 ;;; Regions and appellations
 
 ;;;###autoload
+(defvar vino-region-template
+  `("d" "default" plain
+    #'org-roam-capture--get-point
+    "%?"
+    :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}"
+    :head ,(concat
+            ":PROPERTIES:\n"
+            ":ID:                     ${id}\n"
+            ":END:\n"
+            "#+TITLE: ${title}\n"
+            "#+TIME-STAMP: <>\n\n")
+    :unnarrowed t
+    :immediate-finish t)
+  "Capture template for region entry.
+
+Variables in the capture context are provided by
+`vulpea-create'.")
+
+;;;###autoload
+(defvar vino-appellation-template
+  `("d" "default" plain
+    #'org-roam-capture--get-point
+    "%?"
+    :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}"
+    :head ,(concat
+            ":PROPERTIES:\n"
+            ":ID:                     ${id}\n"
+            ":END:\n"
+            "#+TITLE: ${title}\n"
+            "#+TIME-STAMP: <>\n\n")
+    :unnarrowed t
+    :immediate-finish t)
+  "Capture template for appellation entry.
+
+Variables in the capture context are provided by
+`vulpea-create'.")
+
+;;;###autoload
+(defun vino-region-create (&optional title)
+  "Create a region note using `vino-region-template'.
+
+Unless TITLE is specified, user is prompted to provide one.
+
+Return `vulpea-note'."
+  (interactive)
+  (let* ((title (or title (read-string "Region: ")))
+         (id (vulpea-create title vino-region-template)))
+    ;; TODO: optimize by moving cache refresh to vulpea
+    (org-roam-db-build-cache)
+    (vulpea-db-get-by-id id)))
+
+;;;###autoload
+(defun vino-appellation-create (&optional title)
+  "Create a appellation note using `vino-appellation-template'.
+
+Unless TITLE is specified, user is prompted to provide one.
+
+Return `vulpea-note'."
+  (interactive)
+  (let* ((title (or title (read-string "Appellation: ")))
+         (id (vulpea-create title vino-appellation-template)))
+    ;; TODO: optimize by moving cache refresh to vulpea
+    (org-roam-db-build-cache)
+    (vulpea-db-get-by-id id)))
+
+;;;###autoload
 (defun vino-region-select ()
   "Select a wine region or appellation note.
 
@@ -808,14 +874,14 @@ Return `vulpea-note'."
             "#+TIME-STAMP: <>\n\n")
     :unnarrowed t
     :immediate-finish t)
-  "Capture template for grape entry.
+  "Capture template for producer entry.
 
 Variables in the capture context are provided by
 `vulpea-create'.")
 
 ;;;###autoload
 (defun vino-producer-create (&optional title)
-  "Create a producer note using `vino-grape-template'.
+  "Create a producer note using `vino-producer-template'.
 
 Unless TITLE is specified, user is prompted to provide one.
 
