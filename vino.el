@@ -795,6 +795,39 @@ Return `vulpea-note'."
 ;;; Producers
 
 ;;;###autoload
+(defvar vino-producer-template
+  `("d" "default" plain
+    #'org-roam-capture--get-point
+    "%?"
+    :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}"
+    :head ,(concat
+            ":PROPERTIES:\n"
+            ":ID:                     ${id}\n"
+            ":END:\n"
+            "#+TITLE: ${title}\n"
+            "#+TIME-STAMP: <>\n\n")
+    :unnarrowed t
+    :immediate-finish t)
+  "Capture template for grape entry.
+
+Variables in the capture context are provided by
+`vulpea-create'.")
+
+;;;###autoload
+(defun vino-producer-create (&optional title)
+  "Create a producer note using `vino-grape-template'.
+
+Unless TITLE is specified, user is prompted to provide one.
+
+Return `vulpea-note'."
+  (interactive)
+  (let* ((title (or title (read-string "Producer: ")))
+         (id (vulpea-create title vino-producer-template)))
+    ;; TODO: optimize by moving cache refresh to vulpea
+    (org-roam-db-build-cache)
+    (vulpea-db-get-by-id id)))
+
+;;;###autoload
 (defun vino-producer-select ()
   "Select a producer note.
 

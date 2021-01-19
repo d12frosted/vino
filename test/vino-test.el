@@ -338,6 +338,31 @@
              :level 0
              :id id))))
 
+(describe "vino-producer-create"
+  :var (id ts)
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "creates a new producer note"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (expect (vino-producer-create "Vino di Anna")
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/producer/%s-vino_di_anna.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Vino di Anna"
+             :tags '("wine" "producer")
+             :level 0
+             :id id))))
+
 (describe "vino-producer-select"
   (before-all
     (vino-test--init))
