@@ -95,7 +95,7 @@ DATE arguments.")
             "#+TIME-STAMP: <>\n\n")
     :unnarrowed t
     :immediate-finish t)
-  "Capture template for grape entry.")
+  "Capture template for rating entry.")
 
 (defvar vino-rating-props nil
   "Rating properties per version.")
@@ -231,7 +231,7 @@ The process is simple:
             "#+TIME-STAMP: <>\n\n")
     :unnarrowed t
     :immediate-finish t)
-  "Capture template for grape entry.")
+  "Capture template for wine entry.")
 
 ;;;###autoload
 (cl-defstruct vino-entry
@@ -353,7 +353,7 @@ The process is simple:
 
 ;;;###autoload
 (defun vino-entry-create ()
-  "Create a `vino` entry."
+  "Create a `vino-entry'."
   (interactive)
   (vino-entry--create (vino-entry-read)))
 
