@@ -228,10 +228,6 @@ The process is simple:
                       (or (vino-entry-vintage vino) "NV")
                       date-str))
        (rid (vulpea-create title vino-rating-template)))
-    ;; TODO extract this to vulpea
-    (org-roam-db-update-file
-     (expand-file-name (concat "wine/rating/" rid ".org")
-                       org-roam-directory))
     ;; TODO: performance of multiple `vulpea-meta-set'
     (vulpea-meta-set
      id
@@ -418,9 +414,6 @@ ID is generated unless passed."
                             (number-to-string vintage)
                           vintage)))
          (id (vulpea-create title vino-entry-template id)))
-    (org-roam-db-update-file
-     (expand-file-name (concat "wine/cellar/" id ".org")
-                       org-roam-directory))
     ;; TODO: optimize multiple calls
     (let ((note (vino-entry-note-get-dwim id)))
       (vulpea-meta-set
@@ -810,8 +803,6 @@ Return `vulpea-note'."
   (interactive)
   (let* ((title (or title (read-string "Region: ")))
          (id (vulpea-create title vino-region-template)))
-    ;; TODO: optimize by moving cache refresh to vulpea
-    (org-roam-db-build-cache)
     (vulpea-db-get-by-id id)))
 
 ;;;###autoload
@@ -824,8 +815,6 @@ Return `vulpea-note'."
   (interactive)
   (let* ((title (or title (read-string "Appellation: ")))
          (id (vulpea-create title vino-appellation-template)))
-    ;; TODO: optimize by moving cache refresh to vulpea
-    (org-roam-db-build-cache)
     (vulpea-db-get-by-id id)))
 
 ;;;###autoload
@@ -875,8 +864,6 @@ Return `vulpea-note'."
   (interactive)
   (let* ((title (or title (read-string "Grape: ")))
          (id (vulpea-create title vino-grape-template)))
-    ;; TODO: optimize by moving cache refresh to vulpea
-    (org-roam-db-build-cache)
     (vulpea-db-get-by-id id)))
 
 ;;;###autoload
@@ -928,8 +915,6 @@ Return `vulpea-note'."
   (interactive)
   (let* ((title (or title (read-string "Producer: ")))
          (id (vulpea-create title vino-producer-template)))
-    ;; TODO: optimize by moving cache refresh to vulpea
-    (org-roam-db-build-cache)
     (vulpea-db-get-by-id id)))
 
 ;;;###autoload
