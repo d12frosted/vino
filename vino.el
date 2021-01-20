@@ -480,6 +480,31 @@ explicitly."
     (vulpea-meta-set note "grapes" grapes 'append)))
 
 ;;;###autoload
+(defun vino-entry-set-region (&optional note-or-id region)
+  "Set REGION to `vino-entry'.
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly.
+
+REGION may be either region or appellation."
+  (interactive)
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
+         (region (cond
+                  ((stringp region) (vulpea-db-get-by-id region))
+                  ((vulpea-note-p region) region)
+                  (t (vino-region-select)))))
+    (when (seq-contains-p (vulpea-note-tags region) "region")
+      (vulpea-meta-remove note "appellation")
+      (vulpea-meta-set note "region" region 'append))
+    (when (seq-contains-p (vulpea-note-tags region) "appellation")
+      (vulpea-meta-remove note "region")
+      (vulpea-meta-set note "appellation" region 'append))
+    ;; TODO: sort metadata
+    ))
+
+;;;###autoload
 (defun vino-entry-update (&optional note-or-id)
   "Update `vino-entry'.
 

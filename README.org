@@ -310,6 +310,8 @@ Optional variables (with their default values):
   =vino-appellation-template=.
 - =vino-entry-set-grapes= - set grapes of visiting (or selected) =vino-entry= by
   replacing existing.
+- =vino-entry-set-region= - set region (or appellation) of visiting (or
+  selected) =vino-entry= by replacing existing.
 
 ** Notes structure
 :PROPERTIES:
