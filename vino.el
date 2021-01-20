@@ -545,10 +545,7 @@ The following things are updated:
     (vulpea-utils-with-file (vulpea-note-path note)
       (org-roam--set-global-prop "TITLE" title)
       (save-buffer))
-    (org-roam-db-update-file
-     (expand-file-name
-      (concat "wine/cellar/" (vulpea-note-id note) ".org")
-      org-roam-directory))
+    (vulpea-db-update note)
     (setq note (vulpea-db-get-by-id (vulpea-note-id note)))
     (vulpea-meta-set
      note
@@ -562,10 +559,7 @@ The following things are updated:
                    title
                    (vulpea-meta-get rn "date")))
           (save-buffer))
-        (org-roam-db-update-file
-         (expand-file-name
-          (concat "wine/rating/" (vulpea-note-id rn) ".org")
-          org-roam-directory))
+        (vulpea-db-update rn)
         (vulpea-meta-set rn "wine" note)
         (vulpea-db-get-by-id (vulpea-note-id rn)))
       (seq-map
