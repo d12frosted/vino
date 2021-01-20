@@ -618,6 +618,77 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 "
              id))))
 
+(describe "vino-entry-set-grapes"
+  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "replace grapes metadata with new data"
+    (vino-entry-set-grapes id '("1c436b3b-ad14-4818-896d-1b7755f10fa1"
+                                "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
+    (expect (vino-entry-grapes (vino-entry-get-by-id id))
+            :to-equal
+            '("1c436b3b-ad14-4818-896d-1b7755f10fa1"
+              "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
+    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+            :to-contain-exactly
+            (format
+             ":PROPERTIES:
+:ID:                     %s
+:END:
+#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+
+- carbonation :: still
+- colour :: red
+- sweetness :: dry
+- producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
+- name :: Bombolieri BB
+- vintage :: 2017
+- appellation :: [[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]
+- grapes :: [[id:1c436b3b-ad14-4818-896d-1b7755f10fa1][Nerello Mascalese]]
+- grapes :: [[id:3b38917f-6065-42e8-87ca-33dd39a92fc0][Nero d'Avola]]
+- alcohol :: 13
+- sugar :: 1
+- price :: 50.00 EUR
+- acquired :: 2
+- consumed :: 1
+- available :: 1
+- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
+- rating :: NA
+
+#+begin_quote
+Il Frappato stems from a dream which I had when I was a girl to make a wine that
+knows the land that I work, the air I breath, and my own thoughts. It is bitter,
+bloody and elegant. That is Vittoria and the Iblei Mountains. It is the wine
+that most resembles me, brave, original and rebellious. But not only. It has
+peasant origins, for this it loves its roots and the past that it brings in;
+but, at the same time, it is able to fight to improve itself. It knows
+refinement without forgetting itself.
+
+Arianna Occhipinti
+#+end_quote
+
+* Additional information
+:PROPERTIES:
+:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:END:
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
+consequat pulvinar. Nullam ac dapibus arcu. Phasellus ornare tincidunt justo in
+tincidunt. Vestibulum dignissim arcu erat, in viverra ligula tristique vel.
+Etiam ac euismod lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Phasellus nec urna sit amet arcu laoreet sagittis ac et dolor. Sed molestie mi
+dui, eu posuere diam faucibus eget. Nullam fringilla ante in laoreet
+scelerisque. Nam feugiat neque id odio accumsan sodales. Quisque eu nibh diam.
+Aliquam varius, nibh vel pretium molestie, velit lorem consectetur erat, quis
+pretium eros dui eu eros. Vestibulum at turpis lacus. Donec tempor nec ipsum sed
+dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
+"
+             id))))
+
 (describe "vino-entry-update-availability"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
         vino)

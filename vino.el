@@ -466,6 +466,20 @@ ID is generated unless passed."
       id)))
 
 ;;;###autoload
+(defun vino-entry-set-grapes (&optional note-or-id grapes)
+  "Set GRAPES to `vino-entry'.
+
+When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
+Otherwise if current buffer is visiting `vino-entry', it used
+instead. Otherwise user is prompted to select a `vino-entry'
+explicitly."
+  (interactive)
+  (let* ((note (vino-entry-note-get-dwim note-or-id))
+         (grapes (or grapes
+                     (+fun-collect-while #'vino-grape-select nil))))
+    (vulpea-meta-set note "grapes" grapes 'append)))
+
+;;;###autoload
 (defun vino-entry-update (&optional note-or-id)
   "Update `vino-entry'.
 

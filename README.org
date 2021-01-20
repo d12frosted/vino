@@ -304,6 +304,12 @@ Optional variables (with their default values):
   =vino-grape-template=.
 - =vino-producer-create= - create a new =producer= note according to
   =vino-producer-template=.
+- =vino-region-create= - create a new =region= note according to
+  =vino-region-template=.
+- =vino-appellation-create= - create a new =appellation= note according to
+  =vino-appellation-template=.
+- =vino-entry-set-grapes= - set grapes of visiting (or selected) =vino-entry= by
+  replacing existing.
 
 ** Notes structure
 :PROPERTIES:
