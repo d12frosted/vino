@@ -180,7 +180,7 @@
                        (vulpea-db-get-by-id id)))))))
 
 (describe "vino-entry--create"
-  :var (vino id)
+  :var (note vino)
   (before-all
     (vino-test--init))
 
@@ -205,9 +205,9 @@
                 :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
                              "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
                 :price '("50.00 EUR")))
-    (setq id (vino-entry--create vino))
-    (expect (vino-entry-get-by-id id) :to-equal vino)
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+    (setq note (vino-entry--create vino))
+    (expect (vino-entry-get-by-id (vulpea-note-id note)) :to-equal vino)
+    (expect (expand-file-name (vulpea-note-path note))
             :to-contain-exactly
             (format
              ":PROPERTIES:
@@ -237,7 +237,7 @@
 
 
 "
-             id))))
+             (vulpea-note-id note)))))
 
 (describe "vino-entry-get-by-id"
   (before-all
@@ -930,7 +930,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   :var* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
          (date (current-time))
          (date-str (format-time-string "%Y-%m-%d" date))
-         rid)
+         note)
   (before-all
     (vino-test--init)
     (setq vino-rating-props '((4 . (("property_1" 3)
@@ -946,7 +946,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
           vino-availability-fn nil))
 
   (it "should create rating note and update vino note"
-    (setq rid (vino-rating--create
+    (setq note (vino-rating--create
                id date 4
                '(("property_1" 3 3)
                  ("property_2" 3 4)
@@ -971,8 +971,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
-             :ratings (list rid)))
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+             :ratings (list (vulpea-note-id note))))
+    (expect (vulpea-db-get-file-by-id id)
             :to-contain-exactly
             (format
              ":PROPERTIES:
@@ -1027,9 +1027,9 @@ pretium eros dui eu eros. Vestibulum at turpis lacus. Donec tempor nec ipsum sed
 dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 "
              id
-             rid
+             (vulpea-note-id note)
              date-str))
-    (expect (expand-file-name (concat "wine/rating/" rid ".org") org-roam-directory)
+    (expect (vulpea-note-path note)
             :to-contain-exactly
             (format
              ":PROPERTIES:
@@ -1057,7 +1057,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 
 
 "
-             rid
+             (vulpea-note-id note)
              date-str
              id
              date-str))))

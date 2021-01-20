@@ -227,29 +227,29 @@ The process is simple:
                       (vino-entry-name vino)
                       (or (vino-entry-vintage vino) "NV")
                       date-str))
-       (rid (vulpea-create title vino-rating-template)))
+       (note (vulpea-create title vino-rating-template)))
     ;; TODO: performance of multiple `vulpea-meta-set'
     (vulpea-meta-set
      id
      "ratings"
-     (cons rid
+     (cons note
            (vulpea-meta-get-list id "ratings" 'link))
      'append)
-    (vulpea-meta-set rid "wine" id 'append)
-    (vulpea-meta-set rid "date" date-str 'append)
-    (vulpea-meta-set rid "version" version 'append)
+    (vulpea-meta-set note "wine" id 'append)
+    (vulpea-meta-set note "date" date-str 'append)
+    (vulpea-meta-set note "version" version 'append)
     (seq-do (lambda (data)
-              (vulpea-meta-set rid
+              (vulpea-meta-set note
                                (downcase (nth 0 data))
                                (nth 1 data)
                                'append)
-              (vulpea-meta-set rid
+              (vulpea-meta-set note
                                (downcase (concat (nth 0 data) "_MAX"))
                                (nth 2 data)
                                'append))
             values)
     (vino-entry-update id)
-    rid))
+    note))
 
 
 ;;; Entry
@@ -413,50 +413,49 @@ ID is generated unless passed."
                         (if (numberp vintage)
                             (number-to-string vintage)
                           vintage)))
-         (id (vulpea-create title vino-entry-template id)))
+         (note (vulpea-create title vino-entry-template id)))
     ;; TODO: optimize multiple calls
-    (let ((note (vino-entry-note-get-dwim id)))
+    (vulpea-meta-set
+     note "carbonation" (vino-entry-carbonation vino) 'append)
+    (vulpea-meta-set
+     note "colour" (vino-entry-colour vino) 'append)
+    (vulpea-meta-set
+     note "sweetness" (vino-entry-sweetness vino) 'append)
+    (vulpea-meta-set
+     note "producer" (vino-entry-producer vino) 'append)
+    (vulpea-meta-set
+     note "name" (vino-entry-name vino) 'append)
+    (when-let ((vintage (vino-entry-vintage vino)))
+      (vulpea-meta-set note "vintage" vintage 'append))
+    (when-let ((appellation (vino-entry-appellation vino)))
+      (vulpea-meta-set note "appellation" appellation 'append))
+    (when-let ((region (vino-entry-region vino)))
+      (vulpea-meta-set note "region" region 'append))
+    (vulpea-meta-set
+     note "grapes" (vino-entry-grapes vino) 'append)
+    (let ((alcohol (vino-entry-alcohol vino)))
+      (when (and alcohol
+                 (> alcohol 0))
+        (vulpea-meta-set note "alcohol" alcohol 'append)))
+    (let ((sugar (vino-entry-sugar vino)))
+      (when (and sugar (>= sugar 0))
+        (vulpea-meta-set note "sugar" sugar 'append)))
+    (when (vino-entry-price vino)
       (vulpea-meta-set
-       note "carbonation" (vino-entry-carbonation vino) 'append)
+       note "price" (vino-entry-price vino) 'append))
+    (let ((acquired (or (vino-entry-acquired vino) 0))
+          (consumed (or (vino-entry-consumed vino) 0)))
+      (vulpea-meta-set note "acquired" acquired 'append)
+      (vulpea-meta-set note "consumed" consumed 'append)
       (vulpea-meta-set
-       note "colour" (vino-entry-colour vino) 'append)
-      (vulpea-meta-set
-       note "sweetness" (vino-entry-sweetness vino) 'append)
-      (vulpea-meta-set
-       note "producer" (vino-entry-producer vino) 'append)
-      (vulpea-meta-set
-       note "name" (vino-entry-name vino) 'append)
-      (when-let ((vintage (vino-entry-vintage vino)))
-        (vulpea-meta-set note "vintage" vintage 'append))
-      (when-let ((appellation (vino-entry-appellation vino)))
-        (vulpea-meta-set note "appellation" appellation 'append))
-      (when-let ((region (vino-entry-region vino)))
-        (vulpea-meta-set note "region" region 'append))
-      (vulpea-meta-set
-       note "grapes" (vino-entry-grapes vino) 'append)
-      (let ((alcohol (vino-entry-alcohol vino)))
-        (when (and alcohol
-                   (> alcohol 0))
-          (vulpea-meta-set note "alcohol" alcohol 'append)))
-      (let ((sugar (vino-entry-sugar vino)))
-        (when (and sugar (>= sugar 0))
-          (vulpea-meta-set note "sugar" sugar 'append)))
-      (when (vino-entry-price vino)
-        (vulpea-meta-set
-         note "price" (vino-entry-price vino) 'append))
-      (let ((acquired (or (vino-entry-acquired vino) 0))
-            (consumed (or (vino-entry-consumed vino) 0)))
-        (vulpea-meta-set note "acquired" acquired 'append)
-        (vulpea-meta-set note "consumed" consumed 'append)
-        (vulpea-meta-set
-         note "available" (- acquired consumed) 'append))
-      (vulpea-meta-set
-       note "resources" (vino-entry-resources vino) 'append)
-      (vulpea-meta-set
-       note "rating" (or (vino-entry-rating vino) "NA") 'append)
-      (vulpea-meta-set
-       note "ratings" (vino-entry-ratings vino) 'append)
-      id)))
+       note "available" (- acquired consumed) 'append))
+    (vulpea-meta-set
+     note "resources" (vino-entry-resources vino) 'append)
+    (vulpea-meta-set
+     note "rating" (or (vino-entry-rating vino) "NA") 'append)
+    (vulpea-meta-set
+     note "ratings" (vino-entry-ratings vino) 'append)
+    note))
 
 ;;;###autoload
 (defun vino-entry-set-grapes (&optional note-or-id grapes)
@@ -801,9 +800,8 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Region: ")))
-         (id (vulpea-create title vino-region-template)))
-    (vulpea-db-get-by-id id)))
+  (let ((title (or title (read-string "Region: "))))
+    (vulpea-create title vino-region-template)))
 
 ;;;###autoload
 (defun vino-appellation-create (&optional title)
@@ -813,9 +811,8 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Appellation: ")))
-         (id (vulpea-create title vino-appellation-template)))
-    (vulpea-db-get-by-id id)))
+  (let ((title (or title (read-string "Appellation: "))))
+    (vulpea-create title vino-appellation-template)))
 
 ;;;###autoload
 (defun vino-region-select ()
@@ -862,9 +859,8 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Grape: ")))
-         (id (vulpea-create title vino-grape-template)))
-    (vulpea-db-get-by-id id)))
+  (let ((title (or title (read-string "Grape: "))))
+    (vulpea-create title vino-grape-template)))
 
 ;;;###autoload
 (defun vino-grape-select ()
@@ -913,9 +909,8 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Producer: ")))
-         (id (vulpea-create title vino-producer-template)))
-    (vulpea-db-get-by-id id)))
+  (let ((title (or title (read-string "Producer: "))))
+    (vulpea-create title vino-producer-template)))
 
 ;;;###autoload
 (defun vino-producer-select ()
