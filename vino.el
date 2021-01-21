@@ -820,6 +820,17 @@ Return `vulpea-note'."
     (vulpea-create title vino-appellation-template)))
 
 ;;;###autoload
+(defun vino-region-find-file ()
+  "Select and find region note."
+  (interactive)
+  (let ((res (vino-region-select)))
+    (if (vulpea-note-id res)
+        (find-file (vulpea-note-path res))
+      (user-error
+       "Can not visit region entry that does not exist: %s"
+       (vulpea-note-title res)))))
+
+;;;###autoload
 (defun vino-region-select ()
   "Select a wine region or appellation note.
 
@@ -866,6 +877,17 @@ Return `vulpea-note'."
   (interactive)
   (let ((title (or title (read-string "Grape: "))))
     (vulpea-create title vino-grape-template)))
+
+;;;###autoload
+(defun vino-grape-find-file ()
+  "Select and find grape note."
+  (interactive)
+  (let ((res (vino-grape-select)))
+    (if (vulpea-note-id res)
+        (find-file (vulpea-note-path res))
+      (user-error
+       "Can not visit grape entry that does not exist: %s"
+       (vulpea-note-title res)))))
 
 ;;;###autoload
 (defun vino-grape-select ()
@@ -916,6 +938,17 @@ Return `vulpea-note'."
   (interactive)
   (let ((title (or title (read-string "Producer: "))))
     (vulpea-create title vino-producer-template)))
+
+;;;###autoload
+(defun vino-producer-find-file ()
+  "Select and find producer note."
+  (interactive)
+  (let ((res (vino-producer-select)))
+    (if (vulpea-note-id res)
+        (find-file (vulpea-note-path res))
+      (user-error
+       "Can not visit producer entry that does not exist: %s"
+       (vulpea-note-title res)))))
 
 ;;;###autoload
 (defun vino-producer-select ()
