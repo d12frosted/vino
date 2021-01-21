@@ -100,6 +100,25 @@
       (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
      :to-be nil)))
 
+(describe "vino-entry-note-select"
+  (before-all
+    (vino-test--init))
+
+  (after-all
+    (vino-test--teardown))
+
+  (it "returns full information about selected wine"
+    (spy-on 'org-roam-completion--completing-read
+            :and-return-value "(wine,cellar) Arianna Occhipinti Bombolieri BB 2017")
+    (expect (vino-entry-note-select)
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name "wine/cellar/c9937e3e-c83d-4d8d-a612-6110e6706252.org" org-roam-directory)
+             :title "Arianna Occhipinti Bombolieri BB 2017"
+             :tags '("wine" "cellar")
+             :level 0
+             :id "c9937e3e-c83d-4d8d-a612-6110e6706252"))))
+
 (describe "vino-entry-note-get-dwim"
   (before-all
     (vino-test--init))
@@ -947,12 +966,12 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 
   (it "should create rating note and update vino note"
     (setq note (vino-rating--create
-               id date 4
-               '(("property_1" 3 3)
-                 ("property_2" 3 4)
-                 ("property_3" 0 2)
-                 ("property_4" 5 5)
-                 ("property_5" 5 6))))
+                id date 4
+                '(("property_1" 3 3)
+                  ("property_2" 3 4)
+                  ("property_3" 0 2)
+                  ("property_4" 5 5)
+                  ("property_5" 5 6))))
     (expect (vino-entry-get-by-id id)
             :to-equal
             (make-vino-entry

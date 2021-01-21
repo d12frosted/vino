@@ -294,6 +294,17 @@ Variables in the capture context are provided by
   ratings)
 
 ;;;###autoload
+(defun vino-entry-find-file ()
+  "Select and find vino note."
+  (interactive)
+  (let ((res (vino-entry-note-select)))
+    (if (vulpea-note-id res)
+        (find-file (vulpea-note-path res))
+      (user-error
+       "Can not visit vino entry that does not exist: %s"
+       (vulpea-note-title res)))))
+
+;;;###autoload
 (defun vino-entry-read ()
   "Read a `vino-entry'."
   (let* ((producer (vino-producer-select))
