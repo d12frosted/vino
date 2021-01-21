@@ -1,0 +1,62 @@
+:PROPERTIES:
+:ID:                     f9a623b7-0123-4845-ae03-8369426d961d
+:END:
+
+* Changelog
+:PROPERTIES:
+:ID:                     e08b1bd9-0803-4266-9049-36a8174b999e
+:END:
+
+** v0.1
+:PROPERTIES:
+:ID:                     81aaf405-b49b-4b96-811d-fb6989e6a26f
+:END:
+
+Initial release of =vino= application. The main goal of this release is to
+achieve feature parity with [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]]. See [[README.org][README]] for more information.
+
+*Features*
+
+- Functionality to create and find producers:
+  - =vino-producer-create= - create a new =producer= note according to
+    =vino-producer-template=.
+  - =vino-producer-find-file= - select and visit =producer= note.
+- Functionality to create and find grapes:
+  - =vino-grape-create= - create a new =grape= note according to
+    =vino-grape-template=.
+  - =vino-grape-find-file= - select and visit =grape= note.
+- Functionality to create and find regions and appellations:
+  - =vino-region-create= - create a new =region= note according to
+    =vino-region-template=.
+  - =vino-appellation-create= - create a new =appellation= note according to
+    =vino-appellation-template=.
+  - =vino-region-find-file= - select and visit =region= or =appellation= note.
+- Functionality to create and maintain cellar entries:
+  - =vino-entry-create= - create a new =vino-entry= according to
+    =vino-entry-template=. It interactively reads carbonation type, colour type,
+    sweetness level, producer, name, vintage, appellation or region, grapes,
+    alcohol level, sugar, resources and price. Producer, appellation, region and
+    grapes are linked using =org-roam=.
+  - =vino-entry-find-file= - select and visit =vino-entry=.
+  - =vino-entry-update= - update visiting (or selected) =vino-entry=. It
+    refreshes =rating= and =availability= (using =vino-availability-fn=). You
+    rarely need to use this function, unless availability or rating is modified
+    manually.
+  - =vino-entry-update-title= - update visiting (or selected) =vino-entry=
+    title. It also changes the title of all linked =ratings=. You only need this
+    function if you modify a producer name, wine entry name or vintage manually
+    and want to update everything. Might take a while, depending on amount of
+    linked =ratings=.
+  - =vino-entry-set-grapes= - set grapes of visiting (or selected) =vino-entry=
+    by replacing existing.
+  - =vino-entry-set-region= - set region (or appellation) of visiting (or
+    selected) =vino-entry= by replacing existing.
+  - =vino-entry-acquire= - acquire visiting (or selected) =vino-entry=. Reads a
+    source, amount, price and date, and calls =vino-availability-add-fn=.
+  - =vino-entry-consume= - consume visiting (or selected) =vino-entry=. Reads a
+    action, amount and date, and calls =vino-availability-sub-fn=. For
+    convenience also asks you to rate entry if the action is =consume=.
+  - =vino-entry-rate= - rate a visiting (or selected) =vino-entry=. Reads a
+    date, props defined by =vino-rating-props=, creates a new rating note
+    according to =vino-rating-template= and creates a link between wine and
+    rating.
