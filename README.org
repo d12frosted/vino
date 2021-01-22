@@ -71,9 +71,9 @@ be the first stable release. The goal is to have feature parity with
 [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
 
 - [X] [[https://github.com/d12frosted/vulpea/milestone/1][v0.1]] - feature parity with [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
-- [ ] v0.2 - dedicated database for =vino= needs.
-- [ ] v0.3 - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/4164a5abd43d478fd314bb299ea4e1024d89c39c/emacs/lisp/+inventory.el][+inventory.el]]).
-- [ ] v.04 - querying and viewing.
+- [ ] [[https://github.com/d12frosted/vulpea/milestone/2][v0.2]] - dedicated database for =vino= needs.
+- [ ] [[https://github.com/d12frosted/vulpea/milestone/3][v0.3]] - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/4164a5abd43d478fd314bb299ea4e1024d89c39c/emacs/lisp/+inventory.el][+inventory.el]]).
+- [ ] [[https://github.com/d12frosted/vulpea/milestone/4][v0.4]] - querying and viewing.
 
 ** Getting started
 :PROPERTIES:
