@@ -49,6 +49,7 @@ process.
   - [[#store-images-and-other-attachments][Store images and other attachments]]
   - [[#query-additional-metadata-when-creating-a-new-wine-entry][Query additional metadata when creating a new wine entry]]
   - [[#query-additional-metadata-when-rating-a-wine-entry][Query additional metadata when rating a wine entry]]
+- [[#building-and-testing][Building and testing]]
 - [[#faq][FAQ]]
   - [[#why-not-generalise][Why not generalise?]]
   - [[#why-not-cellar-tracker-vivino-etc][Why not Cellar Tracker, Vivino, etc.?]]
@@ -825,6 +826,26 @@ See [[https://github.com/d12frosted/vino/issues/65][vino#65]].
 :END:
 
 See [[https://github.com/d12frosted/vino/issues/64][vino#64]].
+
+* Building and testing
+:PROPERTIES:
+:ID:                     5b9d4440-716a-41dd-9598-da916cefcb3e
+:END:
+
+Vulpea tests are written using [[https://github.com/jorgenschaefer/emacs-buttercup/][buttercup]] testing framework. And [[https://github.com/doublep/eldev/][eldev]] is used to
+run them both locally and on CI. In order to run the tests locally, first
+[[https://github.com/doublep/eldev/#installation][install]] =eldev= and then run:
+
+#+begin_src bash
+  $ make test
+#+end_src
+
+Please note, that the linter is used in this project, so you might want to run
+it as well:
+
+#+begin_src bash
+  $ make lint
+#+end_src
 
 * FAQ
 :PROPERTIES:
