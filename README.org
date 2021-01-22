@@ -2,10 +2,18 @@
 :ID:                     e2554430-e28e-4b63-b598-5718bea73a62
 :END:
 
-* vino
-:PROPERTIES:
-:ID:                     d66cbe06-0cbb-4805-9696-9ca31850590b
-:END:
+#+begin_html
+<h1 align="center">Vino</h1>
+<h3 align="center">🍷It's your cellar, your dear cantina 🍷</h3>
+<p align="center">
+  <a href="https://github.com/d12frosted/vino/releases">
+    <img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/d12frosted/vino">
+  </a>
+  <a href="https://github.com/d12frosted/vino/actions?query=workflow%3ACI">
+    <img src="https://github.com/d12frosted/vino/workflows/CI/badge.svg" alt="CI Status Badge">
+  </a>
+</p>
+#+end_html
 
 =vino= is an Emacs program for cellar tracking and wine rating. Every entity is
 stored as separate Org file, =vino= provides convenient functions to query and
@@ -16,35 +24,36 @@ producers, grapes, appellations or wine regions. The idea is that each user
 creates his/her own collection and learns about huge world of wine in the
 process.
 
-** Table of Contents                                                   :TOC_3_gh:
+* Table of Contents                                                :TOC_3_gh:
 :PROPERTIES:
 :ID:                     6383aaf3-05fc-403f-b3f5-05dab6501d57
 :END:
 
-- [[#vino][vino]]
-  - [[#goals][Goals]]
-  - [[#status-and-roadmap][Status and roadmap]]
-  - [[#getting-started][Getting started]]
-    - [[#installing][Installing]]
-    - [[#configuration][Configuration]]
-    - [[#interactive-functions][Interactive functions]]
-  - [[#notes-structure][Notes structure]]
-    - [[#appellationregion][Appellation/region]]
-    - [[#producer][Producer]]
-    - [[#grape][Grape]]
-    - [[#vino-entry][Vino entry]]
-    - [[#rating][Rating]]
-    - [[#org-roam-tags][=org-roam= Tags]]
-  - [[#how-to-][How to ...]]
-    - [[#configure-rating-system][Configure rating system]]
-    - [[#store-images-and-other-attachments][Store images and other attachments]]
-    - [[#query-additional-metadata-when-creating-a-new-wine-entry][Query additional metadata when creating a new wine entry]]
-    - [[#query-additional-metadata-when-rating-a-wine-entry][Query additional metadata when rating a wine entry]]
-  - [[#faq][FAQ]]
-    - [[#why-not-generalise][Why not generalise?]]
-    - [[#why-not-cellar-tracker-vivino-etc][Why not Cellar Tracker, Vivino, etc.?]]
+- [[#goals][Goals]]
+- [[#status-and-roadmap][Status and roadmap]]
+- [[#getting-started][Getting started]]
+  - [[#installing][Installing]]
+    - [[#straightel][straight.el]]
+  - [[#configuration][Configuration]]
+    - [[#example-configuration][Example configuration]]
+  - [[#interactive-functions][Interactive functions]]
+- [[#notes-structure][Notes structure]]
+  - [[#appellationregion][Appellation/region]]
+  - [[#producer][Producer]]
+  - [[#grape][Grape]]
+  - [[#vino-entry][Vino entry]]
+  - [[#rating][Rating]]
+  - [[#org-roam-tags][=org-roam= Tags]]
+- [[#how-to-][How to ...]]
+  - [[#configure-rating-system][Configure rating system]]
+  - [[#store-images-and-other-attachments][Store images and other attachments]]
+  - [[#query-additional-metadata-when-creating-a-new-wine-entry][Query additional metadata when creating a new wine entry]]
+  - [[#query-additional-metadata-when-rating-a-wine-entry][Query additional metadata when rating a wine entry]]
+- [[#faq][FAQ]]
+  - [[#why-not-generalise][Why not generalise?]]
+  - [[#why-not-cellar-tracker-vivino-etc][Why not Cellar Tracker, Vivino, etc.?]]
 
-** Goals
+* Goals
 :PROPERTIES:
 :ID:                     db8950da-aad1-41f3-940a-7140c6ce6209
 :END:
@@ -56,7 +65,7 @@ process.
 - Provide functionality to query wine entries based on different predicates.
 - Be able to handle big (1000+) collection of wine entries.
 
-** Status and roadmap
+* Status and roadmap
 :PROPERTIES:
 :ID:                     626c7352-8762-4800-8c2e-de3068c386d0
 :END:
@@ -75,12 +84,12 @@ be the first stable release. The goal is to have feature parity with
 - [ ] [[https://github.com/d12frosted/vulpea/milestone/3][v0.3]] - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/4164a5abd43d478fd314bb299ea4e1024d89c39c/emacs/lisp/+inventory.el][+inventory.el]]).
 - [ ] [[https://github.com/d12frosted/vulpea/milestone/4][v0.4]] - querying and viewing.
 
-** Getting started
+* Getting started
 :PROPERTIES:
 :ID:                     b065010c-acc7-4685-a7eb-f342c54b3558
 :END:
 
-*** Installing
+** Installing
 :PROPERTIES:
 :ID:                     ee4a877a-a870-41b9-8820-9aa910fb14b4
 :END:
@@ -91,7 +100,7 @@ be the first stable release. The goal is to have feature parity with
 Keep in mind that =vino= depends on [[https://github.com/d12frosted/vulpea][vulpea]], which is also not available via
 MELPA, so you have to install it as well.
 
-**** straight.el
+*** straight.el
 :PROPERTIES:
 :ID:                     2beccee5-417a-4053-8275-217f41dedcca
 :END:
@@ -120,7 +129,7 @@ In case you have [[https://github.com/raxod502/straight.el/#integration-with-use
                :repo "d12frosted/vino"))
 #+end_src
 
-*** Configuration
+** Configuration
 :PROPERTIES:
 :ID:                     f7b2fe31-4695-441c-82e8-421f8e2a2fa1
 :END:
@@ -174,7 +183,7 @@ Optionally you can configure the following variables:
   Passed to =vulpea-create=, which enriches context with variables like =id=,
   =title= and =slug=. Used by =vulpea-appellation-create=.
 
-**** Example configuration
+*** Example configuration
 :PROPERTIES:
 :ID:                     a796506e-ff4c-4a1f-8d00-50b02692b26c
 :END:
@@ -275,7 +284,7 @@ Optional variables (with their default values):
                          :immediate-finish t))
 #+end_src
 
-*** Interactive functions
+** Interactive functions
 :PROPERTIES:
 :ID:                     b85937bf-ebca-41d5-8a2e-a23cb95bb489
 :END:
@@ -318,7 +327,7 @@ Optional variables (with their default values):
   =vino-appellation-template=.
 - =vino-region-find-file= - select and visit =region= or =appellation= note.
 
-** Notes structure
+* Notes structure
 :PROPERTIES:
 :ID:                     98b08892-811d-41d5-9dc1-6cff3d2e4382
 :END:
@@ -367,7 +376,7 @@ I use it) and even in =wine= folder, but please keep in mind that any file in
 =appellation=, =cellar=, =grape=, =producer=, =rating= and =region= will be
 processed by =vino=. Read further to learn more about each folder and note type.
 
-*** Appellation/region
+** Appellation/region
 :PROPERTIES:
 :ID:                     cf3c3359-c438-4e00-8d27-6239704777a2
 :END:
@@ -395,7 +404,7 @@ more information.
   located here.
 #+end_example
 
-*** Producer
+** Producer
 :PROPERTIES:
 :ID:                     5316a829-59ab-4e28-8abc-08774630bee6
 :END:
@@ -428,7 +437,7 @@ to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
   ...
 #+end_example
 
-*** Grape
+** Grape
 :PROPERTIES:
 :ID:                     230273de-6831-490a-b247-99603c23985b
 :END:
@@ -477,7 +486,7 @@ to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
   - cellar: 10+ years
 #+end_example
 
-*** Vino entry
+** Vino entry
 :PROPERTIES:
 :ID:                     3b12dd67-4a6c-4669-97a0-ecff94fa1eb6
 :END:
@@ -574,7 +583,7 @@ See [[#org-roam-tags][=org-roam= Tags]] for more information.
   ,#+end_quote
 #+end_example
 
-*** Rating
+** Rating
 :PROPERTIES:
 :ID:                     86f2bcc9-7bf7-4feb-82d4-5895124d7372
 :END:
@@ -604,7 +613,7 @@ Rating files require the presence of =rating= tag in addition to =wine= tag. See
   - total :: 7.0
 #+end_example
 
-*** =org-roam= Tags
+** =org-roam= Tags
 :PROPERTIES:
 :ID:                     813fa350-d83f-4955-9e75-a09af41b47ff
 :END:
@@ -654,12 +663,12 @@ will not work.
 In general, it's more convenient to store each type in a separate folder. But
 it's up to you to decide.
 
-** How to ...
+* How to ...
 :PROPERTIES:
 :ID:                     c730ed42-0347-4778-b3fd-feab7f361db3
 :END:
 
-*** Configure rating system
+** Configure rating system
 :PROPERTIES:
 :ID:                     6c787546-ca9a-41a0-946d-cc609f5b3393
 :END:
@@ -795,7 +804,7 @@ Here are several examples to illustrate.
                      ("bad wine, only for enemies" . 0)))))))
    #+end_src
 
-*** Store images and other attachments
+** Store images and other attachments
 :PROPERTIES:
 :ID:                     c8fb7afd-ba51-4fc2-8ee2-7324348e69b7
 :END:
@@ -803,26 +812,26 @@ Here are several examples to illustrate.
 Since all filed are =org-mode= files, you can use =org-attach= to store images
 and other files.
 
-*** Query additional metadata when creating a new wine entry
+** Query additional metadata when creating a new wine entry
 :PROPERTIES:
 :ID:                     877e4ec7-d7af-44f6-85ff-9278af58c061
 :END:
 
 See [[https://github.com/d12frosted/vino/issues/65][vino#65]].
 
-*** Query additional metadata when rating a wine entry
+** Query additional metadata when rating a wine entry
 :PROPERTIES:
 :ID:                     b220ca96-48c7-4ee0-b5b6-f7fb79572a22
 :END:
 
 See [[https://github.com/d12frosted/vino/issues/64][vino#64]].
 
-** FAQ
+* FAQ
 :PROPERTIES:
 :ID:                     299283b3-6f65-497c-9a87-7638bbc0f4ec
 :END:
 
-*** Why not generalise?
+** Why not generalise?
 :PROPERTIES:
 :ID:                     75f7f880-998b-4cb6-b047-e2f6473c412c
 :END:
@@ -837,7 +846,7 @@ topic and avoid making perfect an enemy of good.
 That being said, please contact me if you wish to use it for other things, I
 would love to hear your use case and help you with building solution for you.
 
-*** Why not Cellar Tracker, Vivino, etc.?
+** Why not Cellar Tracker, Vivino, etc.?
 :PROPERTIES:
 :ID:                     83bbfcc4-794f-41f0-a5c4-ab7dcf91add9
 :END:
