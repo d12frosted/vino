@@ -810,8 +810,9 @@ Here are several examples to illustrate.
 :ID:                     c8fb7afd-ba51-4fc2-8ee2-7324348e69b7
 :END:
 
-Since all filed are =org-mode= files, you can use =org-attach= to store images
-and other files.
+=vino= operates with =org-mode= files, meaning that you can use =org-attach= to
+store images as well as other attachments. Refer to [[https://orgmode.org/manual/Attachments.html#Attachments][Org mode documentation]] for
+more information.
 
 ** Query additional metadata when creating a new wine entry
 :PROPERTIES:
