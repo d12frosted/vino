@@ -7,6 +7,18 @@
 :ID:                     e08b1bd9-0803-4266-9049-36a8174b999e
 :END:
 
+** TBD
+:PROPERTIES:
+:ID:                     26667ab6-6896-44bc-94b1-2526bde8cca4
+:END:
+
+Primarily a stabilization and bug-fix release.
+
+*Fixes*
+
+- [[https://github.com/d12frosted/vino/pull/84][vino#84]] Fix invalid vintage in rating title both in =vino-rating--create= and
+  =vino-entry-update-title=.
+
 ** v0.1
 :PROPERTIES:
 :ID:                     81aaf405-b49b-4b96-811d-fb6989e6a26f

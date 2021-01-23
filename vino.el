@@ -401,7 +401,9 @@ Variables in the capture context are provided by
          :sweetness (vulpea-meta-get! meta "sweetness" 'symbol)
          :producer (vulpea-meta-get! meta "producer" 'link)
          :name (vulpea-meta-get! meta "name" 'string)
-         :vintage (vulpea-meta-get! meta "vintage" 'number)
+         :vintage (vino--parse-opt-number
+                   (vulpea-meta-get! meta "vintage")
+                   "NV")
          :appellation (vulpea-meta-get! meta "appellation" 'link)
          :region (vulpea-meta-get! meta "region" 'link)
          :grapes (vulpea-meta-get-list! meta "grapes" 'link)
@@ -565,8 +567,7 @@ The following things are updated:
                   (vulpea-db-get-by-id
                    (vulpea-meta-get! meta "producer" 'link)))
                  (vulpea-meta-get! meta "name")
-                 (or (vulpea-meta-get! meta "vintage" 'number)
-                     "NV"))))
+                 (vulpea-meta-get! meta "vintage"))))
     (vulpea-utils-with-file (vulpea-note-path note)
       (org-roam--set-global-prop "TITLE" title)
       (save-buffer))
