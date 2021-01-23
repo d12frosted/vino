@@ -19,6 +19,12 @@ Primarily a stabilization and bug-fix release.
 - [[https://github.com/d12frosted/vino/pull/84][vino#84]] Fix invalid vintage in rating title both in =vino-rating--create= and
   =vino-entry-update-title=.
 
+*Features*
+
+- [[https://github.com/d12frosted/vino/pull/85][vino#85]] Allow to create producer note when selecting non-existent producer.
+  Affects =vino-producer-select=, =vino-producer-find-file= and
+  =vino-entry-create=.
+
 ** v0.1
 :PROPERTIES:
 :ID:                     81aaf405-b49b-4b96-811d-fb6989e6a26f

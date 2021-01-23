@@ -397,6 +397,7 @@
              :id id))))
 
 (describe "vino-producer-select"
+  :var (id ts)
   (before-all
     (vino-test--init))
 
@@ -413,7 +414,26 @@
              :title "Arianna Occhipinti"
              :tags '("wine" "producer")
              :level 0
-             :id "9462dfad-603c-4094-9aca-a9042cec5dd2"))))
+             :id "9462dfad-603c-4094-9aca-a9042cec5dd2")))
+
+  (it "creates a new producer note when selecting non-existing name"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (spy-on 'org-roam-completion--completing-read :and-return-value "Vino di Anna")
+    (spy-on 'y-or-n-p :and-return-value t)
+    (expect (vino-producer-select)
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/producer/%s-vino_di_anna.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Vino di Anna"
+             :tags '("wine" "producer")
+             :level 0
+             :id id))))
 
 (describe "vino-region-create"
   :var (id ts)

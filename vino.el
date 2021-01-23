@@ -958,26 +958,33 @@ Return `vulpea-note'."
 (defun vino-producer-find-file ()
   "Select and find producer note."
   (interactive)
-  (let ((res (vino-producer-select)))
-    (if (vulpea-note-id res)
-        (find-file (vulpea-note-path res))
-      (user-error
-       "Can not visit producer entry that does not exist: %s"
-       (vulpea-note-title res)))))
+  (when-let* ((note (vino-producer-select))
+              (path (vulpea-note-path note)))
+    (find-file path)))
 
 ;;;###autoload
 (defun vino-producer-select ()
   "Select a producer note.
 
+When producer note does not exist, it is created using
+`vino-producer-create' if user decides to do so.
+
 See `vulpea' documentation for more information on note
 structure."
-  (vulpea-select
-   "Producer"
-   nil nil
-   (lambda (note)
-     (let ((tags (vulpea-note-tags note)))
-       (and (seq-contains-p tags "wine")
-            (seq-contains-p tags "producer"))))))
+  (let ((note (vulpea-select
+               "Producer"
+               nil nil
+               (lambda (note)
+                 (let ((tags (vulpea-note-tags note)))
+                   (and (seq-contains-p tags "wine")
+                        (seq-contains-p tags "producer")))))))
+    (if (vulpea-note-id note)
+        note
+      (if (y-or-n-p
+           (format "Producer %s does not exist. Create it? "
+                   (vulpea-note-title note)))
+          (vino-producer-create (vulpea-note-title note))
+        note))))
 
 
 ;;; Price
