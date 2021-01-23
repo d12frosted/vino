@@ -568,7 +568,7 @@ The following things are updated:
                    (vulpea-meta-get! meta "producer" 'link)))
                  (vulpea-meta-get! meta "name")
                  (vulpea-meta-get! meta "vintage"))))
-    (vulpea-utils-with-file (vulpea-note-path note)
+    (vulpea-utils-with-note note
       (org-roam--set-global-prop "TITLE" title)
       (save-buffer))
     (vulpea-db-update note)
@@ -578,7 +578,7 @@ The following things are updated:
      "ratings"
      (seq-map
       (lambda (rn)
-        (vulpea-utils-with-file (vulpea-note-path rn)
+        (vulpea-utils-with-note rn
           (org-roam--set-global-prop
            "TITLE"
            (format "%s - %s"
