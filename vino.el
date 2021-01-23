@@ -232,7 +232,7 @@ The process is simple:
 5. Set VALUES"
   (when-let*
       ((vino (vino-entry-get-by-id id))
-       (producer (vulpea-db-get-by-id (vino-entry-producer vino)))
+       (producer (vino-entry-producer vino))
        (date-str (if (stringp date)
                      date
                    (format-time-string "%Y-%m-%d" date)))
@@ -247,7 +247,7 @@ The process is simple:
      id
      "ratings"
      (cons note
-           (vulpea-meta-get-list id "ratings" 'link))
+           (vulpea-meta-get-list id "ratings" 'note))
      'append)
     (vulpea-meta-set note "wine" id 'append)
     (vulpea-meta-set note "date" date-str 'append)
@@ -399,14 +399,14 @@ Variables in the capture context are provided by
          :carbonation (vulpea-meta-get! meta "carbonation" 'symbol)
          :colour (vulpea-meta-get! meta "colour" 'symbol)
          :sweetness (vulpea-meta-get! meta "sweetness" 'symbol)
-         :producer (vulpea-meta-get! meta "producer" 'link)
+         :producer (vulpea-meta-get! meta "producer" 'note)
          :name (vulpea-meta-get! meta "name" 'string)
          :vintage (vino--parse-opt-number
                    (vulpea-meta-get! meta "vintage")
                    "NV")
-         :appellation (vulpea-meta-get! meta "appellation" 'link)
-         :region (vulpea-meta-get! meta "region" 'link)
-         :grapes (vulpea-meta-get-list! meta "grapes" 'link)
+         :appellation (vulpea-meta-get! meta "appellation" 'note)
+         :region (vulpea-meta-get! meta "region" 'note)
+         :grapes (vulpea-meta-get-list! meta "grapes" 'note)
          :alcohol (vulpea-meta-get! meta "alcohol" 'number)
          :sugar (vulpea-meta-get! meta "sugar" 'number)
          :acquired (vulpea-meta-get! meta "acquired" 'number)
@@ -416,7 +416,7 @@ Variables in the capture context are provided by
          :rating (vino--parse-opt-number
                   (vulpea-meta-get! meta "rating" 'string)
                   "NA")
-         :ratings (vulpea-meta-get-list! meta "ratings" 'link))))))
+         :ratings (vulpea-meta-get-list! meta "ratings" 'note))))))
 
 ;;;###autoload
 (defun vino-entry-create ()
@@ -562,10 +562,8 @@ The following things are updated:
          (meta (vulpea-meta note))
          (title (format
                  "%s %s %s"
-                 ;; TODO use 'note type from vulpea-meta
                  (vulpea-note-title
-                  (vulpea-db-get-by-id
-                   (vulpea-meta-get! meta "producer" 'link)))
+                  (vulpea-meta-get! meta "producer" 'note))
                  (vulpea-meta-get! meta "name")
                  (vulpea-meta-get! meta "vintage"))))
     (vulpea-utils-with-note note
@@ -588,9 +586,7 @@ The following things are updated:
         (vulpea-db-update rn)
         (vulpea-meta-set rn "wine" note)
         (vulpea-db-get-by-id (vulpea-note-id rn)))
-      (seq-map
-       #'vulpea-db-get-by-id
-       (vulpea-meta-get-list note "ratings" 'link))))))
+      (vulpea-meta-get-list note "ratings" 'note)))))
 
 ;;;###autoload
 (defun vino-entry-update-rating (note-or-id)
@@ -604,10 +600,7 @@ explicitly.
 - total score of each linked ratings;
 - rating of the `vino-entry'."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         ;; TODO use 'note type from vulpea-meta
-         (ratings (seq-map
-                   #'vulpea-db-get-by-id
-                   (vulpea-meta-get-list note "ratings" 'link)))
+         (ratings (vulpea-meta-get-list note "ratings" 'note))
          (values (seq-map
                   (lambda (rn)
                     (vino-rating-update rn)

@@ -225,12 +225,12 @@
                 :carbonation 'still
                 :colour 'red
                 :sweetness 'dry
-                :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+                :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
                 :name "Grotte Alte"
                 :vintage 2014
-                :appellation "6a0819f3-0770-4481-9754-754ca397800b"
-                :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
-                          "3b38917f-6065-42e8-87ca-33dd39a92fc0")
+                :appellation (vulpea-db-get-by-id "6a0819f3-0770-4481-9754-754ca397800b")
+                :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+                              (vulpea-db-get-by-id "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
                 :alcohol 13
                 :sugar 0
                 :acquired 0
@@ -286,11 +286,11 @@
              :carbonation 'still
              :colour 'red
              :sweetness 'dry
-             :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+             :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
              :name "Bombolieri BB"
              :vintage 2017
-             :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
-             :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+             :appellation (vulpea-db-get-by-id "8353e2fc-8034-4540-8254-4b63fb5a421a")
+             :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :alcohol 13
              :sugar 1
              :acquired 2
@@ -726,8 +726,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                                 "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
     (expect (vino-entry-grapes (vino-entry-get-by-id id))
             :to-equal
-            '("1c436b3b-ad14-4818-896d-1b7755f10fa1"
-              "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
+            (list (vulpea-db-get-by-id "1c436b3b-ad14-4818-896d-1b7755f10fa1")
+                  (vulpea-db-get-by-id "3b38917f-6065-42e8-87ca-33dd39a92fc0")))
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -796,7 +796,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   (it "replace region metadata"
     (vino-entry-set-region id "f9ef759b-f39e-4121-ab19-9ab3daa318be")
     (setq vino (vino-entry-get-by-id id))
-    (expect (vino-entry-region vino) :to-equal "f9ef759b-f39e-4121-ab19-9ab3daa318be")
+    (expect (vino-entry-region vino) :to-equal (vulpea-db-get-by-id "f9ef759b-f39e-4121-ab19-9ab3daa318be"))
     (expect (vino-entry-appellation vino) :to-equal nil)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
@@ -857,7 +857,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (vino-entry-set-region id "860f5505-d83c-4305-bc20-cb6a92f5d0be")
     (setq vino (vino-entry-get-by-id id))
     (expect (vino-entry-region vino) :to-equal nil)
-    (expect (vino-entry-appellation vino) :to-equal "860f5505-d83c-4305-bc20-cb6a92f5d0be")
+    (expect (vino-entry-appellation vino) :to-equal (vulpea-db-get-by-id "860f5505-d83c-4305-bc20-cb6a92f5d0be"))
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -1006,11 +1006,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :carbonation 'still
              :colour 'red
              :sweetness 'dry
-             :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+             :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
              :name "Bombolieri BB"
              :vintage 2017
-             :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
-             :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+             :appellation (vulpea-db-get-by-id "8353e2fc-8034-4540-8254-4b63fb5a421a")
+             :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :alcohol 13
              :sugar 1
              :acquired 5
@@ -1018,8 +1018,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
-             :ratings '("be7777a9-7993-44cf-be9e-0ae65297a35d"
-                        "f1ecb856-c009-4a65-a8d0-8191a9de66dd")))))
+             :ratings (list (vulpea-db-get-by-id "be7777a9-7993-44cf-be9e-0ae65297a35d")
+                            (vulpea-db-get-by-id "f1ecb856-c009-4a65-a8d0-8191a9de66dd"))))))
 
 (describe "vino-rating--create"
   :var* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
@@ -1054,11 +1054,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :carbonation 'still
              :colour 'red
              :sweetness 'dry
-             :producer "9462dfad-603c-4094-9aca-a9042cec5dd2"
+             :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
              :name "Bombolieri BB"
              :vintage 2017
-             :appellation "8353e2fc-8034-4540-8254-4b63fb5a421a"
-             :grapes '("cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+             :appellation (vulpea-db-get-by-id "8353e2fc-8034-4540-8254-4b63fb5a421a")
+             :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :alcohol 13
              :sugar 1
              :acquired 5
@@ -1066,7 +1066,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
-             :ratings (list (vulpea-note-id note))))
+             :ratings (list note)))
     (expect (vulpea-db-get-file-by-id id)
             :to-contain-exactly
             (format
