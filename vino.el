@@ -838,27 +838,44 @@ Return `vulpea-note'."
 (defun vino-region-find-file ()
   "Select and find region note."
   (interactive)
-  (let ((res (vino-region-select)))
-    (if (vulpea-note-id res)
-        (find-file (vulpea-note-path res))
-      (user-error
-       "Can not visit region entry that does not exist: %s"
-       (vulpea-note-title res)))))
+  (if-let* ((note (vino-region-select))
+            (path (vulpea-note-path note)))
+      (find-file path)
+    (user-error
+     "Can not visit region entry that does not exist: %s"
+     (vulpea-note-title note))))
 
 ;;;###autoload
 (defun vino-region-select ()
   "Select a wine region or appellation note.
 
-See `vulpea' documentation for more information on note
-structure."
-  (vulpea-select
-   "Region"
-   nil nil
-   (lambda (note)
-     (let ((tags (vulpea-note-tags note)))
-       (and (seq-contains-p tags "wine")
-            (or (seq-contains-p tags "appellation")
-                (seq-contains-p tags "region")))))))
+When region or appellation note does not exist, it is created
+using `vino-region-create' or `vino-appellation-create' depending
+on user decision.
+
+Return `vulpea-note'."
+  (let ((note
+         (vulpea-select
+          "Region"
+          nil nil
+          (lambda (note)
+            (let ((tags (vulpea-note-tags note)))
+              (and (seq-contains-p tags "wine")
+                   (or (seq-contains-p tags "appellation")
+                       (seq-contains-p tags "region"))))))))
+    (if (vulpea-note-id note)
+        note
+      (pcase (completing-read
+              (format "Region %s does not exist. What to do?"
+                      (vulpea-note-title note))
+              '("Create region"
+                "Create appellation"
+                "Ignore"))
+        (`"Create region"
+         (vino-region-create (vulpea-note-title note)))
+        (`"Create appellation"
+         (vino-appellation-create (vulpea-note-title note)))
+        (_ note)))))
 
 
 ;;; Grapes
@@ -897,12 +914,12 @@ Return `vulpea-note'."
 (defun vino-grape-find-file ()
   "Select and find grape note."
   (interactive)
-  (let ((res (vino-grape-select)))
-    (if (vulpea-note-id res)
-        (find-file (vulpea-note-path res))
-      (user-error
-       "Can not visit grape entry that does not exist: %s"
-       (vulpea-note-title res)))))
+  (if-let* ((note (vino-grape-select))
+            (path (vulpea-note-path note)))
+      (find-file path)
+    (user-error
+     "Can not visit grape entry that does not exist: %s"
+     (vulpea-note-title note))))
 
 ;;;###autoload
 (defun vino-grape-select ()
@@ -965,9 +982,12 @@ Return `vulpea-note'."
 (defun vino-producer-find-file ()
   "Select and find producer note."
   (interactive)
-  (when-let* ((note (vino-producer-select))
-              (path (vulpea-note-path note)))
-    (find-file path)))
+  (if-let* ((note (vino-producer-select))
+            (path (vulpea-note-path note)))
+      (find-file path)
+    (user-error
+     "Can not visit region entry that does not exist: %s"
+     (vulpea-note-title note))))
 
 ;;;###autoload
 (defun vino-producer-select ()

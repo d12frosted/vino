@@ -487,6 +487,7 @@
              :id id))))
 
 (describe "vino-region-select"
+  :var (id ts)
   (before-all
     (vino-test--init))
 
@@ -515,7 +516,47 @@
              :title "Cerasuolo di Vittoria DOCG"
              :tags '("wine" "appellation")
              :level 0
-             :id "6a0819f3-0770-4481-9754-754ca397800b"))))
+             :id "6a0819f3-0770-4481-9754-754ca397800b")))
+
+  (it "creates a new region note when selecting non-existing name"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (spy-on 'org-roam-completion--completing-read :and-return-value "Codru")
+    (spy-on 'completing-read :and-return-value "Create region")
+    (spy-on 'read-string :and-return-value "")
+    (expect (vino-region-select)
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/region/%s-codru.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Codru"
+             :tags '("wine" "region")
+             :level 0
+             :id id)))
+
+  (it "creates a new appellation note when selecting non-existing name"
+    (setq id (org-id-new)
+          ts (current-time))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (spy-on 'org-roam-completion--completing-read :and-return-value "Gattinara DOCG")
+    (spy-on 'completing-read :and-return-value "Create appellation")
+    (spy-on 'read-string :and-return-value "")
+    (expect (vino-region-select)
+            :to-equal
+            (make-vulpea-note
+             :path (expand-file-name
+                    (format "wine/appellation/%s-gattinara_docg.org"
+                            (format-time-string "%Y%m%d%H%M%S" ts))
+                    org-roam-directory)
+             :title "Gattinara DOCG"
+             :tags '("wine" "appellation")
+             :level 0
+             :id id))))
 
 (describe "vino-entry-consume"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
