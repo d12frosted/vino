@@ -358,6 +358,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
+    (spy-on 'y-or-n-p :and-return-value t)
     (spy-on 'read-string :and-return-value "")
     (expect (vino-grape-select)
             :to-equal

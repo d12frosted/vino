@@ -24,6 +24,9 @@ Primarily a stabilization and bug-fix release.
 - [[https://github.com/d12frosted/vino/pull/85][vino#85]] Allow to create producer note when selecting non-existent producer.
   Affects =vino-producer-select=, =vino-producer-find-file= and
   =vino-entry-create=.
+- [[https://github.com/d12frosted/vino/pull/86][vino#86]] Align behaviour of =vino-grape-select= with =vino-producer-select=, so
+  the user is prompted to create a note when selecting a non-existent grape
+  note.
 
 ** v0.1
 :PROPERTIES:

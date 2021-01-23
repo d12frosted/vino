@@ -908,8 +908,11 @@ Return `vulpea-note'."
 (defun vino-grape-select ()
   "Select a grape note.
 
+When grape note does not exist, it is created using
+`vino-grape-create' if user decides to do so.
+
 Return `vulpea-note'."
-  (let ((result
+  (let ((note
          (vulpea-select
           "Grape"
           nil nil
@@ -917,9 +920,13 @@ Return `vulpea-note'."
             (let ((tags (vulpea-note-tags note)))
               (and (seq-contains-p tags "wine")
                    (seq-contains-p tags "grape")))))))
-    (if (vulpea-note-id result)
-        result
-      (vino-grape-create (vulpea-note-title result)))))
+    (if (vulpea-note-id note)
+        note
+      (if (y-or-n-p
+           (format "Grape %s does not exist. Create it? "
+                   (vulpea-note-title note)))
+          (vino-grape-create (vulpea-note-title note))
+        note))))
 
 
 ;;; Producers
@@ -969,8 +976,7 @@ Return `vulpea-note'."
 When producer note does not exist, it is created using
 `vino-producer-create' if user decides to do so.
 
-See `vulpea' documentation for more information on note
-structure."
+Return `vulpea-note'."
   (let ((note (vulpea-select
                "Producer"
                nil nil
