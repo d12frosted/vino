@@ -638,6 +638,7 @@ explicitly."
     (vulpea-meta-set note "consumed" out 'append)
     (vulpea-meta-set note "available" cur 'append)))
 
+;;;###autoload
 (defun vino-entry-acquire (&optional note-or-id
                                      amount source price date)
   "Acquire AMOUNT of `vino-entry' from SOURCE for PRICE at DATE.
@@ -661,6 +662,7 @@ explicitly."
         (vulpea-meta-set note "price" (cons price prices))))
     (vino-entry-update-availability id)))
 
+;;;###autoload
 (defun vino-entry-consume (&optional note-or-id amount action date)
   "Consume AMOUNT of `vino-entry' because of ACTION at DATE.
 
@@ -685,6 +687,7 @@ explicitly."
                (y-or-n-p "Rate? "))
       (vino-entry-rate id date))))
 
+;;;###autoload
 (defun vino-entry-rate (&optional note-or-id date)
   "Rate a `vino-entry' on DATE.
 

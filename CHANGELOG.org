@@ -18,6 +18,7 @@ Primarily a stabilization and bug-fix release.
 
 - [[https://github.com/d12frosted/vino/pull/84][vino#84]] Fix invalid vintage in rating title both in =vino-rating--create= and
   =vino-entry-update-title=.
+- [[https://github.com/d12frosted/vino/pull/89][vino#89]] Add missing =autoload= comments.
 
 *Features*
 
@@ -27,9 +28,11 @@ Primarily a stabilization and bug-fix release.
 - [[https://github.com/d12frosted/vino/pull/86][vino#86]] Align behaviour of =vino-grape-select= with =vino-producer-select=, so
   the user is prompted to create a note when selecting a non-existent grape
   note.
-- [[https://github.com/d12frosted/vino/pull/86][vino#86]] Allow to create region or appellation note when selecting non-existent
+- [[https://github.com/d12frosted/vino/pull/87][vino#87]] Allow to create region or appellation note when selecting non-existent
   region or appellation. Affects =vino-region-select=, =vino-region-find-file=
   and =vino-entry-create=.
+- [[https://github.com/d12frosted/vino/pull/88][vino#88]] Switch to =vulpea-utils-with-note=.
+- [[https://github.com/d12frosted/vino/pull/88][vino#88]] Use notes instead of ids in vino-netry
 
 ** v0.1
 :PROPERTIES:
