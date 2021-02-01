@@ -417,7 +417,9 @@ Variables in the capture context are provided by
 (defun vino-entry-create ()
   "Create a `vino-entry'."
   (interactive)
-  (vino-entry--create (vino-entry-read)))
+  (let ((note (vino-entry--create (vino-entry-read))))
+    (when (y-or-n-p "Acquire? ")
+      (vino-entry-acquire note))))
 
 (defun vino-entry--create (vino &optional id)
   "Create an entry for VINO.

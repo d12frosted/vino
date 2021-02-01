@@ -35,6 +35,7 @@ Primarily a stabilization and bug-fix release.
   and =vino-entry-create=.
 - [[https://github.com/d12frosted/vino/pull/88][vino#88]] Switch to =vulpea-utils-with-note=.
 - [[https://github.com/d12frosted/vino/pull/88][vino#88]] Use notes instead of ids in vino-netry
+- [[https://github.com/d12frosted/vino/pull/91][vino#91]] Ask to acquire wine upon creation.
 
 ** v0.1
 :PROPERTIES:
