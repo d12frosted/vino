@@ -725,6 +725,7 @@ explicitly."
   "Select and return a `vulpea-note' representing `vino-entry'."
   (vulpea-select
    "Wine"
+   :require-match t
    :filter-fn
    (lambda (note)
      (let ((tags (vulpea-note-tags note)))
