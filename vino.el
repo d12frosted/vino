@@ -440,7 +440,10 @@ ID is generated unless passed."
                         (if (numberp vintage)
                             (number-to-string vintage)
                           vintage)))
-         (note (vulpea-create title vino-entry-template id)))
+         (note (vulpea-create title
+                              vino-entry-template
+                              (when id
+                                (list (cons 'id id))))))
     ;; TODO: optimize multiple calls
     (vulpea-meta-set
      note "carbonation" (vino-entry-carbonation vino) 'append)
@@ -722,7 +725,7 @@ explicitly."
   "Select and return a `vulpea-note' representing `vino-entry'."
   (vulpea-select
    "Wine"
-   nil nil
+   :filter-fn
    (lambda (note)
      (let ((tags (vulpea-note-tags note)))
        (and (seq-contains-p tags "wine")
@@ -853,7 +856,7 @@ Return `vulpea-note'."
   (let ((note
          (vulpea-select
           "Region"
-          nil nil
+          :filter-fn
           (lambda (note)
             (let ((tags (vulpea-note-tags note)))
               (and (seq-contains-p tags "wine")
@@ -928,7 +931,7 @@ Return `vulpea-note'."
   (let ((note
          (vulpea-select
           "Grape"
-          nil nil
+          :filter-fn
           (lambda (note)
             (let ((tags (vulpea-note-tags note)))
               (and (seq-contains-p tags "wine")
@@ -995,7 +998,7 @@ When producer note does not exist, it is created using
 Return `vulpea-note'."
   (let ((note (vulpea-select
                "Producer"
-               nil nil
+               :filter-fn
                (lambda (note)
                  (let ((tags (vulpea-note-tags note)))
                    (and (seq-contains-p tags "wine")
