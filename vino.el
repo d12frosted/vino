@@ -311,12 +311,7 @@ Variables in the capture context are provided by
 (defun vino-entry-find-file ()
   "Select and find vino note."
   (interactive)
-  (let ((res (vino-entry-note-select)))
-    (if (vulpea-note-id res)
-        (find-file (vulpea-note-path res))
-      (user-error
-       "Can not visit vino entry that does not exist: %s"
-       (vulpea-note-title res)))))
+  (find-file (vulpea-note-path (vino-entry-note-select))))
 
 ;;;###autoload
 (defun vino-entry-read ()
@@ -838,12 +833,7 @@ Return `vulpea-note'."
 (defun vino-region-find-file ()
   "Select and find region note."
   (interactive)
-  (if-let* ((note (vino-region-select))
-            (path (vulpea-note-path note)))
-      (find-file path)
-    (user-error
-     "Can not visit region entry that does not exist: %s"
-     (vulpea-note-title note))))
+  (find-file (path (vulpea-note-path (vino-region-select)))))
 
 ;;;###autoload
 (defun vino-region-select ()
@@ -914,12 +904,7 @@ Return `vulpea-note'."
 (defun vino-grape-find-file ()
   "Select and find grape note."
   (interactive)
-  (if-let* ((note (vino-grape-select))
-            (path (vulpea-note-path note)))
-      (find-file path)
-    (user-error
-     "Can not visit grape entry that does not exist: %s"
-     (vulpea-note-title note))))
+  (find-file (vulpea-note-path (vino-grape-select))))
 
 ;;;###autoload
 (defun vino-grape-select ()
@@ -982,12 +967,7 @@ Return `vulpea-note'."
 (defun vino-producer-find-file ()
   "Select and find producer note."
   (interactive)
-  (if-let* ((note (vino-producer-select))
-            (path (vulpea-note-path note)))
-      (find-file path)
-    (user-error
-     "Can not visit region entry that does not exist: %s"
-     (vulpea-note-title note))))
+  (find-file (vulpea-note-path (vino-producer-select))))
 
 ;;;###autoload
 (defun vino-producer-select ()
