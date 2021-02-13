@@ -836,7 +836,7 @@ Return `vulpea-note'."
 (defun vino-region-find-file ()
   "Select and find region note."
   (interactive)
-  (find-file (path (vulpea-note-path (vino-region-select)))))
+  (find-file (vulpea-note-path (vino-region-select))))
 
 ;;;###autoload
 (defun vino-region-select ()

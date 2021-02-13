@@ -21,6 +21,7 @@ Primarily a stabilization and bug-fix release.
 - [[https://github.com/d12frosted/vino/pull/89][vino#89]] Add missing =autoload= comments.
 - [[https://github.com/d12frosted/vino/pull/92][vino#92]] Do not allow to select vino entry that does not exist in
   =vino-entry-note-select=.
+- Fix =vino-region-find-file= function.
 
 *Features*
 
