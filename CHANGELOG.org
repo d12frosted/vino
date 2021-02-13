@@ -36,6 +36,7 @@ Primarily a stabilization and bug-fix release.
 - [[https://github.com/d12frosted/vino/pull/88][vino#88]] Switch to =vulpea-utils-with-note=.
 - [[https://github.com/d12frosted/vino/pull/88][vino#88]] Use notes instead of ids in vino-netry
 - [[https://github.com/d12frosted/vino/pull/91][vino#91]] Ask to acquire wine upon creation.
+- Propose maximum 1 bottle of wine during consumption as default value.
 
 ** v0.1
 :PROPERTIES:

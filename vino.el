@@ -677,7 +677,8 @@ explicitly."
          (amount (or amount
                      (read-number
                       "Amount: "
-                      (or (vulpea-meta-get note "available" 'number)
+                      (or (min 1.0 (vulpea-meta-get
+                                    note "available" 'number))
                           1))))
          (date (or date (org-read-date nil t))))
     (funcall vino-availability-sub-fn
