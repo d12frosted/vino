@@ -39,6 +39,12 @@ Primarily a stabilization and bug-fix release.
 - [[https://github.com/d12frosted/vino/pull/91][vino#91]] Ask to acquire wine upon creation.
 - Propose maximum 1 bottle of wine during consumption as default value.
 
+*Breaking changes*
+
+- Remove TIME-STAMP from templates. If user wants to use it, it's better to
+  configure template, as timestamps require additional configurations and are
+  not covered by =vino=.
+
 ** v0.1
 :PROPERTIES:
 :ID:                     81aaf405-b49b-4b96-811d-fb6989e6a26f

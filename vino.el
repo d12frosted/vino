@@ -105,8 +105,7 @@ DATE arguments.")
             ":PROPERTIES:\n"
             ":ID:                     ${id}\n"
             ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
+            "#+TITLE: ${title}\n\n")
     :unnarrowed t
     :immediate-finish t)
   "Capture template for rating entry.
@@ -278,8 +277,7 @@ The process is simple:
             ":PROPERTIES:\n"
             ":ID:                     ${id}\n"
             ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
+            "#+TITLE: ${title}\n\n")
     :unnarrowed t
     :immediate-finish t)
   "Capture template for wine entry.
@@ -782,8 +780,7 @@ or ask for user to select a note."
             ":PROPERTIES:\n"
             ":ID:                     ${id}\n"
             ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
+            "#+TITLE: ${title}\n\n")
     :unnarrowed t
     :immediate-finish t)
   "Capture template for region entry.
@@ -801,8 +798,7 @@ Variables in the capture context are provided by
             ":PROPERTIES:\n"
             ":ID:                     ${id}\n"
             ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
+            "#+TITLE: ${title}\n\n")
     :unnarrowed t
     :immediate-finish t)
   "Capture template for appellation entry.
@@ -883,8 +879,7 @@ Return `vulpea-note'."
             ":PROPERTIES:\n"
             ":ID:                     ${id}\n"
             ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
+            "#+TITLE: ${title}\n\n")
     :unnarrowed t
     :immediate-finish t)
   "Capture template for grape entry.
@@ -946,8 +941,7 @@ Return `vulpea-note'."
             ":PROPERTIES:\n"
             ":ID:                     ${id}\n"
             ":END:\n"
-            "#+TITLE: ${title}\n"
-            "#+TIME-STAMP: <>\n\n")
+            "#+TITLE: ${title}\n\n")
     :unnarrowed t
     :immediate-finish t)
   "Capture template for producer entry.

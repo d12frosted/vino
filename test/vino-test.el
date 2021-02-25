@@ -247,7 +247,6 @@
 :ID:                     %s
 :END:
 #+TITLE: Arianna Occhipinti Grotte Alte 2014
-#+TIME-STAMP: <>
 
 - carbonation :: still
 - colour :: red
@@ -1131,7 +1130,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:                     %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017 - %s
-#+TIME-STAMP: <>
 
 - wine :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017]]
 - date :: %s
