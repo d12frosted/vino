@@ -66,6 +66,26 @@
   (delete-file org-roam-db-location)
   (org-roam-db--close))
 
+(buttercup-define-matcher :to-be-note-like (a b)
+  (cl-destructuring-bind
+        ((a-expr . a)
+         (b-expr . b))
+        (mapcar #'buttercup--expr-and-value (list a b))
+      (let* ((spec (format-spec-make
+                    ?A (format "%S" a-expr)
+                    ?a (format "%S" a)
+                    ?B (format "%S" b-expr)
+                    ?b (format "%S" b))))
+        (let ((o (copy-vulpea-note a)))
+          (setf (vulpea-note-meta o) nil)
+          (if (equal o b)
+              (cons t (buttercup-format-spec
+                       "Expected `%A' not to be like `'%b, but it was."
+                       spec))
+            (cons nil (buttercup-format-spec
+                       "Expected `%A' to be like `%b', but instead it was `%a'."
+                       spec)))))))
+
 (buttercup-define-matcher :to-contain-exactly (file value)
   (cl-destructuring-bind
       ((file-expr . file) (value-expr . value))
@@ -125,7 +145,7 @@
     (spy-on 'org-roam-completion--completing-read
             :and-return-value "(wine,cellar) Arianna Occhipinti Bombolieri BB 2017")
     (expect (vino-entry-note-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name "wine/cellar/c9937e3e-c83d-4d8d-a612-6110e6706252.org" org-roam-directory)
              :title "Arianna Occhipinti Bombolieri BB 2017"
@@ -320,7 +340,7 @@
     (spy-on 'current-time :and-return-value ts)
     (spy-on 'read-string :and-return-value "")
     (expect (vino-grape-create "Slarina")
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/grape/%s-slarina.org"
@@ -343,7 +363,7 @@
     (spy-on 'org-roam-completion--completing-read
             :and-return-value "(wine,grape) Frappato")
     (expect (vino-grape-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
              :title "Frappato"
@@ -360,7 +380,7 @@
     (spy-on 'y-or-n-p :and-return-value t)
     (spy-on 'read-string :and-return-value "")
     (expect (vino-grape-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/grape/%s-slarina.org"
@@ -385,7 +405,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-producer-create "Vino di Anna")
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/producer/%s-vino_di_anna.org"
@@ -408,7 +428,7 @@
     (spy-on 'org-roam-completion--completing-read
             :and-return-value "(wine,producer) Arianna Occhipinti")
     (expect (vino-producer-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
              :title "Arianna Occhipinti"
@@ -424,7 +444,7 @@
     (spy-on 'org-roam-completion--completing-read :and-return-value "Vino di Anna")
     (spy-on 'y-or-n-p :and-return-value t)
     (expect (vino-producer-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/producer/%s-vino_di_anna.org"
@@ -449,7 +469,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-region-create "Codru")
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/region/%s-codru.org"
@@ -474,7 +494,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-appellation-create "Gattinara DOCG")
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/appellation/%s-gattinara_docg.org"
@@ -497,7 +517,7 @@
     (spy-on 'org-roam-completion--completing-read
             :and-return-value "(wine,region) Central Otago")
     (expect (vino-region-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
              :title "Central Otago"
@@ -509,7 +529,7 @@
     (spy-on 'org-roam-completion--completing-read
             :and-return-value "(wine,appellation) Cerasuolo di Vittoria DOCG")
     (expect (vino-region-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
              :title "Cerasuolo di Vittoria DOCG"
@@ -526,7 +546,7 @@
     (spy-on 'completing-read :and-return-value "Create region")
     (spy-on 'read-string :and-return-value "")
     (expect (vino-region-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/region/%s-codru.org"
@@ -546,7 +566,7 @@
     (spy-on 'completing-read :and-return-value "Create appellation")
     (spy-on 'read-string :and-return-value "")
     (expect (vino-region-select)
-            :to-equal
+            :to-be-note-like
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/appellation/%s-gattinara_docg.org"
