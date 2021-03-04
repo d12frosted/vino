@@ -58,6 +58,7 @@
     (setq org-roam-directory new-dir
           org-roam-tag-sources '(prop all-directories))
     (org-roam-mode +1)
+    (vulpea-setup)
     (sleep-for 2)))
 
 (defun vino-test--teardown ()

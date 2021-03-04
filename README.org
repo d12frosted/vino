@@ -110,6 +110,8 @@ MELPA, so you have to install it as well.
   (straight-use-package
    '(vulpea :type git :host github :repo "d12frosted/vulpea"))
 
+  (vulpea-setup)
+
   (straight-use-package
    '(vino :type git :host github :repo "d12frosted/vino"))
 #+end_src
@@ -121,7 +123,9 @@ In case you have [[https://github.com/raxod502/straight.el/#integration-with-use
     :straight (vulpea
                :type git
                :host github
-               :repo "d12frosted/vulpea"))
+               :repo "d12frosted/vulpea")
+    :hook
+    (after-init . vulpea-setup))
 
   (use-package vino
     :straight (vino
