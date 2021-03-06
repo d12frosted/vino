@@ -71,6 +71,13 @@ Orange wine is marked as white.")
                      doux))
   "List of valid sweetness levels per carbonation type.")
 
+(defvar vino-db-location (expand-file-name
+                          "vino.db"
+                          user-emacs-directory)
+  "The full path to file where the `vino' database is stored.
+
+If this is non-nil, the `vino' sqlite database is saved here.")
+
 
 ;;; Availability
 
@@ -91,6 +98,15 @@ DATE arguments.")
 
 Function is called with ID of `vino-entry', AMOUNT, ACTION and
 DATE arguments.")
+
+
+;;; Setup
+
+(defun vino-setup ()
+  "Setup `vino' library."
+  (advice-add 'org-roam-db--update-files
+              :after
+              #'vino-db--update-files))
 
 
 ;;; Rating
@@ -1001,6 +1017,214 @@ Return `vulpea-note'."
     (read-string "Price: ")))
 
 
+;;; Database
+
+(defvar vino-db--connection (make-hash-table :test #'equal)
+  "Database connection to `vino' database.")
+
+(defconst vino-db--version 1
+  "Version of `vino' database.")
+
+(defconst vino-db--schemata
+  '((cellar
+     [(id :unique :primary-key)
+      (file :unique)
+      (carbonation :not-null)
+      (colour :not-null)
+      (sweetness :not-null)
+      (producer :not-null)
+      (name :not-null)
+      (vintage)
+      (appellation)
+      (region)
+      (grapes)
+      (alcohol :not-null)
+      (sugar)
+      (prices)
+      (acquired :not-null)
+      (consumed :not-null)
+      (rating)
+      (ratings)])))
+
+(defun vino-db-query (sql &rest args)
+  "Run SQL query on `vino' database with ARGS.
+
+SQL can be either the emacsql vector representation, or a
+string."
+  (if (stringp sql)
+      (emacsql (vino-db) (apply #'format sql args))
+    (apply #'emacsql (vino-db) sql args)))
+
+(defun vino-db ()
+  "Entrypoint to the `vino' sqlite database.
+
+Initializes and stores the database, and the database connection.
+Performs a database upgrade when required."
+  (unless (and (vino-db--get-connection)
+               (emacsql-live-p (vino-db--get-connection)))
+    (let ((init-db (not (file-exists-p vino-db-location))))
+      (make-directory (file-name-directory vino-db-location) t)
+      (let ((conn (emacsql-sqlite3 vino-db-location)))
+        (set-process-query-on-exit-flag (emacsql-process conn) nil)
+        (puthash (expand-file-name vino-db-location)
+                 conn
+                 vino-db--connection)
+        (when init-db
+          (vino-db--init conn))
+        (let* ((version (caar (emacsql conn "PRAGMA user_version")))
+               (version (vino-db--upgrade-maybe conn version)))
+          (cond
+           ((> version vino-db--version)
+            (emacsql-close conn)
+            (user-error
+             "The database was created with a newer vino version.  "
+             "You need to update the Org-roam package"))
+           ((< version vino-db--version)
+            (emacsql-close conn)
+            (error "BUG: The Org-roam database scheme changed %s"
+                   "and there is no upgrade path")))))))
+  (vino-db--get-connection))
+
+(defun vino-db--init (db)
+  "Initialize DB with the correct schema and user version."
+  (emacsql-with-transaction db
+    (pcase-dolist (`(,table . ,schema) vino-db--schemata)
+      (emacsql db [:create-table $i1 $S2] table schema))
+    (emacsql db (format "PRAGMA user_version = %s"
+                        vino-db--version))))
+
+(defun vino-db--get-connection ()
+  "Return the database connection, if any."
+  (gethash (expand-file-name vino-db-location)
+           vino-db--connection))
+
+(defun vino-db--close (&optional db)
+  "Closes the database connection for database DB."
+  (unless db
+    (setq db (vino-db--get-connection)))
+  (when (and db (emacsql-live-p db))
+    (emacsql-close db)))
+
+(defun vino-db--upgrade-maybe (db version)
+  "Upgrades the database schema for DB, if VERSION is old."
+  (emacsql-with-transaction db
+    'ignore
+    (if (< version vino-db--version)
+        (progn
+          (user-error "Not implemented"))))
+  version)
+
+(defun vino-db-build-cache (&optional force)
+  "Build the cache for `vino'.
+
+If FORCE, force a rebuild of the cache from scratch."
+  (interactive "P")
+  (when force (delete-file vino-db-location))
+  (vino-db--close)
+  (vino-db)
+  (let* ((notes (vulpea-db-query #'vino-entry-note-p))
+         (current-entries (vino-db--get-current-entries))
+         (modified-entries nil)
+         (deleted-count 0))
+    (dolist (note notes)
+      (let* ((contents-hash
+              (org-roam-db--file-hash
+               (vulpea-note-path note))))
+        (unless (string=
+                 (gethash (vulpea-note-id note)
+                          current-entries)
+                 contents-hash)
+          (push (cons note contents-hash) modified-entries)))
+      (remhash (vulpea-note-id note) current-entries))
+    (dolist (note (hash-table-keys current-entries))
+      ;; These notes are no longer around, remove from cache...
+      (vino-db--clear-note note)
+      (setq deleted-count (1+ deleted-count)))
+    (vino-db--update-notes modified-entries)
+    (message "(vino) total: Δ%s, modified: Δ%s, deleted: Δ%s"
+             (length notes)
+             (length modified-entries)
+             deleted-count)))
+
+(defun vino-db--get-current-entries ()
+  "Return a hash-table of entry id to the hash of its content."
+  (let* ((entries (vino-db-query [:select * :from cellar]))
+         (current-files (org-roam-db--get-current-files))
+         (ht (make-hash-table :test #'equal)))
+    (dolist (row entries)
+      (puthash (car row) (gethash (cadr row) current-files) ht))
+    ht))
+
+(defun vino-db--update-notes (modified-notes)
+  "Update `vino' cache for a list of MODIFIED-NOTES.
+
+Notes is a list of (note . hash) pairs."
+  (pcase-dolist (`(,note . _) modified-notes)
+    (vino-db--clear-note note))
+  (let ((modified-count 0))
+    (pcase-dolist (`(,note . _) modified-notes)
+      (message "(vino) Processed %s/%s modified notes..."
+               modified-count
+               (length modified-notes))
+      (vino-db--update-note note)
+      (setq modified-count (1+ modified-count)))))
+
+(defun vino-db--update-files (modified-files)
+  "Update `vino' cache for a list of MODIFIED-FILES.
+
+Files is a list of (file . hash) pairs."
+  (vino-db--update-notes
+   (seq-map
+    (lambda (x)
+      (cons
+       (vulpea-db-get-by-id
+        (vulpea-db-get-id-by-file (car x)))
+       (cdr x)))
+    modified-files)))
+
+(defun vino-db--update-note (note)
+  "Update `vino' cache for a NOTE."
+  (let* ((id (vulpea-note-id note))
+         (entry (vino-entry-get-by-id id)))
+    (vino-db--update-entry id (vulpea-note-path note) entry)))
+
+(defun vino-db--update-entry (id file entry)
+  "Update `vino' cache for an ENTRY with ID in FILE."
+  (vino-db-query
+   [:insert :into cellar
+    :values $v1]
+   (list
+    (vector
+     id
+     file
+     (vino-entry-carbonation entry)
+     (vino-entry-colour entry)
+     (vino-entry-sweetness entry)
+     (vulpea-note-id (vino-entry-producer entry))
+     (vino-entry-name entry)
+     (vino-entry-vintage entry)
+     (when-let ((n (vino-entry-appellation entry)))
+       (vulpea-note-id n))
+     (when-let ((n (vino-entry-region entry)))
+       (vulpea-note-id n))
+     (seq-map #'vulpea-note-id (vino-entry-grapes entry))
+     (vino-entry-alcohol entry)
+     (vino-entry-sugar entry)
+     (vino-entry-price entry)
+     (vino-entry-acquired entry)
+     (vino-entry-consumed entry)
+     (vino-entry-rating entry)
+     (seq-map #'vulpea-note-id (vino-entry-ratings entry))))))
+
+(defun vino-db--clear-note (note)
+  "Remove any db information related to NOTE."
+  (when-let ((id (vulpea-note-id note)))
+    (vino-db-query
+     [:delete :from cellar
+      :where (= id $s1)]
+     id)))
+
+
 ;;; Utilities
 
 ;;;###autoload
@@ -1027,6 +1251,8 @@ Return `vulpea-note'."
 If STR is equal to NIL-STR, then nil is the result."
   (when (and str (not (string-equal str nil-str)))
     (string-to-number str)))
+
+
 
 (provide 'vino)
 ;;; vino.el ends here
