@@ -1174,13 +1174,15 @@ Notes is a list of (note . hash) pairs."
 
 Files is a list of (file . hash) pairs."
   (vino-db--update-notes
-   (seq-map
-    (lambda (x)
-      (cons
-       (vulpea-db-get-by-id
-        (vulpea-db-get-id-by-file (car x)))
-       (cdr x)))
-    modified-files)))
+   (seq-filter
+    (lambda (x) (vino-entry-p (car x)))
+    (seq-map
+     (lambda (x)
+       (cons
+        (vulpea-db-get-by-id
+         (vulpea-db-get-id-by-file (car x)))
+        (cdr x)))
+     modified-files))))
 
 (defun vino-db--update-note (note)
   "Update `vino' cache for a NOTE."
