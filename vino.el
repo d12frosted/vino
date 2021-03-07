@@ -104,9 +104,9 @@ DATE arguments.")
 
 (defun vino-setup ()
   "Setup `vino' library."
-  (advice-add 'org-roam-db--update-files
+  (advice-add 'org-roam-db-build-cache
               :after
-              #'vino-db--update-files))
+              #'vino-db-build-cache))
 
 
 ;;; Rating
@@ -1168,21 +1168,6 @@ Notes is a list of (note . hash) pairs."
                (length modified-notes))
       (vino-db--update-note note)
       (setq modified-count (1+ modified-count)))))
-
-(defun vino-db--update-files (modified-files)
-  "Update `vino' cache for a list of MODIFIED-FILES.
-
-Files is a list of (file . hash) pairs."
-  (vino-db--update-notes
-   (seq-filter
-    (lambda (x) (vino-entry-p (car x)))
-    (seq-map
-     (lambda (x)
-       (cons
-        (vulpea-db-get-by-id
-         (vulpea-db-get-id-by-file (car x)))
-        (cdr x)))
-     modified-files))))
 
 (defun vino-db--update-note (note)
   "Update `vino' cache for a NOTE."
