@@ -60,7 +60,7 @@
     (org-roam-mode +1)
     (vulpea-setup)
     (vino-setup)
-    (sleep-for 2)))
+    (org-roam-db-build-cache)))
 
 (defun vino-test--teardown ()
   "Teardown testing environment."
