@@ -1181,15 +1181,17 @@ If FORCE, force a rebuild of the cache from scratch."
                            (vulpea-note-tags n)
                            "rating"))
                         notes))))
-    (message (concat  "(vino)"
-                      " Cellar (total: %s, modified: %s, deleted: %s)"
-                      " Ratings (total: %s, modified: %s, deleted: %s)")
-             (plist-get entries-res :total)
-             (plist-get entries-res :modified)
-             (plist-get entries-res :deleted)
-             (plist-get ratings-res :total)
-             (plist-get ratings-res :modified)
-             (plist-get ratings-res :deleted))))
+    (message
+     (concat
+      "(vino)"
+      " Cellar (total: %s, modified: %s, deleted: %s)"
+      " Ratings (total: %s, modified: %s, deleted: %s)")
+     (plist-get entries-res :total)
+     (plist-get entries-res :modified)
+     (plist-get entries-res :deleted)
+     (plist-get ratings-res :total)
+     (plist-get ratings-res :modified)
+     (plist-get ratings-res :deleted))))
 
 (defun vino-db--build-cache (table notes)
   "Build cache for TABLE from NOTES.
