@@ -1057,6 +1057,7 @@ Return `vulpea-note'."
   '((cellar
      [(id :unique :primary-key)
       (file :unique)
+      (hash :not-null)
       (carbonation :not-null)
       (colour :not-null)
       (sweetness :not-null)
@@ -1076,6 +1077,7 @@ Return `vulpea-note'."
     (ratings
      [(id :unique :primary-key)
       (file :unique)
+      (hash :not-null)
       (wine :not-null)
       (date :not-null)
       (version :not-null)
@@ -1219,11 +1221,10 @@ Return a property list (:total NUM :modified NUM :deleted NUM)"
   "Return a hash-table of note id to the hash of its content.
 
 Data is retrieved from TABLE."
-  (let* ((rows (vino-db-query `[:select * :from ,table]))
-         (current-files (org-roam-db--get-current-files))
+  (let* ((rows (vino-db-query `[:select [id hash] :from ,table]))
          (ht (make-hash-table :test #'equal)))
     (dolist (row rows)
-      (puthash (car row) (gethash (cadr row) current-files) ht))
+      (puthash (nth 0 row) (nth 1 row) ht))
     ht))
 
 (defun vino-db--update-notes (table notes)
@@ -1233,29 +1234,33 @@ Notes is a list of (note . hash) pairs."
   (pcase-dolist (`(,note . _) notes)
     (vino-db--clear-note table note))
   (let ((modified-count 0))
-    (pcase-dolist (`(,note . _) notes)
+    (pcase-dolist (`(,note . ,hash) notes)
       (message "(vino) Processed %s/%s modified notes from %s..."
                modified-count
                (length notes)
                table)
-      (vino-db--update-note table note)
+      (vino-db--update-note table hash note)
       (setq modified-count (1+ modified-count)))))
 
-(defun vino-db--update-note (table note)
-  "Update TABLE cache for a NOTE."
+(defun vino-db--update-note (table hash note)
+  "Update TABLE cache for a NOTE with HASH."
   (let ((id (vulpea-note-id note)))
     (pcase table
       ('cellar (vino-db--update-entry
                 id
                 (vulpea-note-path note)
+                hash
                 (vino-entry-get-by-id id)))
       ('ratings (vino-db--update-rating
                  id
                  (vulpea-note-path note)
+                 hash
                  (vino-rating-get-by-id id))))))
 
-(defun vino-db--update-entry (id file entry)
-  "Update `vino' cache for an ENTRY with ID in FILE."
+(defun vino-db--update-entry (id file hash entry)
+  "Update `vino' cache for ENTRY with ID.
+
+FILE and HASH are metadata."
   (vino-db-query
    [:insert :into cellar
     :values $v1]
@@ -1263,6 +1268,7 @@ Notes is a list of (note . hash) pairs."
     (vector
      id
      file
+     hash
      (vino-entry-carbonation entry)
      (vino-entry-colour entry)
      (vino-entry-sweetness entry)
@@ -1282,8 +1288,10 @@ Notes is a list of (note . hash) pairs."
      (vino-entry-rating entry)
      (seq-map #'vulpea-note-id (vino-entry-ratings entry))))))
 
-(defun vino-db--update-rating (id file rating)
-  "Update `vino' cache for an RATING with ID in FILE."
+(defun vino-db--update-rating (id file hash rating)
+  "Update `vino' cache for RATING with ID.
+
+FILE and HASH are metadata."
   (vino-db-query
    [:insert :into ratings
     :values $v1]
@@ -1291,6 +1299,7 @@ Notes is a list of (note . hash) pairs."
     (vector
      id
      file
+     hash
      (vulpea-note-id (vino-rating-wine rating))
      (vino-rating-date rating)
      (vino-rating-version rating)
