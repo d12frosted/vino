@@ -66,7 +66,8 @@
   "Teardown testing environment."
   (org-roam-mode -1)
   (delete-file org-roam-db-location)
-  (org-roam-db--close))
+  (org-roam-db--close)
+  (vino-db--close))
 
 (buttercup-define-matcher :to-be-note-like (a b)
   (cl-destructuring-bind
