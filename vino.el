@@ -112,6 +112,13 @@ DATE arguments.")
 ;;; Rating
 
 ;;;###autoload
+(cl-defstruct vino-rating
+  wine
+  date
+  version
+  total)
+
+;;;###autoload
 (defvar vino-rating-template
   `("d" "default" plain
     #'org-roam-capture--get-point
@@ -169,6 +176,27 @@ Each PROP can be of one of the following types:
   `cdr' of PROP result, function is called with without arguments
   during `vino-entry-rate' and `car' of the result is used as
   value.")
+
+;;;###autoload
+(defun vino-rating-get-by-id (id)
+  "Get `vino-rating' by ID."
+  (let ((note (vulpea-db-get-by-id id)))
+    (when (and note (vino-rating-note-p note))
+      (let ((meta (vulpea-meta note)))
+        (make-vino-rating
+         :wine (vulpea-meta-get! meta "wine" 'note)
+         :date (vulpea-meta-get! meta "date")
+         :version (vulpea-meta-get! meta "version" 'number)
+         :total (vulpea-meta-get! meta "total" 'number))))))
+
+;;;###autoload
+(defun vino-rating-note-p (note)
+  "Return non-nil if NOTE represents `vino-rating'."
+  (when-let* ((tags (vulpea-note-tags note))
+              (level (vulpea-note-level note)))
+    (and (equal level 0)
+         (seq-contains-p tags "wine")
+         (seq-contains-p tags "rating"))))
 
 ;;;###autoload
 (defun vino-rating-update (note-or-id)
@@ -1044,7 +1072,14 @@ Return `vulpea-note'."
       (acquired :not-null)
       (consumed :not-null)
       (rating)
-      (ratings)])))
+      (ratings)])
+    (ratings
+     [(id :unique :primary-key)
+      (file :unique)
+      (wine :not-null)
+      (date :not-null)
+      (version :not-null)
+      (total :not-null)])))
 
 (defun vino-db-query (sql &rest args)
   "Run SQL query on `vino' database with ARGS.
@@ -1122,9 +1157,44 @@ If FORCE, force a rebuild of the cache from scratch."
   (when force (delete-file vino-db-location))
   (vino-db--close)
   (vino-db)
-  (let* ((notes (vulpea-db-query #'vino-entry-note-p))
-         (current-entries (vino-db--get-current-entries))
-         (modified-entries nil)
+  (let* ((notes (vulpea-db-query
+                 (lambda (n)
+                   (let ((tags (vulpea-note-tags n)))
+                     (and (seq-contains-p tags "wine")
+                          (or (seq-contains-p tags "cellar")
+                              (seq-contains-p tags "rating")))))))
+         (entries-res (vino-db--build-cache
+                       'cellar
+                       (seq-filter
+                        (lambda (n)
+                          (seq-contains-p
+                           (vulpea-note-tags n)
+                           "cellar"))
+                        notes)))
+         (ratings-res (vino-db--build-cache
+                       'ratings
+                       (seq-filter
+                        (lambda (n)
+                          (seq-contains-p
+                           (vulpea-note-tags n)
+                           "rating"))
+                        notes))))
+    (message (concat  "(vino)"
+                      " Cellar (total: %s, modified: %s, deleted: %s)"
+                      " Ratings (total: %s, modified: %s, deleted: %s)")
+             (plist-get entries-res :total)
+             (plist-get entries-res :modified)
+             (plist-get entries-res :deleted)
+             (plist-get ratings-res :total)
+             (plist-get ratings-res :modified)
+             (plist-get ratings-res :deleted))))
+
+(defun vino-db--build-cache (table notes)
+  "Build cache for TABLE from NOTES.
+
+Return a property list (:total NUM :modified NUM :deleted NUM)"
+  (let* ((current-notes (vino-db--get-current-notes table))
+         (modified-notes nil)
          (deleted-count 0))
     (dolist (note notes)
       (let* ((contents-hash
@@ -1132,48 +1202,57 @@ If FORCE, force a rebuild of the cache from scratch."
                (vulpea-note-path note))))
         (unless (string=
                  (gethash (vulpea-note-id note)
-                          current-entries)
+                          current-notes)
                  contents-hash)
-          (push (cons note contents-hash) modified-entries)))
-      (remhash (vulpea-note-id note) current-entries))
-    (dolist (note (hash-table-keys current-entries))
+          (push (cons note contents-hash) modified-notes)))
+      (remhash (vulpea-note-id note) current-notes))
+    (dolist (note (hash-table-keys current-notes))
       ;; These notes are no longer around, remove from cache...
-      (vino-db--clear-note note)
+      (vino-db--clear-note table note)
       (setq deleted-count (1+ deleted-count)))
-    (vino-db--update-notes modified-entries)
-    (message "(vino) total: Δ%s, modified: Δ%s, deleted: Δ%s"
-             (length notes)
-             (length modified-entries)
-             deleted-count)))
+    (vino-db--update-notes table modified-notes)
+    (list :total (length notes)
+          :modified (length modified-notes)
+          :deleted deleted-count)))
 
-(defun vino-db--get-current-entries ()
-  "Return a hash-table of entry id to the hash of its content."
-  (let* ((entries (vino-db-query [:select * :from cellar]))
+(defun vino-db--get-current-notes (table)
+  "Return a hash-table of note id to the hash of its content.
+
+Data is retrieved from TABLE."
+  (let* ((rows (vino-db-query `[:select * :from ,table]))
          (current-files (org-roam-db--get-current-files))
          (ht (make-hash-table :test #'equal)))
-    (dolist (row entries)
+    (dolist (row rows)
       (puthash (car row) (gethash (cadr row) current-files) ht))
     ht))
 
-(defun vino-db--update-notes (modified-notes)
-  "Update `vino' cache for a list of MODIFIED-NOTES.
+(defun vino-db--update-notes (table notes)
+  "Update TABLE cache for a list of modified NOTES.
 
 Notes is a list of (note . hash) pairs."
-  (pcase-dolist (`(,note . _) modified-notes)
-    (vino-db--clear-note note))
+  (pcase-dolist (`(,note . _) notes)
+    (vino-db--clear-note table note))
   (let ((modified-count 0))
-    (pcase-dolist (`(,note . _) modified-notes)
-      (message "(vino) Processed %s/%s modified notes..."
+    (pcase-dolist (`(,note . _) notes)
+      (message "(vino) Processed %s/%s modified notes from %s..."
                modified-count
-               (length modified-notes))
-      (vino-db--update-note note)
+               (length notes)
+               table)
+      (vino-db--update-note table note)
       (setq modified-count (1+ modified-count)))))
 
-(defun vino-db--update-note (note)
-  "Update `vino' cache for a NOTE."
-  (let* ((id (vulpea-note-id note))
-         (entry (vino-entry-get-by-id id)))
-    (vino-db--update-entry id (vulpea-note-path note) entry)))
+(defun vino-db--update-note (table note)
+  "Update TABLE cache for a NOTE."
+  (let ((id (vulpea-note-id note)))
+    (pcase table
+      ('cellar (vino-db--update-entry
+                id
+                (vulpea-note-path note)
+                (vino-entry-get-by-id id)))
+      ('ratings (vino-db--update-rating
+                 id
+                 (vulpea-note-path note)
+                 (vino-rating-get-by-id id))))))
 
 (defun vino-db--update-entry (id file entry)
   "Update `vino' cache for an ENTRY with ID in FILE."
@@ -1203,12 +1282,26 @@ Notes is a list of (note . hash) pairs."
      (vino-entry-rating entry)
      (seq-map #'vulpea-note-id (vino-entry-ratings entry))))))
 
-(defun vino-db--clear-note (note)
-  "Remove any db information related to NOTE."
-  (when-let ((id (vulpea-note-id note)))
+(defun vino-db--update-rating (id file rating)
+  "Update `vino' cache for an RATING with ID in FILE."
+  (vino-db-query
+   [:insert :into ratings
+    :values $v1]
+   (list
+    (vector
+     id
+     file
+     (vulpea-note-id (vino-rating-wine rating))
+     (vino-rating-date rating)
+     (vino-rating-version rating)
+     (vino-rating-total rating)))))
+
+(defun vino-db--clear-note (table note)
+  "Remove any db information from TABLE related to NOTE."
+  (when-let ((id (if (stringp note) note (vulpea-note-id note))))
     (vino-db-query
-     [:delete :from cellar
-      :where (= id $s1)]
+     `[:delete :from ,table
+       :where (= id $s1)]
      id)))
 
 
