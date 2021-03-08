@@ -1201,9 +1201,7 @@ Return a property list (:total NUM :modified NUM :deleted NUM)"
          (modified-notes nil)
          (deleted-count 0))
     (dolist (note notes)
-      (let* ((contents-hash
-              (org-roam-db--file-hash
-               (vulpea-note-path note))))
+      (let* ((contents-hash (vulpea-utils-note-hash note)))
         (unless (string=
                  (gethash (vulpea-note-id note)
                           current-notes)
