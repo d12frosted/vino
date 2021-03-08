@@ -975,7 +975,7 @@ Return `vulpea-note'."
 (defvar vino-grape-template
   `("d" "default" plain
     #'org-roam-capture--get-point
-    "%(vino-resources-template)%?"
+    "%?"
     :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
     :head ,(concat
             ":PROPERTIES:\n"

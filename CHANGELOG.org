@@ -12,9 +12,13 @@
 :ID:                     16a41084-d445-47a2-adb5-eff9569dd8d4
 :END:
 
+*Breaking changes*
+
+- =vino-grape-template= does not include =vino-resources-template= anymore.
+
 ** v0.1.1
 :PROPERTIES:
-:ID:                     26667ab6-6896-44bc-94b1-2526bde8cca4
+:ID: 26667ab6-6896-44bc-94b1-2526bde8cca4
 :END:
 
 Primarily a stabilization and bug-fix release.
