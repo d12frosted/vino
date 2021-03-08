@@ -71,23 +71,23 @@
 
 (buttercup-define-matcher :to-be-note-like (a b)
   (cl-destructuring-bind
-        ((a-expr . a)
-         (b-expr . b))
-        (mapcar #'buttercup--expr-and-value (list a b))
-      (let* ((spec (format-spec-make
-                    ?A (format "%S" a-expr)
-                    ?a (format "%S" a)
-                    ?B (format "%S" b-expr)
-                    ?b (format "%S" b))))
-        (let ((o (copy-vulpea-note a)))
-          (setf (vulpea-note-meta o) nil)
-          (if (equal o b)
-              (cons t (buttercup-format-spec
-                       "Expected `%A' not to be like `'%b, but it was."
-                       spec))
-            (cons nil (buttercup-format-spec
-                       "Expected `%A' to be like `%b', but instead it was `%a'."
-                       spec)))))))
+      ((a-expr . a)
+       (b-expr . b))
+      (mapcar #'buttercup--expr-and-value (list a b))
+    (let* ((spec (format-spec-make
+                  ?A (format "%S" a-expr)
+                  ?a (format "%S" a)
+                  ?B (format "%S" b-expr)
+                  ?b (format "%S" b))))
+      (let ((o (copy-vulpea-note a)))
+        (setf (vulpea-note-meta o) nil)
+        (if (equal o b)
+            (cons t (buttercup-format-spec
+                     "Expected `%A' not to be like `'%b, but it was."
+                     spec))
+          (cons nil (buttercup-format-spec
+                     "Expected `%A' to be like `%b', but instead it was `%a'."
+                     spec)))))))
 
 (buttercup-define-matcher :to-contain-exactly (file value)
   (cl-destructuring-bind
@@ -1051,32 +1051,32 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
          rating
          note)
   (before-all
-    (vino-test--init)
-    (setq vino-rating-props '((4 . (("property_1" 3)
-                                    ("property_2" 4)
-                                    ("property_3" 2)
-                                    ("property_4" 5)
-                                    ("property_5" 6))))
-          vino-availability-fn (lambda (_) (cons 5 2))))
+    (setq vino-rating-props
+          '((1 . (("score" 20)))
+            (4 . (("property_1" 3)
+                  ("property_2" 4)
+                  ("property_3" 2)
+                  ("property_4" 5)
+                  ("property_5" 6))))
+          vino-availability-fn (lambda (_) (cons 5 2)))
+    (vino-test--init))
 
   (after-all
-    (vino-test--teardown)
     (setq vino-rating-props nil
-          vino-availability-fn nil))
+          vino-availability-fn nil)
+    (vino-test--teardown))
 
   (it "should create rating note and update vino note"
-    (setq note (vino-rating--create
-                id date 4
-                '(("property_1" 3 3)
-                  ("property_2" 3 4)
-                  ("property_3" 0 2)
-                  ("property_4" 5 5)
-                  ("property_5" 5 6))))
     (setq rating (make-vino-rating
                   :wine (vulpea-db-get-by-id id)
                   :date date-str
                   :version 4
-                  :total 8.0))
+                  :values '(("property_1" 3 3)
+                            ("property_2" 3 4)
+                            ("property_3" 0 2)
+                            ("property_4" 5 5)
+                            ("property_5" 5 6))))
+    (setq note (vino-rating--create rating))
     (expect (vino-entry-get-by-id id)
             :to-equal
             (make-vino-entry

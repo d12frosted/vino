@@ -112,11 +112,58 @@ DATE arguments.")
 ;;; Rating
 
 ;;;###autoload
-(cl-defstruct vino-rating
-  wine
-  date
-  version
-  total)
+(cl-defstruct (vino-rating
+               (:constructor
+                make-vino-rating
+                (&key wine date version values
+                      &aux
+                      (score
+                       (seq-reduce
+                        #'+
+                        (seq-map
+                         (lambda (value)
+                           (nth 1 value))
+                         values)
+                        0))
+                      (score-max
+                       (seq-reduce
+                        #'+
+                        (seq-map
+                         (lambda (value)
+                           (nth 2 value))
+                         values)
+                        0))
+                      (total (* 10.0
+                                (/ (float score)
+                                   (float score-max)))))))
+  (wine
+   nil
+   :type vino-entry
+   :documentation "Associated `vino-entry'.")
+  (date
+   nil
+   :type string
+   :documentation "Rating date in format YYYY-MM-DD.")
+  (version
+   nil
+   :type number
+   :documentation "Rating version.")
+  (score
+   nil
+   :type number
+   :documentation "Resulting score of the rating based on VALUES.")
+  (score-max
+   nil
+   :type number
+   :documentation "Max score of the rating based on VALUES.")
+  (total
+   nil
+   :type number
+   :documentation "Normalised SCORE from 0 to 10.")
+  (values
+   nil
+   :type list
+   :documentation "Rating values based on `vino-rating-props'."))
 
 ;;;###autoload
 (defvar vino-rating-template
@@ -178,16 +225,36 @@ Each PROP can be of one of the following types:
   value.")
 
 ;;;###autoload
-(defun vino-rating-get-by-id (id)
-  "Get `vino-rating' by ID."
-  (let ((note (vulpea-db-get-by-id id)))
+(defun vino-rating-get-by-id (note-or-id)
+  "Get `vino-rating' represented by NOTE-OR-ID."
+  (let ((note (if (stringp note-or-id)
+                  (vulpea-db-get-by-id note-or-id)
+                note-or-id)))
     (when (and note (vino-rating-note-p note))
-      (let ((meta (vulpea-meta note)))
+      (when-let*
+          ((meta (vulpea-meta note))
+           (wine (vulpea-meta-get! meta "wine" 'note))
+           (date (vulpea-meta-get! meta "date"))
+           (version (vulpea-meta-get! meta "version" 'number))
+           (info (seq-find
+                  (lambda (x) (equal (car x) version))
+                  vino-rating-props))
+           (props (cdr info))
+           (values (seq-map
+                    (lambda (cfg)
+                      (let ((name (downcase (car cfg))))
+                        (list
+                         name
+                         (vulpea-meta-get!
+                          meta name 'number)
+                         (vulpea-meta-get!
+                          meta (concat name "_max") 'number))))
+                    props)))
         (make-vino-rating
-         :wine (vulpea-meta-get! meta "wine" 'note)
-         :date (vulpea-meta-get! meta "date")
-         :version (vulpea-meta-get! meta "version" 'number)
-         :total (vulpea-meta-get! meta "total" 'number))))))
+         :wine wine
+         :date date
+         :version version
+         :values values)))))
 
 ;;;###autoload
 (defun vino-rating-note-p (note)
@@ -204,37 +271,18 @@ Each PROP can be of one of the following types:
   (let* ((note (if (stringp note-or-id)
                    (vulpea-db-get-by-id note-or-id)
                  note-or-id))
-         (meta (vulpea-meta note))
-         (version (vulpea-meta-get! meta "version" 'number))
-         (info (seq-find (lambda (x) (equal (car x) version))
-                         vino-rating-props))
-         (props (cdr info))
-         (score
-          (seq-reduce
-           #'+
-           (seq-map
-            (lambda (x)
-              (vulpea-meta-get! meta (downcase x) 'number))
-            (seq-map #'car props))
-           0))
-         (score-max
-          (seq-reduce
-           #'+
-           (seq-map
-            (lambda (x)
-              (vulpea-meta-get!
-               meta
-               (downcase (concat x "_MAX"))
-               'number))
-            (seq-map #'car props))
-           0))
-         (total (* 10.0 (/ (float score) (float score-max)))))
-    (vulpea-meta-set note "score" score 'append)
-    (vulpea-meta-set note "score_max" score-max 'append)
-    (vulpea-meta-set note "total" total 'append)))
+         (rating (vino-rating-get-by-id note)))
+    (vulpea-meta-set note "score"
+                     (vino-rating-score rating) 'append)
+    (vulpea-meta-set note "score_max"
+                     (vino-rating-score-max rating) 'append)
+    (vulpea-meta-set note "total"
+                     (vino-rating-total rating) 'append)))
 
 (defun vino-rating--read (props)
-  "Read rating values from PROPS."
+  "Read rating values from PROPS.
+
+Each value is a list (name score score-max)."
   (seq-map
    (lambda (cfg)
      (cond
@@ -263,36 +311,34 @@ Each PROP can be of one of the following types:
                (- (length (cdr cfg)) 1))))))
    props))
 
-(defun vino-rating--create (id date version values)
-  "Rate a rating note for `vino-entry' with ID.
+(defun vino-rating--create (rating &optional id)
+  "Create a note for RATING.
 
-The process is simple:
-
-1. Create a new rating note.
-2. Set wine ID meta.
-3. Set DATE meta.
-4. Set VERSION meta.
-5. Set VALUES"
+ID is generated unless passed."
   (when-let*
-      ((vino (vino-entry-get-by-id id))
-       (producer (vino-entry-producer vino))
-       (date-str (if (stringp date)
-                     date
-                   (format-time-string "%Y-%m-%d" date)))
+      ((wine-note (vino-rating-wine rating))
+       (vino-entry (vino-entry-get-by-id wine-note))
+       (producer (vino-entry-producer vino-entry))
+       (date-str (vino-rating-date rating))
+       (version (vino-rating-version rating))
+       (values (vino-rating-values rating))
        (title (format "%s %s %s - %s"
                       (vulpea-note-title producer)
-                      (vino-entry-name vino)
-                      (or (vino-entry-vintage vino) "NV")
+                      (vino-entry-name vino-entry)
+                      (or (vino-entry-vintage vino-entry) "NV")
                       date-str))
-       (note (vulpea-create title vino-rating-template)))
+       (note (vulpea-create
+              title
+              vino-rating-template
+              (when id (list (cons 'id id))))))
     ;; TODO: performance of multiple `vulpea-meta-set'
     (vulpea-meta-set
-     id
+     wine-note
      "ratings"
      (cons note
-           (vulpea-meta-get-list id "ratings" 'note))
+           (vulpea-meta-get-list wine-note "ratings" 'note))
      'append)
-    (vulpea-meta-set note "wine" id 'append)
+    (vulpea-meta-set note "wine" wine-note 'append)
     (vulpea-meta-set note "date" date-str 'append)
     (vulpea-meta-set note "version" version 'append)
     (seq-do (lambda (data)
@@ -305,8 +351,12 @@ The process is simple:
                                (nth 2 data)
                                'append))
             values)
-    (vino-entry-update id)
-    (vino-db-update-rating note)
+    (vulpea-meta-set note "score" (vino-rating-score rating) 'append)
+    (vulpea-meta-set
+     note "score_max" (vino-rating-score-max rating) 'append)
+    (vulpea-meta-set note "total" (vino-rating-total rating) 'append)
+    (vino-db-update-rating rating note)
+    (vino-entry-update wine-note)
     note))
 
 
@@ -428,9 +478,11 @@ Variables in the capture context are provided by
      :ratings nil)))
 
 ;;;###autoload
-(defun vino-entry-get-by-id (id)
-  "Get `vino-entry' by ID."
-  (let ((note (vulpea-db-get-by-id id)))
+(defun vino-entry-get-by-id (note-or-id)
+  "Get `vino-entry' by NOTE-OR-ID."
+  (let ((note (if (stringp note-or-id)
+                  (vulpea-db-get-by-id note-or-id)
+                note-or-id)))
     (when (and note (vino-entry-note-p note))
       (let ((meta (vulpea-meta note)))
         (make-vino-entry
@@ -525,7 +577,7 @@ ID is generated unless passed."
      note "rating" (or (vino-entry-rating vino) "NA") 'append)
     (vulpea-meta-set
      note "ratings" (vino-entry-ratings vino) 'append)
-    (vino-db-update-entry note)
+    (vino-db-update-entry vino note)
     note))
 
 ;;;###autoload
@@ -748,7 +800,11 @@ explicitly."
               (props (cdr info))
               (values (vino-rating--read props)))
     (vino-rating--create
-     (vulpea-note-id note) date version values)))
+     (make-vino-rating
+      :wine note
+      :date (format-time-string "%Y-%m-%d" date)
+      :version version
+      :values values))))
 
 
 ;;; Vino entry note
@@ -1084,7 +1140,10 @@ Return `vulpea-note'."
       (wine :not-null)
       (date :not-null)
       (version :not-null)
-      (total :not-null)])))
+      (score :not-null)
+      (score-max :not-null)
+      (total :not-null)
+      (values :not-null)])))
 
 (defun vino-db-query (sql &rest args)
   "Run SQL query on `vino' database with ARGS.
@@ -1147,7 +1206,7 @@ string."
               [:select [wine            ; 0
                         date            ; 1
                         version         ; 2
-                        total]          ; 3
+                        values]         ; 3
                :from ratings
                :where (= id $s1)]
               id))))
@@ -1155,7 +1214,7 @@ string."
      :wine (vulpea-db-get-by-id (nth 0 row))
      :date (nth 1 row)
      :version (nth 2 row)
-     :total (nth 3 row))))
+     :values (nth 3 row))))
 
 (defun vino-db ()
   "Entrypoint to the `vino' sqlite database.
@@ -1312,35 +1371,32 @@ Notes is a list of (note . hash) pairs."
   (let ((id (vulpea-note-id note)))
     (pcase table
       ('cellar (vino-db--update-entry
-                id
-                (vulpea-note-path note)
-                hash
-                (vino-entry-get-by-id id)))
+                (vino-entry-get-by-id id)
+                note
+                hash))
       ('ratings (vino-db--update-rating
-                 id
-                 (vulpea-note-path note)
-                 hash
-                 (vino-rating-get-by-id id))))))
+                 (vino-rating-get-by-id id)
+                 note
+                 hash)))))
 
-(defun vino-db-update-entry (note)
-  "Update cache for `vino-entry' represented as NOTE."
+(defun vino-db-update-entry (entry note)
+  "Update cache for ENTRY stored in NOTE."
   (vino-db--update-entry
-   (vulpea-note-id note)
-   (vulpea-note-path note)
-   (vulpea-utils-note-hash note)
-   (vino-entry-get-by-id (vulpea-note-id note))))
+   entry
+   note
+   (vulpea-utils-note-hash note)))
 
-(defun vino-db--update-entry (id file hash entry)
-  "Update `vino' cache for ENTRY with ID.
+(defun vino-db--update-entry (entry note hash)
+  "Update `vino' cache for ENTRY stored in NOTE.
 
-FILE and HASH are metadata."
+HASH is SHA1 of NOTE file."
   (vino-db-query
    [:insert :into cellar
     :values $v1]
    (list
     (vector
-     id
-     file
+     (vulpea-note-id note)
+     (vulpea-note-path note)
      hash
      (vino-entry-carbonation entry)
      (vino-entry-colour entry)
@@ -1362,30 +1418,32 @@ FILE and HASH are metadata."
      (vino-entry-rating entry)
      (seq-map #'vulpea-note-id (vino-entry-ratings entry))))))
 
-(defun vino-db-update-rating (note)
-  "Update cache for `vino-rating' represented as NOTE."
+(defun vino-db-update-rating (rating note)
+  "Update cache for RATING stored in NOTE."
   (vino-db--update-rating
-   (vulpea-note-id note)
-   (vulpea-note-path note)
-   (vulpea-utils-note-hash note)
-   (vino-rating-get-by-id (vulpea-note-id note))))
+   rating
+   note
+   (vulpea-utils-note-hash note)))
 
-(defun vino-db--update-rating (id file hash rating)
-  "Update `vino' cache for RATING with ID.
+(defun vino-db--update-rating (rating note hash)
+  "Update `vino' cache for RATING stored in NOTE.
 
-FILE and HASH are metadata."
+HASH is SHA1 of NOTE file."
   (vino-db-query
    [:insert :into ratings
     :values $v1]
    (list
     (vector
-     id
-     file
+     (vulpea-note-id note)
+     (vulpea-note-path note)
      hash
      (vulpea-note-id (vino-rating-wine rating))
      (vino-rating-date rating)
      (vino-rating-version rating)
-     (vino-rating-total rating)))))
+     (vino-rating-score rating)
+     (vino-rating-score-max rating)
+     (vino-rating-total rating)
+     (vino-rating-values rating)))))
 
 (defun vino-db--clear-note (table note)
   "Remove any db information from TABLE related to NOTE."
