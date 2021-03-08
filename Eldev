@@ -8,6 +8,9 @@
 (eldev-use-package-archive 'gnu)
 (eldev-use-package-archive 'melpa)
 
+;; allow to load test helpers
+(eldev-add-loading-roots 'test "test/utils")
+
 (eldev-add-extra-dependencies 'compile 'quelpa)
 
 (add-hook 'eldev-load-dependencies-hook

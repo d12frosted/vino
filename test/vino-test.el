@@ -2,8 +2,16 @@
 ;;
 ;; Copyright (c) 2020-2021 Boris Buliga
 ;;
-;; Author: Boris Buliga <boris@d12frosted.io>
-;; Maintainer: Boris Buliga <boris@d12frosted.io>
+;; Author: Boris Buliga <d12frosted@d12frosted.local>
+;; Maintainer: Boris Buliga <d12frosted@d12frosted.local>
+;; Version: 0.1.1
+;; Package-Requires: ((emacs "27.1"))
+;;
+;; Created: 09 Jan 2021
+;;
+;; URL: https://github.com/d12frosted/vino
+;;
+;; License: GPLv3
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -19,12 +27,6 @@
 ;; along with this program. If not, see
 ;; <http://www.gnu.org/licenses/>.
 ;;
-;; License: GPLv3
-;;
-;; Created: 09 Jan 2021
-;;
-;; URL: https://github.com/d12frosted/vino
-;;
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
@@ -35,89 +37,14 @@
 
 (require 'buttercup)
 (require 'vino)
-
-(defvar vino-test-directory (expand-file-name "test/note-files")
-  "Directory containing test notes.")
-
-(defun vino-test--abs-path (file-path)
-  "Get absolute FILE-PATH from `org-roam-directory'."
-  (expand-file-name file-path org-roam-directory))
-
-(defun vino-test--map-file (fn file)
-  "Execute FN with buffer visiting FILE."
-  (let* ((fname (vino-test--abs-path file))
-         (buf (find-file-noselect fname)))
-    (with-current-buffer buf
-      (funcall fn fname))))
-
-(defun vino-test--init ()
-  "Initialize testing environment."
-  (let ((original-dir vino-test-directory)
-        (new-dir (expand-file-name (make-temp-name "note-files") temporary-file-directory)))
-    (copy-directory original-dir new-dir)
-    (setq org-roam-directory new-dir
-          org-roam-tag-sources '(prop all-directories))
-    (org-roam-mode +1)
-    (vulpea-setup)
-    (vino-setup)
-    (org-roam-db-build-cache)))
-
-(defun vino-test--teardown ()
-  "Teardown testing environment."
-  (org-roam-mode -1)
-  (delete-file org-roam-db-location)
-  (org-roam-db--close)
-  (vino-db--close))
-
-(buttercup-define-matcher :to-be-note-like (a b)
-  (cl-destructuring-bind
-      ((a-expr . a)
-       (b-expr . b))
-      (mapcar #'buttercup--expr-and-value (list a b))
-    (let* ((spec (format-spec-make
-                  ?A (format "%S" a-expr)
-                  ?a (format "%S" a)
-                  ?B (format "%S" b-expr)
-                  ?b (format "%S" b))))
-      (let ((o (copy-vulpea-note a)))
-        (setf (vulpea-note-meta o) nil)
-        (if (equal o b)
-            (cons t (buttercup-format-spec
-                     "Expected `%A' not to be like `'%b, but it was."
-                     spec))
-          (cons nil (buttercup-format-spec
-                     "Expected `%A' to be like `%b', but instead it was `%a'."
-                     spec)))))))
-
-(buttercup-define-matcher :to-contain-exactly (file value)
-  (cl-destructuring-bind
-      ((file-expr . file) (value-expr . value))
-      (mapcar #'buttercup--expr-and-value (list file value))
-    (let* ((content (vino-test--map-file
-                     (lambda (_)
-                       (buffer-substring-no-properties (point-min)
-                                                       (point-max)))
-                     file))
-           (spec (format-spec-make
-                  ?F (format "%S" file-expr)
-                  ?f (format "%S" file)
-                  ?V (format "%S" value-expr)
-                  ?v (format "%S" value)
-                  ?c (format "%S" content))))
-      (if (string-equal content value)
-          (cons t (buttercup-format-spec
-                   "Expected `%F' not to have content equal to `%v'"
-                   spec))
-        (cons nil (buttercup-format-spec
-                   "Expected `%F' to have content equal to `%v', but instead `%F' has content equal to `%c'"
-                   spec))))))
+(require 'vino-test-utils)
 
 (describe "vino-entry-note-p"
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns non-nil when used on of wine entry"
     (expect
@@ -139,10 +66,10 @@
 
 (describe "vino-entry-note-select"
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns full information about selected wine"
     (spy-on 'org-roam-completion--completing-read
@@ -158,10 +85,10 @@
 
 (describe "vino-entry-note-get-dwim"
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns a note when used on id of wine entry"
     (expect
@@ -238,10 +165,10 @@
 (describe "vino-entry--create"
   :var (note vino)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "creates a new entry with all information"
     (setq vino (make-vino-entry
@@ -297,10 +224,10 @@
 
 (describe "vino-entry-get-by-id"
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns an existing `vino'"
     (expect (vino-entry-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")
@@ -332,10 +259,10 @@
 (describe "vino-grape-create"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "creates a new grape note"
     (setq id (org-id-new)
@@ -357,10 +284,10 @@
 (describe "vino-grape-select"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns full information about selected grape"
     (spy-on 'org-roam-completion--completing-read
@@ -396,10 +323,10 @@
 (describe "vino-producer-create"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "creates a new producer note"
     (setq id (org-id-new)
@@ -421,10 +348,10 @@
 (describe "vino-producer-select"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns full information about selected producer"
     (spy-on 'org-roam-completion--completing-read
@@ -460,10 +387,10 @@
 (describe "vino-region-create"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "creates a new region note"
     (setq id (org-id-new)
@@ -485,10 +412,10 @@
 (describe "vino-appellation-create"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "creates a new appellation note"
     (setq id (org-id-new)
@@ -510,10 +437,10 @@
 (describe "vino-region-select"
   :var (id ts)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "returns full information about selected region"
     (spy-on 'org-roam-completion--completing-read
@@ -589,12 +516,12 @@
     (setq vino-availability-sub-fn (lambda (_id amount _source _date)
                                      (setq  extra-out amount))
           vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out))))
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
     (setq vino-availability-sub-fn nil
           vino-availability-fn nil)
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "updates availability based on vino-availability-sub-fn result"
     (spy-on 'y-or-n-p :and-return-value nil)
@@ -667,12 +594,12 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (setq vino-availability-add-fn (lambda (_id amount _source _date)
                                      (setq  extra-in amount))
           vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2)))
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
     (setq vino-availability-add-fn nil
           vino-availability-fn nil)
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "updates availability based on vino-availability-add-fn result"
     (vino-entry-acquire id 3 "some source" "50.00 EUR" (current-time))
@@ -737,10 +664,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 (describe "vino-entry-set-grapes"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "replace grapes metadata with new data"
     (vino-entry-set-grapes id '("1c436b3b-ad14-4818-896d-1b7755f10fa1"
@@ -809,10 +736,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
         vino)
   (before-all
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "replace region metadata"
     (vino-entry-set-region id "f9ef759b-f39e-4121-ab19-9ab3daa318be")
@@ -939,11 +866,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
         vino)
   (before-all
     (setq vino-availability-fn (lambda (_) (cons 10 8)))
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
     (setq vino-availability-fn nil)
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "updates availability based on vino-availability-fn result"
     (vino-entry-update-availability id)
@@ -1010,12 +937,12 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   (before-all
     (setq vino-rating-props '((1 . (("score" 20))))
           vino-availability-fn (lambda (_) (cons 5 2)))
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
     (setq vino-rating-props nil
           vino-availability-fn nil)
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "should update rating to average of ratings"
     (vulpea-meta-set id "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
@@ -1057,12 +984,12 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                   ("property_4" 5)
                   ("property_5" 6))))
           vino-availability-fn (lambda (_) (cons 5 2)))
-    (vino-test--init))
+    (vino-test-init))
 
   (after-all
     (setq vino-rating-props nil
           vino-availability-fn nil)
-    (vino-test--teardown))
+    (vino-test-teardown))
 
   (it "should create rating note and update vino note"
     (setq rating (make-vino-rating
