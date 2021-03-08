@@ -306,6 +306,7 @@ The process is simple:
                                'append))
             values)
     (vino-entry-update id)
+    (vino-db-update-rating note)
     note))
 
 
@@ -1138,6 +1139,24 @@ string."
      :rating (nth 15 row)
      :ratings (seq-map #'vulpea-db-get-by-id (nth 16 row)))))
 
+(defun vino-db-get-rating (id)
+  "Get `vino-rating' by ID from db."
+  (when-let
+      ((row (car-safe
+             (vino-db-query
+              [:select [wine            ; 0
+                        date            ; 1
+                        version         ; 2
+                        total]          ; 3
+               :from ratings
+               :where (= id $s1)]
+              id))))
+    (make-vino-rating
+     :wine (vulpea-db-get-by-id (nth 0 row))
+     :date (nth 1 row)
+     :version (nth 2 row)
+     :total (nth 3 row))))
+
 (defun vino-db ()
   "Entrypoint to the `vino' sqlite database.
 
@@ -1342,6 +1361,14 @@ FILE and HASH are metadata."
      (vino-entry-consumed entry)
      (vino-entry-rating entry)
      (seq-map #'vulpea-note-id (vino-entry-ratings entry))))))
+
+(defun vino-db-update-rating (note)
+  "Update cache for `vino-rating' represented as NOTE."
+  (vino-db--update-rating
+   (vulpea-note-id note)
+   (vulpea-note-path note)
+   (vulpea-utils-note-hash note)
+   (vino-rating-get-by-id (vulpea-note-id note))))
 
 (defun vino-db--update-rating (id file hash rating)
   "Update `vino' cache for RATING with ID.

@@ -1048,6 +1048,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   :var* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
          (date (current-time))
          (date-str (format-time-string "%Y-%m-%d" date))
+         rating
          note)
   (before-all
     (vino-test--init)
@@ -1071,6 +1072,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                   ("property_3" 0 2)
                   ("property_4" 5 5)
                   ("property_5" 5 6))))
+    (setq rating (make-vino-rating
+                  :wine (vulpea-db-get-by-id id)
+                  :date date-str
+                  :version 4
+                  :total 8.0))
     (expect (vino-entry-get-by-id id)
             :to-equal
             (make-vino-entry
@@ -1090,6 +1096,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :price '("50.00 EUR")
              :rating 8.0
              :ratings (list note)))
+    (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
+    (expect (vino-db-get-rating (vulpea-note-id note)) :to-equal rating)
     (expect (vulpea-db-get-file-by-id id)
             :to-contain-exactly
             (format
