@@ -524,6 +524,7 @@ ID is generated unless passed."
      note "rating" (or (vino-entry-rating vino) "NA") 'append)
     (vulpea-meta-set
      note "ratings" (vino-entry-ratings vino) 'append)
+    (vino-db-update-entry note)
     note))
 
 ;;;###autoload
@@ -1069,6 +1070,7 @@ Return `vulpea-note'."
       (grapes)
       (alcohol :not-null)
       (sugar)
+      (resources)
       (prices)
       (acquired :not-null)
       (consumed :not-null)
@@ -1091,6 +1093,50 @@ string."
   (if (stringp sql)
       (emacsql (vino-db) (apply #'format sql args))
     (apply #'emacsql (vino-db) sql args)))
+
+(defun vino-db-get-entry (id)
+  "Get `vino-entry' by ID from db."
+  (when-let
+      ((row (car-safe
+             (vino-db-query
+              [:select [carbonation     ; 0
+                        colour          ; 1
+                        sweetness       ; 2
+                        producer        ; 3
+                        name            ; 4
+                        vintage         ; 5
+                        appellation     ; 6
+                        region          ; 7
+                        grapes          ; 8
+                        alcohol         ; 9
+                        sugar           ; 10
+                        resources       ; 11
+                        prices          ; 12
+                        acquired        ; 13
+                        consumed        ; 14
+                        rating          ; 15
+                        ratings]        ; 16
+               :from cellar
+               :where (= id $s1)]
+              id))))
+    (make-vino-entry
+     :carbonation (nth 0 row)
+     :colour (nth 1 row)
+     :sweetness (nth 2 row)
+     :producer (vulpea-db-get-by-id (nth 3 row))
+     :name (nth 4 row)
+     :vintage (nth 5 row)
+     :appellation (vulpea-db-get-by-id (nth 6 row))
+     :region (vulpea-db-get-by-id (nth 7 row))
+     :grapes (seq-map #'vulpea-db-get-by-id (nth 8 row))
+     :alcohol (nth 9 row)
+     :sugar (nth 10 row)
+     :resources (nth 11 row)
+     :price (nth 12 row)
+     :acquired (nth 13 row)
+     :consumed (nth 14 row)
+     :rating (nth 15 row)
+     :ratings (seq-map #'vulpea-db-get-by-id (nth 16 row)))))
 
 (defun vino-db ()
   "Entrypoint to the `vino' sqlite database.
@@ -1257,6 +1303,14 @@ Notes is a list of (note . hash) pairs."
                  hash
                  (vino-rating-get-by-id id))))))
 
+(defun vino-db-update-entry (note)
+  "Update cache for `vino-entry' represented as NOTE."
+  (vino-db--update-entry
+   (vulpea-note-id note)
+   (vulpea-note-path note)
+   (vulpea-utils-note-hash note)
+   (vino-entry-get-by-id (vulpea-note-id note))))
+
 (defun vino-db--update-entry (id file hash entry)
   "Update `vino' cache for ENTRY with ID.
 
@@ -1282,6 +1336,7 @@ FILE and HASH are metadata."
      (seq-map #'vulpea-note-id (vino-entry-grapes entry))
      (vino-entry-alcohol entry)
      (vino-entry-sugar entry)
+     (vino-entry-resources entry)
      (vino-entry-price entry)
      (vino-entry-acquired entry)
      (vino-entry-consumed entry)

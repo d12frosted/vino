@@ -263,6 +263,7 @@
                 :price '("50.00 EUR")))
     (setq note (vino-entry--create vino))
     (expect (vino-entry-get-by-id (vulpea-note-id note)) :to-equal vino)
+    (expect (vino-db-get-entry (vulpea-note-id note)) :to-equal vino)
     (expect (expand-file-name (vulpea-note-path note))
             :to-contain-exactly
             (format
