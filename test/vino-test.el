@@ -588,15 +588,15 @@
         (extra-out 0)
         vino)
   (before-all
-    (vino-test--init)
     (setq vino-availability-sub-fn (lambda (_id amount _source _date)
                                      (setq  extra-out amount))
-          vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out)))))
+          vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out))))
+    (vino-test--init))
 
   (after-all
-    (vino-test--teardown)
     (setq vino-availability-sub-fn nil
-          vino-availability-fn nil))
+          vino-availability-fn nil)
+    (vino-test--teardown))
 
   (it "updates availability based on vino-availability-sub-fn result"
     (spy-on 'y-or-n-p :and-return-value nil)
@@ -666,15 +666,15 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
         (extra-in 0)
         vino)
   (before-all
-    (vino-test--init)
     (setq vino-availability-add-fn (lambda (_id amount _source _date)
                                      (setq  extra-in amount))
-          vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2))))
+          vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2)))
+    (vino-test--init))
 
   (after-all
-    (vino-test--teardown)
     (setq vino-availability-add-fn nil
-          vino-availability-fn nil))
+          vino-availability-fn nil)
+    (vino-test--teardown))
 
   (it "updates availability based on vino-availability-add-fn result"
     (vino-entry-acquire id 3 "some source" "50.00 EUR" (current-time))
@@ -940,12 +940,12 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
         vino)
   (before-all
-    (vino-test--init)
-    (setq vino-availability-fn (lambda (_) (cons 10 8))))
+    (setq vino-availability-fn (lambda (_) (cons 10 8)))
+    (vino-test--init))
 
   (after-all
-    (vino-test--teardown)
-    (setq vino-availability-fn nil))
+    (setq vino-availability-fn nil)
+    (vino-test--teardown))
 
   (it "updates availability based on vino-availability-fn result"
     (vino-entry-update-availability id)
@@ -1010,14 +1010,14 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 (describe "vino-entry-update"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
   (before-all
-    (vino-test--init)
     (setq vino-rating-props '((1 . (("score" 20))))
-          vino-availability-fn (lambda (_) (cons 5 2))))
+          vino-availability-fn (lambda (_) (cons 5 2)))
+    (vino-test--init))
 
   (after-all
-    (vino-test--teardown)
     (setq vino-rating-props nil
-          vino-availability-fn nil))
+          vino-availability-fn nil)
+    (vino-test--teardown))
 
   (it "should update rating to average of ratings"
     (vulpea-meta-set id "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
