@@ -98,8 +98,7 @@ be the first stable release. The goal is to have feature parity with
 =vino= is not available via MELPA, so you can install it manually, using
 [[https://github.com/raxod502/straight][straight]], [[https://github.com/quelpa/quelpa][quelpa]], or any other tool.
 
-Keep in mind that =vino= depends on [[https://github.com/d12frosted/vulpea][vulpea]], which is also not available via
-MELPA, so you have to install it as well.
+Keep in mind that =vino= depends on [[https://github.com/d12frosted/vulpea][vulpea]].
 
 *** straight.el
 :PROPERTIES:
@@ -107,9 +106,7 @@ MELPA, so you have to install it as well.
 :END:
 
 #+begin_src emacs-lisp
-  (straight-use-package
-   '(vulpea :type git :host github :repo "d12frosted/vulpea"))
-
+  (straight-use-package vulpea)
   (vulpea-setup)
 
   (straight-use-package
@@ -120,10 +117,6 @@ In case you have [[https://github.com/raxod502/straight.el/#integration-with-use
 
 #+begin_src emacs-lisp
   (use-package vulpea
-    :straight (vulpea
-               :type git
-               :host github
-               :repo "d12frosted/vulpea")
     :hook
     (after-init . vulpea-setup))
 

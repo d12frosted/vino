@@ -11,19 +11,8 @@
 ;; allow to load test helpers
 (eldev-add-loading-roots 'test "test/utils")
 
-(eldev-add-extra-dependencies 'compile 'quelpa)
-
-(add-hook 'eldev-load-dependencies-hook
-          (lambda (type additional-sets)
-            (unless (package-installed-p 'quelpa)
-              (with-temp-buffer
-                (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
-                (eval-buffer)
-                (quelpa-self-upgrade)))
-            (unless (package-installed-p 'vulpea)
-              (quelpa '(vulpea :fetcher git
-                               :url "https://github.com/d12frosted/vulpea.git")))
-            (package-activate 'vulpea)))
+;; load dash.el
+(eldev-add-extra-dependencies 'test 'dash)
 
 ;; Tell checkdoc not to demand two spaces after a period.
 (setq sentence-end-double-space nil)
