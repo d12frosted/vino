@@ -78,6 +78,19 @@ Orange wine is marked as white.")
 
 If this is non-nil, the `vino' sqlite database is saved here.")
 
+(defvar vino-db-gc-threshold gc-cons-threshold
+  "The value to temporarily set the `gc-cons-threshold' threshold to.
+During large, heavy operations like `vino-db-build-cache', many
+GC operations happen because of the large number of temporary
+structures generated (e.g. parsed ASTs). Temporarily increasing
+`gc-cons-threshold' will help reduce the number of GC operations,
+at the cost of temporary memory usage.
+
+This defaults to the original value of `gc-cons-threshold', but
+tweaking this number may lead to better overall performance. For
+example, to reduce the number of GCs, one may set it to a large
+value like `most-positive-fixnum'.")
+
 
 ;;; Availability
 
@@ -1280,42 +1293,70 @@ Performs a database upgrade when required."
 
 If FORCE, force a rebuild of the cache from scratch."
   (interactive "P")
-  (when force (delete-file vino-db-location))
-  (vino-db--close)
-  (vino-db)
-  (let* ((notes (vulpea-db-query
-                 (lambda (n)
-                   (let ((tags (vulpea-note-tags n)))
-                     (and (seq-contains-p tags "wine")
-                          (or (seq-contains-p tags "cellar")
-                              (seq-contains-p tags "rating")))))))
-         (entries-res (vino-db--build-cache
-                       'cellar
-                       (seq-filter
-                        (lambda (n)
-                          (seq-contains-p
-                           (vulpea-note-tags n)
-                           "cellar"))
-                        notes)))
-         (ratings-res (vino-db--build-cache
-                       'ratings
-                       (seq-filter
-                        (lambda (n)
-                          (seq-contains-p
-                           (vulpea-note-tags n)
-                           "rating"))
-                        notes))))
-    (message
-     (concat
-      "(vino)"
-      " Cellar (total: %s, modified: %s, deleted: %s)"
-      " Ratings (total: %s, modified: %s, deleted: %s)")
-     (plist-get entries-res :total)
-     (plist-get entries-res :modified)
-     (plist-get entries-res :deleted)
-     (plist-get ratings-res :total)
-     (plist-get ratings-res :modified)
-     (plist-get ratings-res :deleted))))
+  (vino-dlet ((agenda-files nil)
+              (gc-cons-threshold vino-db-gc-threshold))
+    (let ((t1 (current-time)))
+      (when force (delete-file vino-db-location))
+      (vino-db--close)
+      (vino-db)
+      (let* ((notes (vulpea-db-query
+                     (lambda (n)
+                       (let ((tags (vulpea-note-tags n)))
+                         (and
+                          (seq-contains-p tags "wine")
+                          (or
+                           (seq-contains-p tags "cellar")
+                           (seq-contains-p tags "rating")))))))
+             (entries-res (vino-db--build-cache
+                           'cellar
+                           (seq-filter
+                            (lambda (n)
+                              (seq-contains-p
+                               (vulpea-note-tags n)
+                               "cellar"))
+                            notes)))
+             (ratings-res (vino-db--build-cache
+                           'ratings
+                           (seq-filter
+                            (lambda (n)
+                              (seq-contains-p
+                               (vulpea-note-tags n)
+                               "rating"))
+                            notes))))
+        (message
+         (concat
+          "(vino)"
+          " Cellar (total: %s, modified: %s, deleted: %s)"
+          " Ratings (total: %s, modified: %s, deleted: %s)"
+          " in %s ms")
+         (plist-get entries-res :total)
+         (plist-get entries-res :modified)
+         (plist-get entries-res :deleted)
+         (plist-get ratings-res :total)
+         (plist-get ratings-res :modified)
+         (plist-get ratings-res :deleted)
+         (car (time-convert
+               (time-subtract (current-time) t1)
+               1000)))))))
+
+;; TODO: remove with Emacs 27 support.
+(if (fboundp 'dlet)
+    (defalias 'vino-dlet #'dlet)
+  (defmacro vino-dlet (binders &rest body)
+    "Like `let*' but using dynamic scoping.
+
+Dynamically bind the BINDERS and evaluate the BODY."
+    (declare (indent 1) (debug let))
+    ;; (defvar FOO) only affects the current scope, but in order for
+    ;; this not to affect code after the `let*' we need to create a
+    ;; new scope, which is what the surrounding `let' is for. FIXME:
+    ;; (let () ...) currently doesn't actually create a new scope,
+    ;; which is why we use (let (_) ...).
+    `(let (_)
+       ,@(mapcar (lambda (binder)
+                   `(defvar ,(if (consp binder) (car binder) binder)))
+                 binders)
+       (let* ,binders ,@body))))
 
 (defun vino-db--build-cache (table notes)
   "Build cache for TABLE from NOTES.
