@@ -12,6 +12,10 @@
 :ID:                     16a41084-d445-47a2-adb5-eff9569dd8d4
 :END:
 
+*Feature*
+
+- [[https://github.com/d12frosted/vino/issues/96][vino#96]] Allow to create grape synonyms during =vino-entry-read=.
+
 *Breaking changes*
 
 - =vino-grape-template= does not include =vino-resources-template= anymore.

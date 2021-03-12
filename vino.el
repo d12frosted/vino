@@ -1024,8 +1024,9 @@ Return `vulpea-note'."
 (defun vino-grape-select ()
   "Select a grape note.
 
-When grape note does not exist, it is created using
-`vino-grape-create' if user decides to do so.
+When grape note does not exist, it may be created using
+`vino-grape-create' or added as synonym to other grape if user
+decides to do so.
 
 Return `vulpea-note'."
   (let ((note
@@ -1038,11 +1039,34 @@ Return `vulpea-note'."
                    (seq-contains-p tags "grape")))))))
     (if (vulpea-note-id note)
         note
-      (if (y-or-n-p
-           (format "Grape %s does not exist. Create it? "
-                   (vulpea-note-title note)))
-          (vino-grape-create (vulpea-note-title note))
-        note))))
+      (pcase (completing-read
+              (format "Grape %s does not exist. What to do?"
+                      (vulpea-note-title note))
+              '("Create new grape"
+                "Add a synonym to existing grape"
+                "Ignore"))
+        (`"Create new grape"
+         (vino-grape-create (vulpea-note-title note)))
+        (`"Add a synonym to existing grape"
+         (let ((base (vulpea-select
+                      "Original grape"
+                      :filter-fn
+                      (lambda (note)
+                        (let ((tags (vulpea-note-tags note)))
+                          (and (seq-contains-p tags "wine")
+                               (seq-contains-p tags "grape")))))))
+           (vulpea-utils-with-note base
+             ;; TODO: extract to vulpea
+             (org-roam--set-global-prop
+              "roam_alias"
+              (combine-and-quote-strings
+               (seq-uniq (cons (vulpea-note-title note)
+                               (org-roam--extract-titles-alias)))))
+             (org-roam-db--update-file
+              (buffer-file-name (buffer-base-buffer))))
+           (setf (vulpea-note-title base) (vulpea-note-title note))
+           base))
+        (_ note)))))
 
 
 ;;; Producers

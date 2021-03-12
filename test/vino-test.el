@@ -307,7 +307,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
-    (spy-on 'y-or-n-p :and-return-value t)
+    (spy-on 'completing-read :and-return-value "Create new grape")
     (expect (vino-grape-select)
             :to-be-note-like
             (make-vulpea-note
@@ -318,7 +318,36 @@
              :title "Slarina"
              :tags '("wine" "grape")
              :level 0
-             :id id))))
+             :id id)))
+
+  (it "adds a synonym when selecting non-existing name"
+    (let ((values '("Frappato di Vittoria"
+                    "(wine,grape) Frappato")))
+      (spy-on 'org-roam-completion--completing-read
+              :and-call-fake (lambda (&rest _)
+                               (let ((r (car values)))
+                                 (setq values (cdr values))
+                                 r))))
+    (spy-on 'completing-read
+            :and-return-value "Add a synonym to existing grape")
+    (expect (vino-grape-select)
+            :to-be-note-like
+            (make-vulpea-note
+             :path (expand-file-name "wine/grape/frappato.org"
+                                     org-roam-directory)
+             :title "Frappato di Vittoria"
+             :tags '("wine" "grape")
+             :level 0
+             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
+    (expect (expand-file-name "wine/grape/frappato.org"
+                              org-roam-directory)
+            :to-contain-exactly
+            ":PROPERTIES:
+:ID:                     cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
+:END:
+#+TITLE: Frappato
+#+roam_alias: \"Frappato di Vittoria\"
+")))
 
 (describe "vino-producer-create"
   :var (id ts)
