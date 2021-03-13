@@ -152,8 +152,8 @@ DATE arguments.")
                                    (float score-max)))))))
   (wine
    nil
-   :type vino-entry
-   :documentation "Associated `vino-entry'.")
+   :type vulpea-note
+   :documentation "Associated wine note.")
   (date
    nil
    :type string
