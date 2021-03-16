@@ -1141,5 +1141,40 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              id
              date-str))))
 
+(describe "vino-db"
+  (before-all
+    (setq vino-rating-props
+          '((1 . (("score" 20)))
+            (4 . (("property_1" 3)
+                  ("property_2" 4)
+                  ("property_3" 2)
+                  ("property_4" 5)
+                  ("property_5" 6)))))
+    (vino-test-init))
+
+  (after-all
+    (vino-test-teardown)
+    (setq vino-rating-props nil))
+
+  (it "subsequent call of vino-db-build-cache is fast when the cache is warm"
+    (let ((duration (benchmark-run 1
+                      (vino-db-build-cache))))
+      (message "duration = %s" duration)
+      (expect (car duration) :to-be-less-than 1.0)))
+
+  (it "reading entries from file leads to the same result as reading from db"
+    (let* ((notes (vulpea-db-query #'vino-entry-note-p))
+           (ids (seq-map #'vulpea-note-id notes)))
+      (expect (seq-map #'vino-entry-get-by-id ids)
+              :to-equal
+              (seq-map #'vino-db-get-entry ids))))
+
+  (it "reading ratings from file leads to the same result as reading from db"
+    (let* ((notes (vulpea-db-query #'vino-rating-note-p))
+           (ids (seq-map #'vulpea-note-id notes)))
+      (expect (seq-map #'vino-rating-get-by-id ids)
+              :to-equal
+              (seq-map #'vino-db-get-rating ids)))))
+
 (provide 'vino-test)
 ;;; vino-test.el ends here
