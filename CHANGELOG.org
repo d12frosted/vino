@@ -15,6 +15,7 @@
 *Feature*
 
 - [[https://github.com/d12frosted/vino/issues/96][vino#96]] Allow to create grape synonyms during =vino-entry-read=.
+- =vino-db= functionality with two tables - =cellar= and =ratings=.
 
 *Breaking changes*
 
