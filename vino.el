@@ -241,11 +241,13 @@ Each PROP can be of one of the following types:
 ;;;###autoload
 (defun vino-rating-get-by-id (note-or-id)
   "Get `vino-rating' represented by NOTE-OR-ID."
+  (unless vino-rating-props
+    (user-error "Expected vino-rating-props to be non-nil"))
   (let ((note (if (stringp note-or-id)
                   (vulpea-db-get-by-id note-or-id)
                 note-or-id)))
     (when (and note (vino-rating-note-p note))
-      (when-let*
+      (let*
           ((meta (vulpea-meta note))
            (wine (vulpea-meta-get! meta "wine" 'note))
            (date (vulpea-meta-get! meta "date"))
@@ -253,6 +255,10 @@ Each PROP can be of one of the following types:
            (info (seq-find
                   (lambda (x) (equal (car x) version))
                   vino-rating-props))
+           (_ (unless info
+                (user-error
+                 "Could not find ratings props of version %s"
+                 version)))
            (props (cdr info))
            (values (seq-map
                     (lambda (cfg)
