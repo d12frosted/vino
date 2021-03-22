@@ -85,10 +85,12 @@
 
 (describe "vino-entry-note-get-dwim"
   (before-all
+    (setq vino-rating-props '((1 . (("score" 20)))))
     (vino-test-init))
 
   (after-all
-    (vino-test-teardown))
+    (vino-test-teardown)
+    (setq vino-rating-props nil))
 
   (it "returns a note when used on id of wine entry"
     (expect
@@ -106,6 +108,15 @@
   (it "returns a note when used inside a wine note"
     (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
            (note (vulpea-db-get-by-id id)))
+      (expect
+       (vulpea-utils-with-file (vulpea-db-get-file-by-id id)
+         (goto-char (point-max))
+         (vino-entry-note-get-dwim))
+       :to-equal note)))
+
+  (it "returns a note when used inside a rating note"
+    (let* ((id "be7777a9-7993-44cf-be9e-0ae65297a35d")
+           (note (vulpea-db-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")))
       (expect
        (vulpea-utils-with-file (vulpea-db-get-file-by-id id)
          (goto-char (point-max))

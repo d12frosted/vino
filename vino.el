@@ -881,17 +881,21 @@ If NOTE-OR-ID is a note, then return it. Throws error
 if extracted note does not represent a `vino-entry'.
 
 If NOTE-OR-ID is nil, try to extract a note from current buffer
-or ask for user to select a note."
+or ask for user to select a note. Extractions happens from
+`vino-entry' buffer or from `vino-rating' buffer. In the latter
+case, linked `vino-entry' is extracted."
   (cond
    ((null note-or-id)
     (if (eq major-mode 'org-mode)
         (let* ((id (save-excursion
                      (goto-char (point-min))
                      (org-id-get)))
-               (note (ignore-errors (vino-entry-note-get-dwim id))))
-          (if note
-              note
-            (vino-entry-note-select)))
+               (note (vulpea-db-get-by-id id)))
+          (cond
+           ((vino-entry-note-p note) (vino-entry-note-get-dwim note))
+           ((vino-rating-note-p note)
+            (vino-rating-wine (vino-rating-get-by-id id)))
+           (t (vino-entry-note-select))))
       (vino-entry-note-select)))
    ((stringp note-or-id)
     (let ((note (vulpea-db-get-by-id note-or-id)))
