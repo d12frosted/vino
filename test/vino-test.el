@@ -206,7 +206,7 @@
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Grotte Alte 2014
 
@@ -354,7 +354,7 @@
                               org-roam-directory)
             :to-contain-exactly
             ":PROPERTIES:
-:ID:                     cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
+:ID:       cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
 :END:
 #+TITLE: Frappato
 #+roam_alias: \"Frappato di Vittoria\"
@@ -574,7 +574,7 @@
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -609,7 +609,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -650,7 +650,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -685,7 +685,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -720,7 +720,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -756,7 +756,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -790,7 +790,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -825,7 +825,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -850,7 +850,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -885,7 +885,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -921,7 +921,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -956,7 +956,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -1067,7 +1067,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017
 
@@ -1103,7 +1103,7 @@ Arianna Occhipinti
 
 * Additional information
 :PROPERTIES:
-:ID:                     71715128-3d6f-4e36-8d70-d35fcb057609
+:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
 :END:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
@@ -1124,7 +1124,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-contain-exactly
             (format
              ":PROPERTIES:
-:ID:                     %s
+:ID:       %s
 :END:
 #+TITLE: Arianna Occhipinti Bombolieri BB 2017 - %s
 

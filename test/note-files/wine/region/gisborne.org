@@ -1,4 +1,4 @@
 :PROPERTIES:
-:ID:                     deba4d4d-a510-46a0-a48d-45d6d597c456
+:ID:       deba4d4d-a510-46a0-a48d-45d6d597c456
 :END:
 #+TITLE: Gisborne

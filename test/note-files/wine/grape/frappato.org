@@ -1,4 +1,4 @@
 :PROPERTIES:
-:ID:                     cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
+:ID:       cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
 :END:
 #+TITLE: Frappato

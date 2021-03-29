@@ -1,4 +1,4 @@
 :PROPERTIES:
-:ID:                     f9ef759b-f39e-4121-ab19-9ab3daa318be
+:ID:       f9ef759b-f39e-4121-ab19-9ab3daa318be
 :END:
 #+TITLE: Central Otago
