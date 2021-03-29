@@ -201,17 +201,11 @@ Dynamically bind the BINDERS and evaluate the BODY."
 
 ;;;###autoload
 (defvar vino-rating-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/rating/${id}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n\n")
-    :unnarrowed t
-    :immediate-finish t)
+  (list
+   :file-name "wine/rating/${id}"
+   :head "#+TITLE: ${title}\n\n"
+   :unnarrowed t
+   :immediate-finish t)
   "Capture template for rating entry.
 
 Variables in the capture context are provided by
@@ -404,17 +398,10 @@ ID is generated unless passed."
 
 ;;;###autoload
 (defvar vino-entry-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/cellar/${id}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n\n")
-    :unnarrowed t
-    :immediate-finish t)
+  (list :file-name "wine/cellar/${id}"
+        :head "#+TITLE: ${title}\n\n"
+        :unnarrowed t
+        :immediate-finish t)
   "Capture template for wine entry.
 
 Variables in the capture context are provided by
@@ -918,17 +905,10 @@ case, linked `vino-entry' is extracted."
 
 ;;;###autoload
 (defvar vino-region-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n\n")
-    :unnarrowed t
-    :immediate-finish t)
+  (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}"
+        :head "#+TITLE: ${title}\n\n"
+        :unnarrowed t
+        :immediate-finish t)
   "Capture template for region entry.
 
 Variables in the capture context are provided by
@@ -936,17 +916,10 @@ Variables in the capture context are provided by
 
 ;;;###autoload
 (defvar vino-appellation-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n\n")
-    :unnarrowed t
-    :immediate-finish t)
+  (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}"
+        :head "#+TITLE: ${title}\n\n"
+        :unnarrowed t
+        :immediate-finish t)
   "Capture template for appellation entry.
 
 Variables in the capture context are provided by
@@ -1017,17 +990,10 @@ Return `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-grape-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n\n")
-    :unnarrowed t
-    :immediate-finish t)
+  (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
+        :head "#+TITLE: ${title}\n\n"
+        :unnarrowed t
+        :immediate-finish t)
   "Capture template for grape entry.
 
 Variables in the capture context are provided by
@@ -1103,17 +1069,10 @@ Return `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-producer-template
-  `("d" "default" plain
-    #'org-roam-capture--get-point
-    "%?"
-    :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}"
-    :head ,(concat
-            ":PROPERTIES:\n"
-            ":ID:                     ${id}\n"
-            ":END:\n"
-            "#+TITLE: ${title}\n\n")
-    :unnarrowed t
-    :immediate-finish t)
+  (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}"
+        :head "#+TITLE: ${title}\n\n"
+        :unnarrowed t
+        :immediate-finish t)
   "Capture template for producer entry.
 
 Variables in the capture context are provided by
