@@ -253,44 +253,42 @@ Optional variables (with their default values):
                                             demi-sec
                                             doux))
 
-   vino-rating-template `("d" "default" plain
-                          #'org-roam-capture--get-point
-                          "%?"
-                          :file-name "wine/rating/${id}"
-                          :head ,(concat
-                                  ":PROPERTIES:\n"
-                                  ":ID:                     ${id}\n"
-                                  ":END:\n"
-                                  "#+TITLE: ${title}\n"
-                                  "#+TIME-STAMP: <>\n\n")
-                          :unnarrowed t
-                          :immediate-finish t)
+   vino-rating-template
+   (list
+    :file-name "wine/rating/${id}"
+    :head "#+TITLE: ${title}\n\n"
+    :unnarrowed t
+    :immediate-finish t)
 
-   vino-entry-template `("d" "default" plain
-                         #'org-roam-capture--get-point
-                         "%?"
-                         :file-name "wine/cellar/${id}"
-                         :head ,(concat
-                                 ":PROPERTIES:\n"
-                                 ":ID:                     ${id}\n"
-                                 ":END:\n"
-                                 "#+TITLE: ${title}\n"
-                                 "#+TIME-STAMP: <>\n\n")
-                         :unnarrowed t
-                         :immediate-finish t)
+   vino-entry-template
+   (list :file-name "wine/cellar/${id}"
+         :head "#+TITLE: ${title}\n\n"
+         :unnarrowed t
+         :immediate-finish t)
 
-   vino-grape-template `("d" "default" plain
-                         #'org-roam-capture--get-point
-                         "%(vino-resources-template)%?"
-                         :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
-                         :head ,(concat
-                                 ":PROPERTIES:\n"
-                                 ":ID:                     ${id}\n"
-                                 ":END:\n"
-                                 "#+TITLE: ${title}\n"
-                                 "#+TIME-STAMP: <>\n\n")
-                         :unnarrowed t
-                         :immediate-finish t))
+   vino-grape-template
+   (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
+         :head "#+TITLE: ${title}\n\n"
+         :unnarrowed t
+         :immediate-finish t)
+
+   vino-producer-template
+   (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}"
+         :head "#+TITLE: ${title}\n\n"
+         :unnarrowed t
+         :immediate-finish t)
+
+   vino-region-template
+   (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}"
+         :head "#+TITLE: ${title}\n\n"
+         :unnarrowed t
+         :immediate-finish t)
+
+   vino-appellation-template
+    (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}"
+          :head "#+TITLE: ${title}\n\n"
+          :unnarrowed t
+          :immediate-finish t))
 #+end_src
 
 ** Interactive functions
@@ -652,19 +650,10 @@ template), so new entries are not created in =wino/cellar= folder:
 
 #+begin_src emacs-lisp
   (setq vino-entry-template
-        `("d" "default" plain
-          #'org-roam-capture--get-point
-          "%?"
-          :file-name "${id}"
-          :head ,(concat
-                  ":PROPERTIES:\n"
-                  ":ID:                     ${id}\n"
-                  ":END:\n"
-                  "#+TITLE: ${title}\n"
-                  "#+ROAM_TAGS: wine cellar\n"
-                  "#+TIME-STAMP: <>\n\n")
-          :unnarrowed t
-          :immediate-finish t))
+        (list :file-name "${id}"
+              :head "#+TITLE: ${title}\n#+ROAM_TAGS: wine cellar\n\n"
+              :unnarrowed t
+              :immediate-finish t))
 #+end_src
 
 But make sure that =org-roam-tag-sources= contains =prop= value. Otherwise it
