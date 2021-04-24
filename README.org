@@ -4,6 +4,9 @@
 
 #+begin_html
 <h1 align="center">Vino</h1>
+<p align="center">
+  <img width="256px" src="images/logo.png" alt="Banner">
+</p>
 <h3 align="center">🍷It's your cellar, your dear cantina 🍷</h3>
 <p align="center">
   <a href="https://github.com/d12frosted/vino/releases">
