@@ -58,6 +58,7 @@ process.
 - [[#faq][FAQ]]
   - [[#why-not-generalise][Why not generalise?]]
   - [[#why-not-cellar-tracker-vivino-etc][Why not Cellar Tracker, Vivino, etc.?]]
+- [[#acknowledgements][Acknowledgements]]
 
 * Goals
 :PROPERTIES:
@@ -206,7 +207,7 @@ Mandatory values (uses functions from [[https://github.com/d12frosted/environmen
     (setq
      org-roam-directory (concat (getenv "HOME")
                                 "/org-roam/")
-   
+
      org-roam-tag-sources '(prop all-directories)
 
      vino-rating-props '((1 . (("SCORE" . 3)))
@@ -941,3 +942,10 @@ That being said, I still use Vivino for:
   tasting notes.
 
 So you can use both!
+
+* Acknowledgements
+:PROPERTIES:
+:ID:                     a38c690d-0667-481e-8f93-62bb39659144
+:END:
+
+[[images/logo.png][Logo]] was created by [[https://www.behance.net/irynarutylo][Iryna Rutylo]].
