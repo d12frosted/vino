@@ -21,21 +21,41 @@ jobs:
         emacs_version:
           - 27.2
           - snapshot
+    env:
+      ORG_ROAM_V2_PATH: ../org-roam
+      VULPEA_V2_PATH: ../vulpea
     steps:
       - uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
 
       - uses: actions/checkout@v2.3.4
+        with:
+          path: vino
+
+      - uses: actions/checkout@v2.3.4
+        with:
+          repository: 'org-roam/org-roam'
+          ref: "v2"
+          path: org-roam
+
+      - uses: actions/checkout@v2.3.4
+        with:
+          repository: 'd12frosted/vulpea'
+          ref: "feature/org-roam-v2"
+          path: vulpea
 
       - name: Install Eldev
         run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
 
       - name: Install dependencies
         run: make prepare
+        working-directory: vino
 
       - name: Lint
         run: make lint
+        working-directory: vino
 
       - name: Test
         run: make test
+        working-directory: vino

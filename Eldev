@@ -8,6 +8,19 @@
 (eldev-use-package-archive 'gnu)
 (eldev-use-package-archive 'melpa)
 
+;; Eldev-local is loaded after Eldev, meaning that it's impossible to
+;; set this env per user.
+(let ((path (expand-file-name "Developer/org-roam" (getenv "HOME"))))
+  (when (file-exists-p path)
+    (setenv "ORG_ROAM_V2_PATH" path)))
+(let ((path (expand-file-name "Developer/vulpea" (getenv "HOME"))))
+  (when (file-exists-p path)
+    (setenv "VULPEA_V2_PATH" path)))
+
+;; Use local version of org-roam until it is released.
+(eldev-use-local-dependency (getenv "ORG_ROAM_V2_PATH"))
+(eldev-use-local-dependency (getenv "VULPEA_V2_PATH"))
+
 ;; allow to load test helpers
 (eldev-add-loading-roots 'test "test/utils")
 
