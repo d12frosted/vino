@@ -81,7 +81,7 @@ If this is non-nil, the `vino' sqlite database is saved here.")
 
 (defvar vino-db-gc-threshold gc-cons-threshold
   "The value to temporarily set the `gc-cons-threshold' threshold to.
-During large, heavy operations like `vino-db-build-cache', many
+During large, heavy operations like `vino-db-sync', many
 GC operations happen because of the large number of temporary
 structures generated (e.g. parsed ASTs). Temporarily increasing
 `gc-cons-threshold' will help reduce the number of GC operations,
@@ -118,9 +118,18 @@ DATE arguments.")
 
 (defun vino-setup ()
   "Setup `vino' library."
-  (advice-add 'org-roam-db-build-cache
+  (seq-each
+   (lambda (x)
+     (add-to-list 'org-tags-exclude-from-inheritance x))
+   '("cellar"
+     "rating"
+     "producer"
+     "grape"
+     "region"
+     "appellation"))
+  (advice-add 'org-roam-db-sync
               :after
-              #'vino-db-build-cache))
+              #'vino-db-sync))
 
 
 ;;; Compat
@@ -201,15 +210,25 @@ Dynamically bind the BINDERS and evaluate the BODY."
 
 ;;;###autoload
 (defvar vino-rating-template
-  (list
-   :file-name "wine/rating/${id}"
-   :head "#+TITLE: ${title}\n\n"
-   :unnarrowed t
-   :immediate-finish t)
+  (list :file-name "wine/rating/${id}.org")
   "Capture template for rating entry.
 
-Variables in the capture context are provided by
-`vulpea-create'.")
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :properties (optional) - extra properties to put in PROPERTIES
+  block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+See `vulpea-create' for more information.")
 
 (defvar vino-rating-props nil
   "Rating properties per version.
@@ -363,8 +382,15 @@ ID is generated unless passed."
                       date-str))
        (note (vulpea-create
               title
-              vino-rating-template
-              (when id (list (cons 'id id))))))
+              (plist-get vino-rating-template :file-name)
+              :id id
+              :tags '("wine" "rating")
+              :head (plist-get vino-rating-template :head)
+              :body (plist-get vino-rating-template :body)
+              :context (plist-get vino-rating-template :context)
+              :properties (plist-get vino-rating-template :properties)
+              :unnarrowed t
+              :immediate-finish t)))
     ;; TODO: performance of multiple `vulpea-meta-set'
     (vulpea-meta-set
      wine-note
@@ -398,14 +424,25 @@ ID is generated unless passed."
 
 ;;;###autoload
 (defvar vino-entry-template
-  (list :file-name "wine/cellar/${id}"
-        :head "#+TITLE: ${title}\n\n"
-        :unnarrowed t
-        :immediate-finish t)
+  (list :file-name "wine/cellar/${id}.org")
   "Capture template for wine entry.
 
-Variables in the capture context are provided by
-`vulpea-create'.")
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :properties (optional) - extra properties to put in PROPERTIES
+  block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+See `vulpea-create' for more information.")
 
 ;;;###autoload
 (cl-defstruct vino-entry
@@ -559,10 +596,18 @@ ID is generated unless passed."
                         (if (numberp vintage)
                             (number-to-string vintage)
                           vintage)))
-         (note (vulpea-create title
-                              vino-entry-template
-                              (when id
-                                (list (cons 'id id))))))
+         (note
+          (vulpea-create
+           title
+           (plist-get vino-entry-template :file-name)
+           :id id
+           :tags '("wine" "cellar")
+           :head (plist-get vino-entry-template :head)
+           :body (plist-get vino-entry-template :body)
+           :context (plist-get vino-entry-template :context)
+           :properties (plist-get vino-entry-template :properties)
+           :unnarrowed t
+           :immediate-finish t)))
     ;; TODO: optimize multiple calls
     (vulpea-meta-set
      note "carbonation" (vino-entry-carbonation vino) 'append)
@@ -690,7 +735,7 @@ The following things are updated:
                  (vulpea-meta-get! meta "name")
                  (vulpea-meta-get! meta "vintage"))))
     (vulpea-utils-with-note note
-      (org-roam--set-global-prop "TITLE" title)
+      (vulpea-buffer-title-set title)
       (save-buffer))
     (vulpea-db-update note)
     (setq note (vulpea-db-get-by-id (vulpea-note-id note)))
@@ -700,8 +745,7 @@ The following things are updated:
      (seq-map
       (lambda (rn)
         (vulpea-utils-with-note rn
-          (org-roam--set-global-prop
-           "TITLE"
+          (vulpea-buffer-title-set
            (format "%s - %s"
                    title
                    (vulpea-meta-get rn "date")))
@@ -905,25 +949,47 @@ case, linked `vino-entry' is extracted."
 
 ;;;###autoload
 (defvar vino-region-template
-  (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}"
-        :head "#+TITLE: ${title}\n\n"
-        :unnarrowed t
-        :immediate-finish t)
+  (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}.org")
   "Capture template for region entry.
 
-Variables in the capture context are provided by
-`vulpea-create'.")
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :properties (optional) - extra properties to put in PROPERTIES
+  block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defvar vino-appellation-template
-  (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}"
-        :head "#+TITLE: ${title}\n\n"
-        :unnarrowed t
-        :immediate-finish t)
+  (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}.org")
   "Capture template for appellation entry.
 
-Variables in the capture context are provided by
-`vulpea-create'.")
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :properties (optional) - extra properties to put in PROPERTIES
+  block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defun vino-region-create (&optional title)
@@ -934,7 +1000,16 @@ Unless TITLE is specified, user is prompted to provide one.
 Return `vulpea-note'."
   (interactive)
   (let ((title (or title (read-string "Region: "))))
-    (vulpea-create title vino-region-template)))
+    (vulpea-create
+     title
+     (plist-get vino-region-template :file-name)
+     :tags '("wine" "region")
+     :head (plist-get vino-region-template :head)
+     :body (plist-get vino-region-template :body)
+     :context (plist-get vino-region-template :context)
+     :properties (plist-get vino-region-template :properties)
+     :unnarrowed t
+     :immediate-finish t)))
 
 ;;;###autoload
 (defun vino-appellation-create (&optional title)
@@ -945,7 +1020,16 @@ Unless TITLE is specified, user is prompted to provide one.
 Return `vulpea-note'."
   (interactive)
   (let ((title (or title (read-string "Appellation: "))))
-    (vulpea-create title vino-appellation-template)))
+    (vulpea-create
+     title
+     (plist-get vino-appellation-template :file-name)
+     :tags '("wine" "appellation")
+     :head (plist-get vino-appellation-template :head)
+     :body (plist-get vino-appellation-template :body)
+     :context (plist-get vino-appellation-template :context)
+     :properties (plist-get vino-appellation-template :properties)
+     :unnarrowed t
+     :immediate-finish t)))
 
 ;;;###autoload
 (defun vino-region-find-file ()
@@ -990,14 +1074,25 @@ Return `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-grape-template
-  (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
-        :head "#+TITLE: ${title}\n\n"
-        :unnarrowed t
-        :immediate-finish t)
+  (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}.org")
   "Capture template for grape entry.
 
-Variables in the capture context are provided by
-`vulpea-create'.")
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :properties (optional) - extra properties to put in PROPERTIES
+  block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defun vino-grape-create (&optional title)
@@ -1008,7 +1103,16 @@ Unless TITLE is specified, user is prompted to provide one.
 Return `vulpea-note'."
   (interactive)
   (let ((title (or title (read-string "Grape: "))))
-    (vulpea-create title vino-grape-template)))
+    (vulpea-create
+     title
+     (plist-get vino-grape-template :file-name)
+     :tags '("wine" "grape")
+     :head (plist-get vino-grape-template :head)
+     :body (plist-get vino-grape-template :body)
+     :context (plist-get vino-grape-template :context)
+     :properties (plist-get vino-grape-template :properties)
+     :unnarrowed t
+     :immediate-finish t)))
 
 ;;;###autoload
 (defun vino-grape-find-file ()
@@ -1052,13 +1156,8 @@ Return `vulpea-note'."
                           (and (seq-contains-p tags "wine")
                                (seq-contains-p tags "grape")))))))
            (vulpea-utils-with-note base
-             ;; TODO: extract to vulpea
-             (org-roam--set-global-prop
-              "roam_alias"
-              (combine-and-quote-strings
-               (seq-uniq (cons (vulpea-note-title note)
-                               (org-roam--extract-titles-alias)))))
-             (org-roam-db--update-file
+             (org-roam-alias-add (vulpea-note-title note))
+             (org-roam-db-update-file
               (buffer-file-name (buffer-base-buffer))))
            (setf (vulpea-note-title base) (vulpea-note-title note))
            base))
@@ -1069,14 +1168,25 @@ Return `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-producer-template
-  (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}"
-        :head "#+TITLE: ${title}\n\n"
-        :unnarrowed t
-        :immediate-finish t)
+  (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}.org")
   "Capture template for producer entry.
 
-Variables in the capture context are provided by
-`vulpea-create'.")
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :properties (optional) - extra properties to put in PROPERTIES
+  block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defun vino-producer-create (&optional title)
@@ -1087,7 +1197,16 @@ Unless TITLE is specified, user is prompted to provide one.
 Return `vulpea-note'."
   (interactive)
   (let ((title (or title (read-string "Producer: "))))
-    (vulpea-create title vino-producer-template)))
+    (vulpea-create
+     title
+     (plist-get vino-producer-template :file-name)
+     :tags '("wine" "producer")
+     :head (plist-get vino-producer-template :head)
+     :body (plist-get vino-producer-template :body)
+     :context (plist-get vino-producer-template :context)
+     :properties (plist-get vino-producer-template :properties)
+     :unnarrowed t
+     :immediate-finish t)))
 
 ;;;###autoload
 (defun vino-producer-find-file ()
@@ -1252,7 +1371,7 @@ Performs a database upgrade when required."
                (emacsql-live-p (vino-db--get-connection)))
     (let ((init-db (not (file-exists-p vino-db-location))))
       (make-directory (file-name-directory vino-db-location) t)
-      (let ((conn (emacsql-sqlite3 vino-db-location)))
+      (let ((conn (emacsql-sqlite vino-db-location)))
         (set-process-query-on-exit-flag (emacsql-process conn) nil)
         (puthash (expand-file-name vino-db-location)
                  conn
@@ -1302,7 +1421,7 @@ Performs a database upgrade when required."
           (user-error "Not implemented"))))
   version)
 
-(defun vino-db-build-cache (&optional force)
+(defun vino-db-sync (&optional force)
   "Build the cache for `vino'.
 
 If FORCE, force a rebuild of the cache from scratch."

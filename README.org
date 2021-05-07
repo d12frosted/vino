@@ -46,9 +46,10 @@ process.
   - [[#grape][Grape]]
   - [[#vino-entry][Vino entry]]
   - [[#vino-rating][Vino rating]]
-  - [[#org-roam-tags][=org-roam= Tags]]
+  - [[#tags][Tags]]
 - [[#database][Database]]
 - [[#how-to-][How to ...]]
+  - [[#configure-templates][Configure templates]]
   - [[#configure-rating-system][Configure rating system]]
   - [[#store-images-and-other-attachments][Store images and other attachments]]
   - [[#query-additional-metadata-when-creating-a-new-wine-entry][Query additional metadata when creating a new wine entry]]
@@ -124,10 +125,6 @@ Keep in mind that =vino= depends on [[https://github.com/d12frosted/vulpea][vulp
 In case you have [[https://github.com/raxod502/straight.el/#integration-with-use-package][integration]] with [[https://github.com/jwiegley/use-package][use-package]]:
 
 #+begin_src emacs-lisp
-  (use-package vulpea
-    :hook
-    (after-init . vulpea-setup))
-
   (use-package vino
     :straight (vino
                :type git
@@ -146,9 +143,6 @@ There are several things that you must configure before using =vino=:
 
 - =org-roam-directory= - this is where your =vino= files will be located. See
   [[#notes-structure][Notes structure]] for more information on how to structure this directory.
-- =org-roam-tag-sources= - this variable is as important as the previous one. It
-  must include =all-directories= unless you wish to manually tag each file.
-  Please read [[#org-roam-tags][=org-roam= Tags]] for more information.
 - =vino-rating-props= - this variable describes your rating system. See
   [[#configure-rating-system][Configure rating system]] for more information on how to setup this variable.
 - =vino-availability-fn= - function to check availability of =vino-entry=. It is
@@ -166,9 +160,8 @@ Optionally you can configure the following variables:
 
 - =vino-db-location= - the full path to file where =vino= database is stored.
 - =vino-db-gc-threshold= - the temporary value for =gc-cons-threshold= to use
-  during heavy operations like =vino-db-build-cache=. For performance
-  considerations, you might set it to some high value (like
-  =most-positive-fixnum=).
+  during heavy operations like =vino-db-sync=. For performance considerations,
+  you might set it to some high value (like =most-positive-fixnum=).
 - =vino-carbonation-types= - list of carbonation types, e.g. =still= and
   =sparkling=. Modify it in case you want to be more granular, e.g.
   =traditional-sparkling=, =pet-nat=, etc.
@@ -176,25 +169,22 @@ Optionally you can configure the following variables:
   You might want to add =orange= unless you are marking them as =white=.
 - =vino-sweetness-levels= - a property list where key is carbonation type and
   value is list of sweetness levels (e.g. =dry=, =sweet=, etc).
-- =vino-rating-template= - =org-capture= template for new wine ratings. Passed
-  to =vulpea-create=, which enriches context with variables like =id=, =title=
-  and =slug=.
-- =vino-entry-template= - =org-capture= template for new wine entry. Passed
-  to =vulpea-create=, which enriches context with variables like =id=, =title=
-  and =slug=.
-- =vino-grape-template= - =org-capture= template for new grape note. Passed to
-  =vulpea-create=, which enriches context with variables like =id=, =title= and
-  =slug=. Useful when selecting a grape for wine entry that does not exist or
-  when calling =vulpea-grape-create=
-- =vino-producer-template= - =org-capture= template for new producer note. Passed
-  to =vulpea-create=, which enriches context with variables like =id=, =title=
-  and =slug=. Used by =vulpea-producer-create=.
-- =vino-region-template= - =org-capture= template for new region note. Passed to
-  =vulpea-create=, which enriches context with variables like =id=, =title= and
-  =slug=. Used by =vulpea-region-create=.
-- =vino-appellation-template= - =org-capture= template for new appellation note.
-  Passed to =vulpea-create=, which enriches context with variables like =id=,
-  =title= and =slug=. Used by =vulpea-appellation-create=.
+- =vino-rating-template= - template for a new wine ratings. See [[#configure-templates][template
+  configuration]] section for more information.
+- =vino-entry-template= - template a for new wine entry. See [[#configure-templates][template
+  configuration]] section for more information.
+- =vino-grape-template= - template for a new grape note. Useful when selecting a
+  grape for wine entry that does not exist or when calling =vino-grape-create=.
+  See [[#configure-templates][template configuration]] section for more information.
+- =vino-producer-template= - template for a new producer note. Used by
+  =vino-producer-create=. See [[#configure-templates][template configuration]] section for more
+  information.
+- =vino-region-template= - template for a new region note. Used by
+  =vino-region-create=. See [[#configure-templates][template configuration]] section for more
+  information.
+- =vino-appellation-template= - template for a new appellation note. Used by
+  =vino-appellation-create=. See [[#configure-templates][template configuration]] section for more
+  information.
 
 *** Example configuration
 :PROPERTIES:
@@ -207,8 +197,6 @@ Mandatory values (uses functions from [[https://github.com/d12frosted/environmen
     (setq
      org-roam-directory (concat (getenv "HOME")
                                 "/org-roam/")
-
-     org-roam-tag-sources '(prop all-directories)
 
      vino-rating-props '((1 . (("SCORE" . 3)))
                          (2 . (("AROMA_QUALITY" . 3)
@@ -257,42 +245,17 @@ Optional variables (with their default values):
                                             demi-sec
                                             doux))
 
-   vino-rating-template
-   (list
-    :file-name "wine/rating/${id}"
-    :head "#+TITLE: ${title}\n\n"
-    :unnarrowed t
-    :immediate-finish t)
+   vino-rating-template (list :file-name "wine/rating/${id}.org")
 
-   vino-entry-template
-   (list :file-name "wine/cellar/${id}"
-         :head "#+TITLE: ${title}\n\n"
-         :unnarrowed t
-         :immediate-finish t)
+   vino-entry-template (list :file-name "wine/cellar/${id}.org")
 
-   vino-grape-template
-   (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}"
-         :head "#+TITLE: ${title}\n\n"
-         :unnarrowed t
-         :immediate-finish t)
+   vino-grape-template (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}.org")
 
-   vino-producer-template
-   (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}"
-         :head "#+TITLE: ${title}\n\n"
-         :unnarrowed t
-         :immediate-finish t)
+   vino-producer-template (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}.org")
 
-   vino-region-template
-   (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}"
-         :head "#+TITLE: ${title}\n\n"
-         :unnarrowed t
-         :immediate-finish t)
+   vino-region-template (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}.org")
 
-   vino-appellation-template
-    (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}"
-          :head "#+TITLE: ${title}\n\n"
-          :unnarrowed t
-          :immediate-finish t))
+   vino-appellation-template (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}.org"))
 #+end_src
 
 ** Interactive functions
@@ -337,11 +300,11 @@ Optional variables (with their default values):
 - =vino-appellation-create= - create a new =appellation= note according to
   =vino-appellation-template=.
 - =vino-region-find-file= - select and visit =region= or =appellation= note.
-- =vino-db-build-cache= - build =vino= database cache.
+- =vino-db-sync= - build =vino= database cache.
 
 * Notes structure
 :PROPERTIES:
-:ID:                     98b08892-811d-41d5-9dc1-6cff3d2e4382
+:ID: 98b08892-811d-41d5-9dc1-6cff3d2e4382
 :END:
 
 =vino= assumes the following structure of your =org-roam-directory=:
@@ -383,10 +346,9 @@ Optional variables (with their default values):
           └── ...
 #+end_example
 
-It's totally fine to have other notes in your =org-roam-directory= (this is how
-I use it) and even in =wine= folder, but please keep in mind that any file in
-=appellation=, =cellar=, =grape=, =producer=, =rating= and =region= will be
-processed by =vino=. Read further to learn more about each folder and note type.
+It's totally fine to have other notes in your =org-roam-directory= and even in
+=wine= folder. Storing =vino= files in dedicated directories is not mandatory,
+it just better organises notes.
 
 ** Appellation/region
 :PROPERTIES:
@@ -396,8 +358,8 @@ processed by =vino=. Read further to learn more about each folder and note type.
 Each file represents either an appellation (like Cerasuolo di Vittoria DOCG or
 Morgon AOC) or a wine region (like Central Otago in New Zealand or Codru in
 Moldova). There are no restrictions on these files, except for presence of
-=appellation= or =region= tag in addition to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for
-more information.
+=appellation= or =region= tag in addition to =wine= tag. See [[#tags][Tags]] for more
+information.
 
 #+begin_example
   $ cat wine/region/20201214120801-codru.org
@@ -405,7 +367,8 @@ more information.
   :PROPERTIES:
   :ID:                     b5758d14-61a2-4255-a47d-3cff3b58b321
   :END:
-  ,#+TITLE: Codru
+  ,#+title: Codru
+  ,#+filetags: wine region
 
   - country :: [[id:6ce0bd2d-9018-4c5f-b896-639a85a6e7a4][Moldova]]
 
@@ -423,7 +386,7 @@ more information.
 
 Each file represents a producer (like Occhipinti or Vino di Anna). There are no
 restrictions on these files, except for presence of =producer= tag in addition
-to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
+to =wine= tag. See [[#tags][Tags]] for more information.
 
 #+begin_example
   $ cat wine/producer/20200511140611-arianna_occhipinti.org
@@ -431,10 +394,8 @@ to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
   :PROPERTIES:
   :ID:                     8f62b3bd-2a36-4227-a0d3-4107cd8dac19
   :END:
-  ,#+TITLE: Arianna Occhipinti
-  ,#+TIME-STAMP: <2020-11-17 12:06:41 d12frosted>
-  ,#+ROAM_TAGS: wine producer
-  ,#+FILETAGS: @AriannaOcchipinti
+  ,#+title: Arianna Occhipinti
+  ,#+filetahs: wine producer @AriannaOcchipinti
 
   - resources :: [[https://www.bowlerwine.com/producer/occhipinti][bowlerwine.com]]
 
@@ -456,7 +417,7 @@ to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
 
 Each file represents a producer (like Occhipinti or Vino di Anna). There are no
 restrictions on these files, except for presence of =producer= tag in addition
-to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
+to =wine= tag. See [[#tags][Tags]] for more information.
 
 #+begin_example
   $ cat wine/grape/20200406154953-nerello_mascalese.org
@@ -464,8 +425,8 @@ to =wine= tag. See [[#org-roam-tags][=org-roam= Tags]] for more information.
   :PROPERTIES:
   :ID:                     9c1a5bec-9390-429e-bea9-4f1cce05f79c
   :END:
-  ,#+TITLE: Nerello Mascalese
-  ,#+TIME-STAMP: <2020-11-17 12:06:29 d12frosted>
+  ,#+title: Nerello Mascalese
+  ,#+filetags: wine grape
 
   - resources :: [[https://winefolly.com/grapes/nerello-mascalese/][Winefolly]]
   - resources :: [[https://italianwinecentral.com/variety/nerello-mascalese/][italianwinecentral.com]]
@@ -555,7 +516,7 @@ Rating is updated automatically upon using =vino-entry-rate= and can be updated
 using =vino-entry-update= if you modify any rating note manually.
 
 Vino entry files require the presence of =cellar= tag in addition to =wine= tag.
-See [[#org-roam-tags][=org-roam= Tags]] for more information.
+See [[#tags][Tags]] for more information.
 
 #+begin_example
   $ cat wine/cellar/c9937e3e-c83d-4d8d-a612-6110e6706252.org
@@ -563,7 +524,8 @@ See [[#org-roam-tags][=org-roam= Tags]] for more information.
   :PROPERTIES:
   :ID:                     c9937e3e-c83d-4d8d-a612-6110e6706252
   :END:
-  ,#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+  ,#+title: Arianna Occhipinti Bombolieri BB 2017
+  ,#+filetags: wine cellar
 
   - carbonation :: still
   - colour :: red
@@ -607,7 +569,7 @@ file name) and fills it will provided information. Then it links newly created
 rating from vino entry and updates the latter.
 
 Rating files require the presence of =rating= tag in addition to =wine= tag. See
-[[#org-roam-tags][=org-roam= Tags]] for more information.
+[[#tags][Tags]] for more information.
 
 #+begin_example
   $ cat wine/rating/f1ecb856-c009-4a65-a8d0-8191a9de66dd.org
@@ -615,7 +577,8 @@ Rating files require the presence of =rating= tag in addition to =wine= tag. See
   :PROPERTIES:
   :ID:                     f1ecb856-c009-4a65-a8d0-8191a9de66dd
   :END:
-  ,#+TITLE: Arianna Occhipinti Bombolieri BB 2017 - 2021-01-15
+  ,#+title: Arianna Occhipinti Bombolieri BB 2017 - 2021-01-15
+  ,#+filetags: wine rating
 
   - wine :: [[id:c9937e3e-c83d-4d8d-a612-6110e6706252][Arianna Occhipinti Bombolieri BB 2017]]
   - date :: 2021-01-15
@@ -625,46 +588,30 @@ Rating files require the presence of =rating= tag in addition to =wine= tag. See
   - total :: 7.0
 #+end_example
 
-** =org-roam= Tags
+** Tags
 :PROPERTIES:
 :ID:                     813fa350-d83f-4955-9e75-a09af41b47ff
 :END:
 
 Each vino file must contain a =wine= tag in addition to type tag (=appellation=,
-=region=, =producer=, =grape=, =cellar= or =rating=). Usually that means that
-these files should be placed in the relevant folders, so they are tagged
-automatically when =org-roam-tag-sources= contains =all-directories=.
-
-But since it's not the only way to tag files, one can put everything in any
-place and use =ROAM_TAGS= file property. For example, a vine entry:
+=region=, =producer=, =grape=, =cellar= or =rating=), meaning that each file
+must contain a respective =#+filetags= property:
 
 #+begin_example
   :PROPERTIES:
   :ID:                     1f4e920e-bfd4-4624-8445-fa8480962c17
   :END:
-  ,#+TITLE: La Stoppa Ageno 2015
-  ,#+ROAM_TAGS: wine cellar
-  ,#+TIME-STAMP: <2021-01-18 21:04:11 d12frosted>
+  ,#+title: La Stoppa Ageno 2015
+  ,#+filetags: wine cellar
 
   ...
 #+end_example
 
-In this case you should also modify =vino-entry-template= (or other relevant
-template), so new entries are not created in =wino/cellar= folder:
-
-#+begin_src emacs-lisp
-  (setq vino-entry-template
-        (list :file-name "${id}"
-              :head "#+TITLE: ${title}\n#+ROAM_TAGS: wine cellar\n\n"
-              :unnarrowed t
-              :immediate-finish t))
-#+end_src
-
-But make sure that =org-roam-tag-sources= contains =prop= value. Otherwise it
-will not work.
-
-In general, it's more convenient to store each type in a separate folder. But
-it's up to you to decide.
+Files are tagged automatically by =vino= when entities are being created. You
+can not change that. But since tags in =#+filetags= property are subject to
+inheritance, you should add =vino= tags to =org-tags-exclude-from-inheritance=
+(which is done for you in =vino-setup=) or disable inheritance completely by
+setting =org-use-tag-inheritance= to nil.
 
 * Database
 :PROPERTIES:
@@ -683,10 +630,10 @@ Available tables (see =vino-db--schemata= for full specification):
 - =ratings= - contains =vino-rating= (see [[#vino-rating][Vino rating]]) with some technical
   metadata (=id=, =file= and =hash=).
 
-In order to build database you may manually call =vino-db-build-cache=, but in
-case you properly [[#installing][installed]] =vino= (e.g. called =vino-setup=), then
-=vino-db-build-cache= will be called each time =org-roam-db-build-cache= is
-called (e.g. respecting =org-roam-db-update-method=).
+In order to build database you may manually call =vino-db-sync=, but in case you
+properly [[#installing][installed]] =vino= (e.g. called =vino-setup=), then =vino-db-sync= will
+be called each time =org-roam-db-build-cache= is called (e.g. respecting
+=org-roam-db-update-method=).
 
 In order to query information from database you might use =vino-db-query=:
 
@@ -707,9 +654,41 @@ become available in [[https://github.com/d12frosted/vino/milestone/4][v0.4]].
 :ID:                     c730ed42-0347-4778-b3fd-feab7f361db3
 :END:
 
+** Configure templates
+:PROPERTIES:
+:ID:                     6370bf51-4311-45d5-bf80-d15e3ca41259
+:END:
+
+All the notes created by =vino= are created using =vulpea-create= function
+according to the configurable templates:
+
+- =vino-grape-template=
+- =vino-producer-template=
+- =vino-region-template=
+- =vino-appellation-template=
+- =vino-entry-template=
+- =vino-rating-template=
+
+Each template is a property list accepting following values:
+
+- =:file-name= (mandatory) - file name relative to =org-roam-directory=;
+- =:head= (optional) - extra header of the created note;
+- =:body= (optional) - body of the created note;
+- =:properties= (optional) - extra properties to put into =PROPERTIES= block;
+- =:context= (optional) - extra variables for =:file-name=, =:head=, =:body=
+  templates.
+
+The template is transformed into =vulpea-create= call by:
+
+- providing title (usually read interactively);
+- providing =file-name= from template;
+- providing tags according to entity being created;
+- providing =head=, =body=, =properties= and =context= from template;
+- setting =:unnarrowed= and =:immediate-finish= both to =t=.
+
 ** Configure rating system
 :PROPERTIES:
-:ID:                     6c787546-ca9a-41a0-946d-cc609f5b3393
+:ID: 6c787546-ca9a-41a0-946d-cc609f5b3393
 :END:
 
 Rating is configured by =vino-rating-prop=. My experience shows that rating

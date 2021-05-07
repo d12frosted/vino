@@ -1,5 +1,6 @@
 :PROPERTIES:
 :ID:       3b38917f-6065-42e8-87ca-33dd39a92fc0
+:ROAM_ALIASES: Calabrese
 :END:
-#+TITLE: Nero d'Avola
-#+ROAM_ALIAS: Calabrese
+#+title: Nero d'Avola
+#+filetags: wine grape

@@ -1,7 +1,8 @@
 :PROPERTIES:
 :ID:       f1ecb856-c009-4a65-a8d0-8191a9de66dd
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017 - 2021-01-15
+#+title: Arianna Occhipinti Bombolieri BB 2017 - 2021-01-15
+#+filetags: wine rating
 
 - wine :: [[id:c9937e3e-c83d-4d8d-a612-6110e6706252][Arianna Occhipinti Bombolieri BB 2017]]
 - date :: 2021-01-15

@@ -1,4 +1,5 @@
 :PROPERTIES:
 :ID:       1c436b3b-ad14-4818-896d-1b7755f10fa1
 :END:
-#+TITLE: Nerello Mascalese
+#+title: Nerello Mascalese
+#+filetags: wine grape

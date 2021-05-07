@@ -1,4 +1,5 @@
 :PROPERTIES:
 :ID:       860f5505-d83c-4305-bc20-cb6a92f5d0be
 :END:
-#+TITLE: Etna DOC
+#+title: Etna DOC
+#+filetags: wine appellation

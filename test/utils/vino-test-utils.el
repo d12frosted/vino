@@ -67,42 +67,18 @@
 (defun vino-test-init-in (dir)
   "Initialize testing environment in DIR."
   (setq org-roam-directory dir
-        org-roam-tag-sources '(prop all-directories)
         vino-db-gc-threshold most-positive-fixnum)
-  (org-roam-mode +1)
-  (vulpea-setup)
-  (vino-setup)
-  (org-roam-db-build-cache))
+  (org-roam-setup)
+  (vino-setup))
 
 (defun vino-test-teardown ()
   "Teardown testing environment."
-  (org-roam-mode -1)
+  (org-roam-teardown)
   (delete-file org-roam-db-location)
   (delete-file vino-db-location)
-  (org-roam-db--close)
   (vino-db--close))
 
 
-
-(buttercup-define-matcher :to-be-note-like (a b)
-  (cl-destructuring-bind
-      ((a-expr . a)
-       (b-expr . b))
-      (mapcar #'buttercup--expr-and-value (list a b))
-    (let* ((spec (format-spec-make
-                  ?A (format "%S" a-expr)
-                  ?a (format "%S" a)
-                  ?B (format "%S" b-expr)
-                  ?b (format "%S" b))))
-      (let ((o (copy-vulpea-note a)))
-        (setf (vulpea-note-meta o) nil)
-        (if (equal o b)
-            (cons t (buttercup-format-spec
-                     "Expected `%A' not to be like `'%b, but it was."
-                     spec))
-          (cons nil (buttercup-format-spec
-                     "Expected `%A' to be like `%b', but instead it was `%a'."
-                     spec)))))))
 
 (buttercup-define-matcher :to-contain-exactly (file value)
   (cl-destructuring-bind
@@ -126,6 +102,22 @@
         (cons nil (buttercup-format-spec
                    "Expected `%F' to have content equal to `%v', but instead `%F' has content equal to `%c'"
                    spec))))))
+
+
+
+(cl-defun completion-for (&key title tags)
+  "Return completion for TITLE and TAGS matchers."
+  (car-safe
+   (seq-find
+    (lambda (data)
+      (let ((note (vulpea-note-from-node (cdr data))))
+        (and (or (null title) (string-equal title (vulpea-note-title note)))
+             (or (null tags)
+                 (seq-every-p
+                  (lambda (x)
+                    (seq-contains-p (vulpea-note-tags note) x))
+                  tags)))))
+    (org-roam-node--completions))))
 
 
 

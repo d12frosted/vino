@@ -12,9 +12,32 @@
 :ID:                     70359835-aff8-4cb6-92bd-ac857225a3d5
 :END:
 
+Primarily migration to =org-roam= v2 that has many improvements and breaking
+changes. See [[https://org-roam.discourse.group/t/the-org-roam-v2-great-migration/1505][The Org-roam v2 Great Migration]] for more information on automatic
+migration. There will be a separate script to migrate all =vino= entries.
+
+*Breaking changes*
+
+- Since =org-roam= doesn't provide tagging functionality anymore, there is no
+  built-in way to use directories as tags, so each file must contain a
+  =#+filetags= value. Newly created notes will get this automatically, old notes
+  must be migrated.
+- Template system has adapted to latest =vulpea-create= and =org-roam=. Most
+  importantly, instead of being a full blown template accepted by
+  =vulpea-create= it is now a property list simply allowing only values that
+  make sense:
+  - =:file-name= (mandatory) - file name relative to =org-roam-directory=;
+  - =:head= (optional) - extra header of the created note;
+  - =:body= (optional) - body of the created note;
+  - =:context= (optional) - extra variables for =:file-name=, =:head=, =:body=
+    templates.
+  - =:properties= (optional) - extra properties to put into =PROPERTIES= block;
+  - =:context= (optional) - extra variables for =:file-name=, =:head=, =:body=
+    templates.
+
 ** v0.2
 :PROPERTIES:
-:ID:                     16a41084-d445-47a2-adb5-eff9569dd8d4
+:ID: 16a41084-d445-47a2-adb5-eff9569dd8d4
 :END:
 
 Focus of this release is fulfilling [[https://github.com/d12frosted/vino/milestone/2][milestone#2]] goal - dedicated database for

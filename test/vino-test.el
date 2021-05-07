@@ -72,14 +72,17 @@
     (vino-test-teardown))
 
   (it "returns full information about selected wine"
-    (spy-on 'org-roam-completion--completing-read
-            :and-return-value "(wine,cellar) Arianna Occhipinti Bombolieri BB 2017")
+    (spy-on
+     'completing-read
+     :and-return-value
+     (completion-for :title "Arianna Occhipinti Bombolieri BB 2017"
+                     :tags '("cellar")))
     (expect (vino-entry-note-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name "wine/cellar/c9937e3e-c83d-4d8d-a612-6110e6706252.org" org-roam-directory)
              :title "Arianna Occhipinti Bombolieri BB 2017"
-             :tags '("wine" "cellar")
+             :tags '("cellar" "wine")
              :level 0
              :id "c9937e3e-c83d-4d8d-a612-6110e6706252"))))
 
@@ -208,7 +211,8 @@
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Grotte Alte 2014
+#+title: Arianna Occhipinti Grotte Alte 2014
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -228,7 +232,6 @@
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
 - rating :: NA
-
 
 "
              (vulpea-note-id note)))))
@@ -281,7 +284,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-grape-create "Slarina")
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/grape/%s-slarina.org"
@@ -301,14 +304,17 @@
     (vino-test-teardown))
 
   (it "returns full information about selected grape"
-    (spy-on 'org-roam-completion--completing-read
-            :and-return-value "(wine,grape) Frappato")
+    (spy-on
+     'completing-read
+     :and-return-value
+     (completion-for :title "Frappato"
+                     :tags '("grape")))
     (expect (vino-grape-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
              :title "Frappato"
-             :tags '("wine" "grape")
+             :tags '("grape" "wine")
              :level 0
              :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
 
@@ -317,10 +323,16 @@
           ts (current-time))
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
-    (spy-on 'org-roam-completion--completing-read :and-return-value "Slarina")
-    (spy-on 'completing-read :and-return-value "Create new grape")
+    (let ((values '("Slarina"
+                    "Create new grape")))
+      (spy-on 'completing-read
+              :and-call-fake
+              (lambda (&rest _)
+                (let ((r (car values)))
+                  (setq values (cdr values))
+                  r))))
     (expect (vino-grape-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/grape/%s-slarina.org"
@@ -332,22 +344,22 @@
              :id id)))
 
   (it "adds a synonym when selecting non-existing name"
-    (let ((values '("Frappato di Vittoria"
-                    "(wine,grape) Frappato")))
-      (spy-on 'org-roam-completion--completing-read
+    (let ((values (list
+                   "Frappato di Vittoria"
+                   "Add a synonym to existing grape"
+                   (completion-for :title "Frappato" :tags '("grape")))))
+      (spy-on 'completing-read
               :and-call-fake (lambda (&rest _)
                                (let ((r (car values)))
                                  (setq values (cdr values))
                                  r))))
-    (spy-on 'completing-read
-            :and-return-value "Add a synonym to existing grape")
     (expect (vino-grape-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name "wine/grape/frappato.org"
                                      org-roam-directory)
              :title "Frappato di Vittoria"
-             :tags '("wine" "grape")
+             :tags '("grape" "wine")
              :level 0
              :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
     (expect (expand-file-name "wine/grape/frappato.org"
@@ -355,9 +367,10 @@
             :to-contain-exactly
             ":PROPERTIES:
 :ID:       cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
+:ROAM_ALIASES: \"Frappato di Vittoria\"
 :END:
-#+TITLE: Frappato
-#+roam_alias: \"Frappato di Vittoria\"
+#+title: Frappato
+#+filetags: wine grape
 ")))
 
 (describe "vino-producer-create"
@@ -374,7 +387,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-producer-create "Vino di Anna")
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/producer/%s-vino_di_anna.org"
@@ -394,14 +407,17 @@
     (vino-test-teardown))
 
   (it "returns full information about selected producer"
-    (spy-on 'org-roam-completion--completing-read
-            :and-return-value "(wine,producer) Arianna Occhipinti")
+    (spy-on
+     'completing-read
+     :and-return-value
+     (completion-for :title "Arianna Occhipinti"
+                     :tags '("producer")))
     (expect (vino-producer-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
              :title "Arianna Occhipinti"
-             :tags '("wine" "producer")
+             :tags '("producer" "wine")
              :level 0
              :id "9462dfad-603c-4094-9aca-a9042cec5dd2")))
 
@@ -410,10 +426,13 @@
           ts (current-time))
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
-    (spy-on 'org-roam-completion--completing-read :and-return-value "Vino di Anna")
+    (spy-on
+     'completing-read
+     :and-return-value
+     "Vino di Anna")
     (spy-on 'y-or-n-p :and-return-value t)
     (expect (vino-producer-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/producer/%s-vino_di_anna.org"
@@ -438,7 +457,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-region-create "Codru")
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/region/%s-codru.org"
@@ -463,7 +482,7 @@
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
     (expect (vino-appellation-create "Gattinara DOCG")
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/appellation/%s-gattinara_docg.org"
@@ -483,26 +502,28 @@
     (vino-test-teardown))
 
   (it "returns full information about selected region"
-    (spy-on 'org-roam-completion--completing-read
-            :and-return-value "(wine,region) Central Otago")
+    (spy-on 'completing-read
+            :and-return-value
+            (completion-for :title "Central Otago" :tags '("region")))
     (expect (vino-region-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
              :title "Central Otago"
-             :tags '("wine" "region")
+             :tags '("region" "wine")
              :level 0
              :id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))
 
   (it "returns full information about selected appellation"
-    (spy-on 'org-roam-completion--completing-read
-            :and-return-value "(wine,appellation) Cerasuolo di Vittoria DOCG")
+    (spy-on 'completing-read
+            :and-return-value
+            (completion-for :title "Cerasuolo di Vittoria DOCG" :tags '("appellation")))
     (expect (vino-region-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
              :title "Cerasuolo di Vittoria DOCG"
-             :tags '("wine" "appellation")
+             :tags '("appellation" "wine")
              :level 0
              :id "6a0819f3-0770-4481-9754-754ca397800b")))
 
@@ -511,11 +532,15 @@
           ts (current-time))
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
-    (spy-on 'org-roam-completion--completing-read :and-return-value "Codru")
-    (spy-on 'completing-read :and-return-value "Create region")
+    (let ((values '("Codru" "Create region")))
+      (spy-on 'completing-read
+              :and-call-fake (lambda (&rest _)
+                               (let ((r (car values)))
+                                 (setq values (cdr values))
+                                 r))))
     (spy-on 'read-string :and-return-value "")
     (expect (vino-region-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/region/%s-codru.org"
@@ -531,11 +556,15 @@
           ts (current-time))
     (spy-on 'org-id-new :and-return-value id)
     (spy-on 'current-time :and-return-value ts)
-    (spy-on 'org-roam-completion--completing-read :and-return-value "Gattinara DOCG")
-    (spy-on 'completing-read :and-return-value "Create appellation")
+    (let ((values '("Gattinara DOCG" "Create appellation")))
+      (spy-on 'completing-read
+              :and-call-fake (lambda (&rest _)
+                               (let ((r (car values)))
+                                 (setq values (cdr values))
+                                 r))))
     (spy-on 'read-string :and-return-value "")
     (expect (vino-region-select)
-            :to-be-note-like
+            :to-equal
             (make-vulpea-note
              :path (expand-file-name
                     (format "wine/appellation/%s-gattinara_docg.org"
@@ -576,7 +605,8 @@
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -652,7 +682,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -722,7 +753,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -792,7 +824,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -852,7 +885,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -923,7 +957,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -1069,7 +1104,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017
+#+title: Arianna Occhipinti Bombolieri BB 2017
+#+filetags: wine cellar
 
 - carbonation :: still
 - colour :: red
@@ -1126,7 +1162,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              ":PROPERTIES:
 :ID:       %s
 :END:
-#+TITLE: Arianna Occhipinti Bombolieri BB 2017 - %s
+#+title: Arianna Occhipinti Bombolieri BB 2017 - %s
+#+filetags: wine rating
 
 - wine :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017]]
 - date :: %s
@@ -1144,7 +1181,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - score :: 16
 - score_max :: 20
 - total :: 8.0
-
 
 "
              (vulpea-note-id note)
@@ -1167,9 +1203,9 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (vino-test-teardown)
     (setq vino-rating-props nil))
 
-  (it "subsequent call of vino-db-build-cache is fast when the cache is warm"
+  (it "subsequent call of vino-db-sync is fast when the cache is warm"
     (let ((duration (benchmark-run 1
-                      (vino-db-build-cache))))
+                      (vino-db-sync))))
       (message "duration = %s" duration)
       (expect (car duration) :to-be-less-than 1.0)))
 
