@@ -9,14 +9,24 @@
 
 ** TBD
 :PROPERTIES:
+:ID:                     70359835-aff8-4cb6-92bd-ac857225a3d5
+:END:
+
+** v0.2
+:PROPERTIES:
 :ID:                     16a41084-d445-47a2-adb5-eff9569dd8d4
 :END:
+
+Focus of this release is fulfilling [[https://github.com/d12frosted/vino/milestone/2][milestone#2]] goal - dedicated database for
+=vino= needs.
 
 *Feature*
 
 - [[https://github.com/d12frosted/vino/issues/96][vino#96]] Allow to create grape synonyms during =vino-entry-read=.
 - =vino-db= functionality with two tables - =cellar= and =ratings=.
 - [[https://github.com/d12frosted/vino/issues/97][vino#97]] =vino-entry-note-get-dwim= also gets wine from the rating note.
+- [[https://github.com/d12frosted/vino/pull/94][vino#94]] Provide two databases: =cellar= and =ratings= and all the machinery
+  for its maintenance. See dedicated section for Database in README.
 
 *Breaking changes*
 
