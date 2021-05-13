@@ -127,9 +127,8 @@ DATE arguments.")
      "grape"
      "region"
      "appellation"))
-  (advice-add 'org-roam-db-sync
-              :after
-              #'vino-db-sync))
+  (add-hook 'find-file-hook #'vino-db--update-on-save-h)
+  (add-hook 'kill-emacs-hook #'vino-db--close-all))
 
 
 ;;; Compat
@@ -1405,6 +1404,11 @@ Performs a database upgrade when required."
   (gethash (expand-file-name vino-db-location)
            vino-db--connection))
 
+(defun vino-db--close-all ()
+  "Closes all database connections made by Org-roam."
+  (dolist (conn (hash-table-values vino-db--connection))
+    (vino-db--close conn)))
+
 (defun vino-db--close (&optional db)
   "Closes the database connection for database DB."
   (unless db
@@ -1420,6 +1424,25 @@ Performs a database upgrade when required."
         (progn
           (user-error "Not implemented"))))
   version)
+
+(defun vino-db-update-file (&optional file)
+  "Update cache for FILE."
+  (setq file (or file (buffer-file-name (buffer-base-buffer))))
+  (when-let* ((id (vulpea-db-get-id-by-file file))
+              (note (vulpea-db-get-by-id id))
+              (tags (vulpea-note-tags note))
+              (table (or (and (seq-contains-p tags "cellar")
+                              'cellar)
+                         (and (seq-contains-p tags "rating")
+                              'ratings)))
+              (hash (vulpea-utils-note-hash note)))
+    (unless (string-equal
+             hash
+             (caar (vino-db-query
+                    `[:select hash
+                      :from ,table])))
+      (vino-db--clear-note table note)
+      (vino-db--update-note table hash note))))
 
 (defun vino-db-sync (&optional force)
   "Build the cache for `vino'.
@@ -1514,25 +1537,27 @@ Notes is a list of (note . hash) pairs."
     (vino-db--clear-note table note))
   (let ((modified-count 0))
     (pcase-dolist (`(,note . ,hash) notes)
+      (vino-db--update-note table hash note)
+      (setq modified-count (1+ modified-count))
       (message "(vino) Processed %s/%s modified notes from %s..."
                modified-count
                (length notes)
-               table)
-      (vino-db--update-note table hash note)
-      (setq modified-count (1+ modified-count)))))
+               table))))
 
 (defun vino-db--update-note (table hash note)
   "Update TABLE cache for a NOTE with HASH."
   (let ((id (vulpea-note-id note)))
     (pcase table
-      ('cellar (vino-db--update-entry
-                (vino-entry-get-by-id id)
-                note
-                hash))
-      ('ratings (vino-db--update-rating
-                 (vino-rating-get-by-id id)
-                 note
-                 hash)))))
+      ('cellar
+       (vino-db--update-entry
+        (vino-entry-get-by-id id)
+        note
+        hash))
+      ('ratings
+       (vino-db--update-rating
+        (vino-rating-get-by-id id)
+        note
+        hash)))))
 
 (defun vino-db-update-entry (entry note)
   "Update cache for ENTRY stored in NOTE."
@@ -1607,6 +1632,11 @@ HASH is SHA1 of NOTE file."
      `[:delete :from ,table
        :where (= id $s1)]
      id)))
+
+(defun vino-db--update-on-save-h ()
+  "Locally setup file update for `vino' files."
+  (when (org-roam--org-roam-file-p)
+    (add-hook 'after-save-hook #'vino-db-update-file nil 'local)))
 
 
 ;;; Utilities

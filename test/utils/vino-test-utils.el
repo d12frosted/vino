@@ -69,7 +69,8 @@
   (setq org-roam-directory dir
         vino-db-gc-threshold most-positive-fixnum)
   (org-roam-setup)
-  (vino-setup))
+  (vino-setup)
+  (vino-db-sync))
 
 (defun vino-test-teardown ()
   "Teardown testing environment."

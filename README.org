@@ -120,6 +120,8 @@ Keep in mind that =vino= depends on [[https://github.com/d12frosted/vulpea][vulp
   (straight-use-package
    '(vino :type git :host github :repo "d12frosted/vino"))
   (vino-setup)
+  ;; optionally sync the database
+  (vino-db-sync)
 #+end_src
 
 In case you have [[https://github.com/raxod502/straight.el/#integration-with-use-package][integration]] with [[https://github.com/jwiegley/use-package][use-package]]:
@@ -131,7 +133,10 @@ In case you have [[https://github.com/raxod502/straight.el/#integration-with-use
                :host github
                :repo "d12frosted/vino")
     :hook
-    (after-init . vino-setup))
+    (after-init . vino-setup)
+    :config
+    ;; optionally sync the database when vino is loaded
+    (vino-db-sync))
 #+end_src
 
 ** Configuration
@@ -630,10 +635,12 @@ Available tables (see =vino-db--schemata= for full specification):
 - =ratings= - contains =vino-rating= (see [[#vino-rating][Vino rating]]) with some technical
   metadata (=id=, =file= and =hash=).
 
-In order to build database you may manually call =vino-db-sync=, but in case you
-properly [[#installing][installed]] =vino= (e.g. called =vino-setup=), then =vino-db-sync= will
-be called each time =org-roam-db-build-cache= is called (e.g. respecting
-=org-roam-db-update-method=).
+In order to build database you need to manually call =vino-db-sync= (either from
+your =init.el= file after =vino-setup= or interactively).
+
+If you properly [[#installing][installed]] =vino= (e.g. called =vino-setup=), then every time you
+modify and save a file, database will be automatically updated via
+=vino-db-update-file= function.
 
 In order to query information from database you might use =vino-db-query=:
 

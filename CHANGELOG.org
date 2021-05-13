@@ -16,6 +16,14 @@ Primarily migration to =org-roam= v2 that has many improvements and breaking
 changes. See [[https://org-roam.discourse.group/t/the-org-roam-v2-great-migration/1505][The Org-roam v2 Great Migration]] for more information on automatic
 migration. There will be a separate script to migrate all =vino= entries.
 
+*Features*
+
+- Faster database updates via =vino-db-update-file=, which is called
+  automatically on buffer save. Also, since =org-roam= has changed the way
+  database is built, =vino= doesn't advice/hook into =org-roam= database build
+  process, but instead provides a separate pipeline similar to one in
+  =org-roam=. See relevant section of README for more information.
+
 *Breaking changes*
 
 - Since =org-roam= doesn't provide tagging functionality anymore, there is no
