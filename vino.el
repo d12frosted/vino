@@ -379,41 +379,47 @@ ID is generated unless passed."
                       (vino-entry-name vino-entry)
                       (or (vino-entry-vintage vino-entry) "NV")
                       date-str))
+       (body (with-temp-buffer
+               ;; TODO: performance of multiple `vulpea-meta-set'
+               (vulpea-buffer-meta-set "wine" wine-note 'append)
+               (vulpea-buffer-meta-set "date" date-str 'append)
+               (vulpea-buffer-meta-set "version" version 'append)
+               (seq-do (lambda (data)
+                         (vulpea-buffer-meta-set
+                          (downcase (nth 0 data))
+                          (nth 1 data)
+                          'append)
+                         (vulpea-buffer-meta-set
+                          (downcase (concat (nth 0 data) "_MAX"))
+                          (nth 2 data)
+                          'append))
+                       values)
+               (vulpea-buffer-meta-set
+                "score" (vino-rating-score rating) 'append)
+               (vulpea-buffer-meta-set
+                "score_max" (vino-rating-score-max rating) 'append)
+               (vulpea-buffer-meta-set
+                "total" (vino-rating-total rating) 'append)
+               (buffer-substring (point-min)
+                                 (point-max))))
        (note (vulpea-create
               title
               (plist-get vino-rating-template :file-name)
               :id id
               :tags '("wine" "rating")
               :head (plist-get vino-rating-template :head)
-              :body (plist-get vino-rating-template :body)
+              :body (concat (plist-get vino-rating-template :body)
+                            body)
               :context (plist-get vino-rating-template :context)
               :properties (plist-get vino-rating-template :properties)
               :unnarrowed t
               :immediate-finish t)))
-    ;; TODO: performance of multiple `vulpea-meta-set'
     (vulpea-meta-set
      wine-note
      "ratings"
      (cons note
            (vulpea-meta-get-list wine-note "ratings" 'note))
      'append)
-    (vulpea-meta-set note "wine" wine-note 'append)
-    (vulpea-meta-set note "date" date-str 'append)
-    (vulpea-meta-set note "version" version 'append)
-    (seq-do (lambda (data)
-              (vulpea-meta-set note
-                               (downcase (nth 0 data))
-                               (nth 1 data)
-                               'append)
-              (vulpea-meta-set note
-                               (downcase (concat (nth 0 data) "_MAX"))
-                               (nth 2 data)
-                               'append))
-            values)
-    (vulpea-meta-set note "score" (vino-rating-score rating) 'append)
-    (vulpea-meta-set
-     note "score_max" (vino-rating-score-max rating) 'append)
-    (vulpea-meta-set note "total" (vino-rating-total rating) 'append)
     (vino-db-update-rating rating note)
     (vino-entry-update wine-note)
     note))
@@ -600,6 +606,52 @@ ID is generated unless passed."
                         (if (numberp vintage)
                             (number-to-string vintage)
                           vintage)))
+         (body
+          (with-temp-buffer
+            ;; TODO: optimize multiple calls
+            (vulpea-buffer-meta-set
+             "carbonation" (vino-entry-carbonation vino) 'append)
+            (vulpea-buffer-meta-set
+             "colour" (vino-entry-colour vino) 'append)
+            (vulpea-buffer-meta-set
+             "sweetness" (vino-entry-sweetness vino) 'append)
+            (vulpea-buffer-meta-set
+             "producer" (vino-entry-producer vino) 'append)
+            (vulpea-buffer-meta-set
+             "name" (vino-entry-name vino) 'append)
+            (when-let ((vintage (vino-entry-vintage vino)))
+              (vulpea-buffer-meta-set "vintage" vintage 'append))
+            (when-let ((appellation (vino-entry-appellation vino)))
+              (vulpea-buffer-meta-set
+               "appellation" appellation 'append))
+            (when-let ((region (vino-entry-region vino)))
+              (vulpea-buffer-meta-set "region" region 'append))
+            (vulpea-buffer-meta-set
+             "grapes" (vino-entry-grapes vino) 'append)
+            (let ((alcohol (vino-entry-alcohol vino)))
+              (when (and alcohol
+                         (> alcohol 0))
+                (vulpea-buffer-meta-set "alcohol" alcohol 'append)))
+            (let ((sugar (vino-entry-sugar vino)))
+              (when (and sugar (>= sugar 0))
+                (vulpea-buffer-meta-set "sugar" sugar 'append)))
+            (when (vino-entry-price vino)
+              (vulpea-buffer-meta-set
+               "price" (vino-entry-price vino) 'append))
+            (let ((acquired (or (vino-entry-acquired vino) 0))
+                  (consumed (or (vino-entry-consumed vino) 0)))
+              (vulpea-buffer-meta-set "acquired" acquired 'append)
+              (vulpea-buffer-meta-set "consumed" consumed 'append)
+              (vulpea-buffer-meta-set
+               "available" (- acquired consumed) 'append))
+            (vulpea-buffer-meta-set
+             "resources" (vino-entry-resources vino) 'append)
+            (vulpea-buffer-meta-set
+             "rating" (or (vino-entry-rating vino) "NA") 'append)
+            (vulpea-buffer-meta-set
+             "ratings" (vino-entry-ratings vino) 'append)
+            (buffer-substring (point-min)
+                              (point-max))))
          (note
           (vulpea-create
            title
@@ -607,52 +659,12 @@ ID is generated unless passed."
            :id id
            :tags '("wine" "cellar")
            :head (plist-get vino-entry-template :head)
-           :body (plist-get vino-entry-template :body)
+           :body (concat (plist-get vino-entry-template :body)
+                         body)
            :context (plist-get vino-entry-template :context)
            :properties (plist-get vino-entry-template :properties)
            :unnarrowed t
            :immediate-finish t)))
-    ;; TODO: optimize multiple calls
-    (vulpea-meta-set
-     note "carbonation" (vino-entry-carbonation vino) 'append)
-    (vulpea-meta-set
-     note "colour" (vino-entry-colour vino) 'append)
-    (vulpea-meta-set
-     note "sweetness" (vino-entry-sweetness vino) 'append)
-    (vulpea-meta-set
-     note "producer" (vino-entry-producer vino) 'append)
-    (vulpea-meta-set
-     note "name" (vino-entry-name vino) 'append)
-    (when-let ((vintage (vino-entry-vintage vino)))
-      (vulpea-meta-set note "vintage" vintage 'append))
-    (when-let ((appellation (vino-entry-appellation vino)))
-      (vulpea-meta-set note "appellation" appellation 'append))
-    (when-let ((region (vino-entry-region vino)))
-      (vulpea-meta-set note "region" region 'append))
-    (vulpea-meta-set
-     note "grapes" (vino-entry-grapes vino) 'append)
-    (let ((alcohol (vino-entry-alcohol vino)))
-      (when (and alcohol
-                 (> alcohol 0))
-        (vulpea-meta-set note "alcohol" alcohol 'append)))
-    (let ((sugar (vino-entry-sugar vino)))
-      (when (and sugar (>= sugar 0))
-        (vulpea-meta-set note "sugar" sugar 'append)))
-    (when (vino-entry-price vino)
-      (vulpea-meta-set
-       note "price" (vino-entry-price vino) 'append))
-    (let ((acquired (or (vino-entry-acquired vino) 0))
-          (consumed (or (vino-entry-consumed vino) 0)))
-      (vulpea-meta-set note "acquired" acquired 'append)
-      (vulpea-meta-set note "consumed" consumed 'append)
-      (vulpea-meta-set
-       note "available" (- acquired consumed) 'append))
-    (vulpea-meta-set
-     note "resources" (vino-entry-resources vino) 'append)
-    (vulpea-meta-set
-     note "rating" (or (vino-entry-rating vino) "NA") 'append)
-    (vulpea-meta-set
-     note "ratings" (vino-entry-ratings vino) 'append)
     (vino-db-update-entry vino note)
     note))
 

@@ -232,7 +232,6 @@
 - resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
 - resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
 - rating :: NA
-
 "
              (vulpea-note-id note)))))
 
@@ -1181,7 +1180,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - score :: 16
 - score_max :: 20
 - total :: 8.0
-
 "
              (vulpea-note-id note)
              date-str
