@@ -899,8 +899,8 @@ explicitly."
 ;;;###autoload
 (defun vino-entry-note-p (note)
   "Return non-nil if NOTE represents vino entry."
-  (when-let* ((tags (vulpea-note-tags note))
-              (level (vulpea-note-level note)))
+  (when-let ((tags (vulpea-note-tags note))
+             (level (vulpea-note-level note)))
     (and (equal level 0)
          (seq-contains-p tags "wine")
          (seq-contains-p tags "cellar"))))
