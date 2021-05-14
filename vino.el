@@ -281,9 +281,9 @@ Each PROP can be of one of the following types:
     (when (and note (vino-rating-note-p note))
       (let*
           ((meta (vulpea-meta note))
-           (wine (vulpea-meta-get! meta "wine" 'note))
-           (date (vulpea-meta-get! meta "date"))
-           (version (vulpea-meta-get! meta "version" 'number))
+           (wine (vulpea-buffer-meta-get! meta "wine" 'note))
+           (date (vulpea-buffer-meta-get! meta "date"))
+           (version (vulpea-buffer-meta-get! meta "version" 'number))
            (info (seq-find
                   (lambda (x) (equal (car x) version))
                   vino-rating-props))
@@ -297,9 +297,9 @@ Each PROP can be of one of the following types:
                       (let ((name (downcase (car cfg))))
                         (list
                          name
-                         (vulpea-meta-get!
+                         (vulpea-buffer-meta-get!
                           meta name 'number)
-                         (vulpea-meta-get!
+                         (vulpea-buffer-meta-get!
                           meta (concat name "_max") 'number))))
                     props)))
         (make-vino-rating
@@ -549,27 +549,32 @@ See `vulpea-create' for more information.")
     (when (and note (vino-entry-note-p note))
       (let ((meta (vulpea-meta note)))
         (make-vino-entry
-         :carbonation (vulpea-meta-get! meta "carbonation" 'symbol)
-         :colour (vulpea-meta-get! meta "colour" 'symbol)
-         :sweetness (vulpea-meta-get! meta "sweetness" 'symbol)
-         :producer (vulpea-meta-get! meta "producer" 'note)
-         :name (vulpea-meta-get! meta "name" 'string)
+         :carbonation (vulpea-buffer-meta-get!
+                       meta "carbonation" 'symbol)
+         :colour (vulpea-buffer-meta-get! meta "colour" 'symbol)
+         :sweetness (vulpea-buffer-meta-get!
+                     meta "sweetness" 'symbol)
+         :producer (vulpea-buffer-meta-get! meta "producer" 'note)
+         :name (vulpea-buffer-meta-get! meta "name" 'string)
          :vintage (vino--parse-opt-number
-                   (vulpea-meta-get! meta "vintage")
+                   (vulpea-buffer-meta-get! meta "vintage")
                    "NV")
-         :appellation (vulpea-meta-get! meta "appellation" 'note)
-         :region (vulpea-meta-get! meta "region" 'note)
-         :grapes (vulpea-meta-get-list! meta "grapes" 'note)
-         :alcohol (vulpea-meta-get! meta "alcohol" 'number)
-         :sugar (vulpea-meta-get! meta "sugar" 'number)
-         :acquired (vulpea-meta-get! meta "acquired" 'number)
-         :consumed (vulpea-meta-get! meta "consumed" 'number)
-         :resources (vulpea-meta-get-list! meta "resources" 'link)
-         :price (vulpea-meta-get-list! meta "price" 'string)
+         :appellation (vulpea-buffer-meta-get!
+                       meta "appellation" 'note)
+         :region (vulpea-buffer-meta-get! meta "region" 'note)
+         :grapes (vulpea-buffer-meta-get-list! meta "grapes" 'note)
+         :alcohol (vulpea-buffer-meta-get! meta "alcohol" 'number)
+         :sugar (vulpea-buffer-meta-get! meta "sugar" 'number)
+         :acquired (vulpea-buffer-meta-get! meta "acquired" 'number)
+         :consumed (vulpea-buffer-meta-get! meta "consumed" 'number)
+         :resources (vulpea-buffer-meta-get-list!
+                     meta "resources" 'link)
+         :price (vulpea-buffer-meta-get-list! meta "price" 'string)
          :rating (vino--parse-opt-number
-                  (vulpea-meta-get! meta "rating" 'string)
+                  (vulpea-buffer-meta-get! meta "rating" 'string)
                   "NA")
-         :ratings (vulpea-meta-get-list! meta "ratings" 'note))))))
+         :ratings (vulpea-buffer-meta-get-list!
+                   meta "ratings" 'note))))))
 
 ;;;###autoload
 (defun vino-entry-create ()
@@ -730,9 +735,9 @@ The following things are updated:
          (title (format
                  "%s %s %s"
                  (vulpea-note-title
-                  (vulpea-meta-get! meta "producer" 'note))
-                 (vulpea-meta-get! meta "name")
-                 (vulpea-meta-get! meta "vintage"))))
+                  (vulpea-buffer-meta-get! meta "producer" 'note))
+                 (vulpea-buffer-meta-get! meta "name")
+                 (vulpea-buffer-meta-get! meta "vintage"))))
     (vulpea-utils-with-note note
       (vulpea-buffer-title-set title)
       (save-buffer))
@@ -1651,7 +1656,7 @@ HASH is SHA1 of NOTE file."
     (lambda ()
       (let ((resource (read-string "Resource: ")))
         (when (not (string-empty-p resource))
-          (vulpea-meta-format resource))))
+          (vulpea-buffer-meta-format resource))))
     (lambda (a) (not (null a))))
    ""))
 

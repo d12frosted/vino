@@ -108,17 +108,18 @@
 
 (cl-defun completion-for (&key title tags)
   "Return completion for TITLE and TAGS matchers."
-  (car-safe
-   (seq-find
-    (lambda (data)
-      (let ((note (vulpea-note-from-node (cdr data))))
-        (and (or (null title) (string-equal title (vulpea-note-title note)))
-             (or (null tags)
-                 (seq-every-p
-                  (lambda (x)
-                    (seq-contains-p (vulpea-note-tags note) x))
-                  tags)))))
-    (org-roam-node--completions))))
+  (when-let ((note
+              (seq-find
+                (lambda (note)
+                  (let ((res (and (or (null title) (string-equal title (vulpea-note-title note)))
+                                  (or (null tags)
+                                      (seq-every-p
+                                       (lambda (x)
+                                         (seq-contains-p (vulpea-note-tags note) x))
+                                       tags)))))
+                    res))
+                (vulpea-db-query))))
+    (vulpea-select-describe note)))
 
 
 
