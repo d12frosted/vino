@@ -1458,7 +1458,6 @@ Performs a database upgrade when required."
              (caar (vino-db-query
                     `[:select hash
                       :from ,table])))
-      (vino-db--clear-note table note)
       (vino-db--update-note table hash note))))
 
 (defun vino-db-sync (&optional force)
@@ -1587,6 +1586,7 @@ Notes is a list of (note . hash) pairs."
   "Update `vino' cache for ENTRY stored in NOTE.
 
 HASH is SHA1 of NOTE file."
+  (vino-db--clear-note 'cellar note)
   (vino-db-query
    [:insert :into cellar
     :values $v1]
@@ -1626,6 +1626,7 @@ HASH is SHA1 of NOTE file."
   "Update `vino' cache for RATING stored in NOTE.
 
 HASH is SHA1 of NOTE file."
+  (vino-db--clear-note 'ratings note)
   (vino-db-query
    [:insert :into ratings
     :values $v1]
