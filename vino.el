@@ -1653,7 +1653,7 @@ HASH is SHA1 of NOTE file."
 
 (defun vino-db--update-on-save-h ()
   "Locally setup file update for `vino' files."
-  (when (org-roam--org-roam-file-p)
+  (when (org-roam-file-p)
     (add-hook 'after-save-hook #'vino-db-update-file nil 'local)))
 
 
