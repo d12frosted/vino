@@ -749,7 +749,7 @@ The following things are updated:
                  (vulpea-note-title
                   (vulpea-buffer-meta-get! meta "producer" 'note))
                  (vulpea-buffer-meta-get! meta "name")
-                 (vulpea-buffer-meta-get! meta "vintage"))))
+                 (or (vulpea-buffer-meta-get! meta "vintage") "NV"))))
     (vulpea-utils-with-note note
       (vulpea-buffer-title-set title)
       (save-buffer))
