@@ -12,6 +12,11 @@
 :ID:                     70359835-aff8-4cb6-92bd-ac857225a3d5
 :END:
 
+** v0.3.0
+:PROPERTIES:
+:ID:                     81df6136-0ec8-415d-9350-279b22629fef
+:END:
+
 Primarily migration to =org-roam= v2 that has many improvements and breaking
 changes. See [[https://org-roam.discourse.group/t/the-org-roam-v2-great-migration/1505][The Org-roam v2 Great Migration]] for more information on automatic
 migration. There will be a separate script to migrate all =vino= entries.
