@@ -283,34 +283,24 @@
              :title "Frappato")))
 
   (it "creates a new grape note when selecting non-existing name"
-    (let ((values '("Slarina"
-                    "Create new grape")))
-      (spy-on 'completing-read
-              :and-call-fake
-              (lambda (&rest _)
-                (let ((r (car values)))
-                  (setq values (cdr values))
-                  r))))
+    (spy-on 'completing-read :and-return-values '("Slarina" "Create new grape"))
     (expect (mock-vulpea-note :type "grape" :title "Slarina")
             :to-equal
             (vino-grape-select)))
 
   (it "adds a synonym when selecting non-existing name"
-    (let ((values (list
-                   "Frappato di Vittoria"
-                   "Add a synonym to existing grape"
-                   (completion-for :title "Frappato" :tags '("grape")))))
-      (spy-on 'completing-read
-              :and-call-fake (lambda (&rest _)
-                               (let ((r (car values)))
-                                 (setq values (cdr values))
-                                 r))))
+    (spy-on 'completing-read
+            :and-return-values
+            (list
+             "Frappato di Vittoria"
+             "Add a synonym to existing grape"
+             (completion-for :title "Frappato" :tags '("grape"))))
     (expect (vino-grape-select)
             :to-equal
             (mk-vulpea-note :type "grape"
-                                 :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
-                                 :title "Frappato di Vittoria"
-                                 :basename "frappato"))
+                            :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
+                            :title "Frappato di Vittoria"
+                            :basename "frappato"))
     (expect (expand-file-name "wine/grape/frappato.org"
                               org-roam-directory)
             :to-contain-exactly
@@ -404,24 +394,14 @@
              :title "Cerasuolo di Vittoria DOCG")))
 
   (it "creates a new region note when selecting non-existing name"
-    (let ((values '("Codru" "Create region")))
-      (spy-on 'completing-read
-              :and-call-fake (lambda (&rest _)
-                               (let ((r (car values)))
-                                 (setq values (cdr values))
-                                 r))))
+    (spy-on 'completing-read :and-return-values '("Codru" "Create region"))
     (spy-on 'read-string :and-return-value "")
     (expect (mock-vulpea-note :type "region" :title "Codru")
             :to-equal
             (vino-region-select)))
 
   (it "creates a new appellation note when selecting non-existing name"
-    (let ((values '("Gattinara DOCG" "Create appellation")))
-      (spy-on 'completing-read
-              :and-call-fake (lambda (&rest _)
-                               (let ((r (car values)))
-                                 (setq values (cdr values))
-                                 r))))
+    (spy-on 'completing-read :and-return-values '("Gattinara DOCG" "Create appellation"))
     (spy-on 'read-string :and-return-value "")
     (expect (mock-vulpea-note :type "appellation" :title "Gattinara DOCG")
             :to-equal

@@ -187,19 +187,74 @@ now."
 
 
 
+(defmacro vino-spy--return-values (res values orig-initform)
+  "Create a function for :and-return-values spy.
+
+Resulting function is interactive depending on ORIG-INITFORM.
+
+Basically, it sets the value of RES variable to `car' of VALUES,
+and replaces VALUES value with `cdr' of VALUES."
+  (let ((tempres (make-symbol "res"))
+        (tempvalues (make-symbol "values")))
+    `(let ((,tempres ,res)
+           (,tempvalues ,values))
+       (lambda (&rest _)
+         ,orig-initform
+         (setq ,tempres (car ,tempvalues)
+               ,tempvalues (cdr ,tempvalues))
+         ,tempres))))
+
+(defun vino-spy-on (original symbol &optional keyword arg)
+  "Create a spy (mock) for the function SYMBOL.
+
+KEYWORD can have one of the following values:
+  :and-call-through -- Track calls, but call the original
+      function.
+  :and-return-value -- Track calls, but return ARG instead of
+      calling the original function.
+  :and-return-values -- Track calls, but return elements of ARG
+      list in turn instead of calling the original function. Once
+      list is depleted, nil is returned.
+  :and-call-fake -- Track calls, but call ARG instead of the
+      original function.
+  :and-throw-error -- Signal ARG as an error instead of calling
+      the original function.
+  nil -- Track calls, but simply return nil instead of calling
+      the original function.
+
+If the original function was a command, the generated spy will
+also be a command with the same interactive form, unless
+`:and-call-fake' is used, in which case it is the caller's
+responsibility to ensure ARG is a command.
+
+In the nutshell, it's an advice around `spy-on', which is passed
+as ORIGINAL."
+  (pcase keyword
+    (:and-return-values
+     (let* ((orig (and (fboundp symbol) (symbol-function symbol)))
+            (replacement (vino-spy--return-values nil arg (interactive-form orig))))
+       (unless (buttercup--spy-on-and-call-replacement symbol replacement)
+         (error "Spies can only be created in `before-each'"))
+       ))
+    (_ (funcall original symbol keyword arg))))
+
+(advice-add #'spy-on :around #'vino-spy-on)
+
+
+
 (cl-defun completion-for (&key title tags)
   "Return completion for TITLE and TAGS matchers."
   (when-let ((note
               (seq-find
-                (lambda (note)
-                  (let ((res (and (or (null title) (string-equal title (vulpea-note-title note)))
-                                  (or (null tags)
-                                      (seq-every-p
-                                       (lambda (x)
-                                         (seq-contains-p (vulpea-note-tags note) x))
-                                       tags)))))
-                    res))
-                (vulpea-db-query))))
+               (lambda (note)
+                 (let ((res (and (or (null title) (string-equal title (vulpea-note-title note)))
+                                 (or (null tags)
+                                     (seq-every-p
+                                      (lambda (x)
+                                        (seq-contains-p (vulpea-note-tags note) x))
+                                      tags)))))
+                   res))
+               (vulpea-db-query))))
     (vulpea-select-describe note)))
 
 
