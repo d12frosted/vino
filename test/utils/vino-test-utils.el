@@ -81,6 +81,87 @@
 
 
 
+(cl-defun mk-vulpea-note (&key type id title basename category tags)
+  "Constructor of `vulpea-note' for `vino' testing.
+
+It handles boilerplate of note creation that is actually
+irrelevant for `vino' library. We just care about few slots.
+
+TYPE (mandatory) is one of: cellar, rating, grape, producer,
+appellation, region.
+
+ID (mandatory) is id slot of the note.
+
+TITLE (mandatory) is title slot of the note.
+
+BASENAME (optional) is basename of note file. E.g. without
+directory and extension. When omitted, BASENAME is calculated as
+`org-roam-node-slug` of TITLE.
+
+CATEGORY (optional) is category property inside properties slot
+of the note. When omitted, equals to BASENAME.
+
+TAGS (optional) is tags slot of the future note. When omitted,
+equals to (TYPE wine) list. Unfortunately, since tags list order
+is fixed, but unpredictable, there is no generic solution for
+now."
+  (let* ((basename (or basename
+                       (org-roam-node-slug
+                        (org-roam-node-create :title title))))
+         (category (or category basename))
+         (path (expand-file-name
+                (format "wine/%s/%s.org" type basename)
+                org-roam-directory)))
+    (make-vulpea-note
+     :path path
+     :title title
+     :tags (or tags (list type "wine"))
+     :level 0
+     :id id
+     :properties (list
+                  (cons "CATEGORY" category)
+                  (cons "ID" id)
+                  (cons "BLOCKED" "")
+                  (cons "FILE" path)
+                  (cons "PRIORITY" "B")))))
+
+(cl-defun mock-vulpea-note (&key type title tags)
+  "Prepare system for note creation.
+
+This function is needed when you want to create a note, but want
+to be able to fix 'random' stuff - id generation and clock to be
+able to compare result.
+
+This function mocks whatever is needed for proper note creation
+and returns a note that would be generated for a given TYPE,
+TITLE and TAGS.
+
+TYPE (mandatory) is one of: cellar, rating, grape, producer,
+appellation, region.
+
+TITLE (mandatory) is title slot of the future note.
+
+TAGS (optional) is tags slot of the future note. When omitted,
+equals to (wine TYPE) list. Unfortunately, since tags list order
+is fixed, but unpredictable, there is no generic solution for
+now."
+  (let* ((id (org-id-new))
+         (ts (current-time))
+         (slug (org-roam-node-slug (org-roam-node-create :title title)))
+         (basename (format "%s-%s"
+                           (format-time-string "%Y%m%d%H%M%S" ts)
+                           slug)))
+    (spy-on 'org-id-new :and-return-value id)
+    (spy-on 'current-time :and-return-value ts)
+    (mk-vulpea-note
+     :type type
+     :id id
+     :title title
+     :basename basename
+     :tags (or tags (list "wine" type)))))
+
+
+
 (buttercup-define-matcher :to-contain-exactly (file value)
   (cl-destructuring-bind
       ((file-expr . file) (value-expr . value))

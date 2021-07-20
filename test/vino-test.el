@@ -40,11 +40,8 @@
 (require 'vino-test-utils)
 
 (describe "vino-entry-note-p"
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "returns non-nil when used on of wine entry"
     (expect
@@ -65,11 +62,8 @@
      :to-be nil)))
 
 (describe "vino-entry-note-select"
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "returns full information about selected wine"
     (spy-on
@@ -79,12 +73,11 @@
                      :tags '("cellar")))
     (expect (vino-entry-note-select)
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name "wine/cellar/c9937e3e-c83d-4d8d-a612-6110e6706252.org" org-roam-directory)
+            (mk-vulpea-note
+             :type "cellar"
+             :id "c9937e3e-c83d-4d8d-a612-6110e6706252"
              :title "Arianna Occhipinti Bombolieri BB 2017"
-             :tags '("cellar" "wine")
-             :level 0
-             :id "c9937e3e-c83d-4d8d-a612-6110e6706252"))))
+             :basename "c9937e3e-c83d-4d8d-a612-6110e6706252"))))
 
 (describe "vino-entry-note-get-dwim"
   (before-all
@@ -178,11 +171,8 @@
 
 (describe "vino-entry--create"
   :var (note vino)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "creates a new entry with all information"
     (setq vino (make-vino-entry
@@ -236,11 +226,8 @@
              (vulpea-note-id note)))))
 
 (describe "vino-entry-get-by-id"
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "returns an existing `vino'"
     (expect (vino-entry-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")
@@ -270,37 +257,17 @@
             :to-equal nil)))
 
 (describe "vino-grape-create"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "creates a new grape note"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
-    (expect (vino-grape-create "Slarina")
+    (expect (mock-vulpea-note :type "grape" :title "Slarina")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/grape/%s-slarina.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Slarina"
-             :tags '("wine" "grape")
-             :level 0
-             :id id))))
+            (vino-grape-create "Slarina"))))
 
 (describe "vino-grape-select"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "returns full information about selected grape"
     (spy-on
@@ -310,18 +277,12 @@
                      :tags '("grape")))
     (expect (vino-grape-select)
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name "wine/grape/frappato.org" org-roam-directory)
-             :title "Frappato"
-             :tags '("grape" "wine")
-             :level 0
-             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))
+            (mk-vulpea-note
+             :type "grape"
+             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
+             :title "Frappato")))
 
   (it "creates a new grape note when selecting non-existing name"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
     (let ((values '("Slarina"
                     "Create new grape")))
       (spy-on 'completing-read
@@ -330,17 +291,9 @@
                 (let ((r (car values)))
                   (setq values (cdr values))
                   r))))
-    (expect (vino-grape-select)
+    (expect (mock-vulpea-note :type "grape" :title "Slarina")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/grape/%s-slarina.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Slarina"
-             :tags '("wine" "grape")
-             :level 0
-             :id id)))
+            (vino-grape-select)))
 
   (it "adds a synonym when selecting non-existing name"
     (let ((values (list
@@ -354,13 +307,10 @@
                                  r))))
     (expect (vino-grape-select)
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name "wine/grape/frappato.org"
-                                     org-roam-directory)
-             :title "Frappato di Vittoria"
-             :tags '("grape" "wine")
-             :level 0
-             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
+            (mk-vulpea-note :type "grape"
+                                 :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
+                                 :title "Frappato di Vittoria"
+                                 :basename "frappato"))
     (expect (expand-file-name "wine/grape/frappato.org"
                               org-roam-directory)
             :to-contain-exactly
@@ -373,37 +323,18 @@
 ")))
 
 (describe "vino-producer-create"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "creates a new producer note"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
-    (expect (vino-producer-create "Vino di Anna")
+    (expect (mock-vulpea-note :type "producer" :title "Vino di Anna")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/producer/%s-vino_di_anna.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Vino di Anna"
-             :tags '("wine" "producer")
-             :level 0
-             :id id))))
+            (vino-producer-create "Vino di Anna")
+            )))
 
 (describe "vino-producer-select"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "returns full information about selected producer"
     (spy-on
@@ -413,92 +344,42 @@
                      :tags '("producer")))
     (expect (vino-producer-select)
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name "wine/producer/arianna_occhipinti.org" org-roam-directory)
-             :title "Arianna Occhipinti"
-             :tags '("producer" "wine")
-             :level 0
-             :id "9462dfad-603c-4094-9aca-a9042cec5dd2")))
+            (mk-vulpea-note
+             :type "producer"
+             :id "9462dfad-603c-4094-9aca-a9042cec5dd2"
+             :title "Arianna Occhipinti")))
 
   (it "creates a new producer note when selecting non-existing name"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
     (spy-on
      'completing-read
      :and-return-value
      "Vino di Anna")
     (spy-on 'y-or-n-p :and-return-value t)
-    (expect (vino-producer-select)
+    (expect (mock-vulpea-note :type "producer" :title "Vino di Anna")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/producer/%s-vino_di_anna.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Vino di Anna"
-             :tags '("wine" "producer")
-             :level 0
-             :id id))))
+            (vino-producer-select))))
 
 (describe "vino-region-create"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "creates a new region note"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
-    (expect (vino-region-create "Codru")
+    (expect (mock-vulpea-note :type "region" :title "Codru")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/region/%s-codru.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Codru"
-             :tags '("wine" "region")
-             :level 0
-             :id id))))
+            (vino-region-create "Codru"))))
 
 (describe "vino-appellation-create"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "creates a new appellation note"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
-    (expect (vino-appellation-create "Gattinara DOCG")
+    (expect (mock-vulpea-note :type "appellation" :title "Gattinara DOCG")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/appellation/%s-gattinara_docg.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Gattinara DOCG"
-             :tags '("wine" "appellation")
-             :level 0
-             :id id))))
+            (vino-appellation-create "Gattinara DOCG"))))
 
 (describe "vino-region-select"
-  :var (id ts)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "returns full information about selected region"
     (spy-on 'completing-read
@@ -506,12 +387,10 @@
             (completion-for :title "Central Otago" :tags '("region")))
     (expect (vino-region-select)
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name "wine/region/central_otago.org" org-roam-directory)
-             :title "Central Otago"
-             :tags '("region" "wine")
-             :level 0
-             :id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))
+            (mk-vulpea-note
+             :type "region"
+             :id "f9ef759b-f39e-4121-ab19-9ab3daa318be"
+             :title "Central Otago")))
 
   (it "returns full information about selected appellation"
     (spy-on 'completing-read
@@ -519,18 +398,12 @@
             (completion-for :title "Cerasuolo di Vittoria DOCG" :tags '("appellation")))
     (expect (vino-region-select)
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name "wine/appellation/cerasuolo_di_vittoria_docg.org" org-roam-directory)
-             :title "Cerasuolo di Vittoria DOCG"
-             :tags '("appellation" "wine")
-             :level 0
-             :id "6a0819f3-0770-4481-9754-754ca397800b")))
+            (mk-vulpea-note
+             :type "appellation"
+             :id "6a0819f3-0770-4481-9754-754ca397800b"
+             :title "Cerasuolo di Vittoria DOCG")))
 
   (it "creates a new region note when selecting non-existing name"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
     (let ((values '("Codru" "Create region")))
       (spy-on 'completing-read
               :and-call-fake (lambda (&rest _)
@@ -538,23 +411,11 @@
                                  (setq values (cdr values))
                                  r))))
     (spy-on 'read-string :and-return-value "")
-    (expect (vino-region-select)
+    (expect (mock-vulpea-note :type "region" :title "Codru")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/region/%s-codru.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Codru"
-             :tags '("wine" "region")
-             :level 0
-             :id id)))
+            (vino-region-select)))
 
   (it "creates a new appellation note when selecting non-existing name"
-    (setq id (org-id-new)
-          ts (current-time))
-    (spy-on 'org-id-new :and-return-value id)
-    (spy-on 'current-time :and-return-value ts)
     (let ((values '("Gattinara DOCG" "Create appellation")))
       (spy-on 'completing-read
               :and-call-fake (lambda (&rest _)
@@ -562,17 +423,9 @@
                                  (setq values (cdr values))
                                  r))))
     (spy-on 'read-string :and-return-value "")
-    (expect (vino-region-select)
+    (expect (mock-vulpea-note :type "appellation" :title "Gattinara DOCG")
             :to-equal
-            (make-vulpea-note
-             :path (expand-file-name
-                    (format "wine/appellation/%s-gattinara_docg.org"
-                            (format-time-string "%Y%m%d%H%M%S" ts))
-                    org-roam-directory)
-             :title "Gattinara DOCG"
-             :tags '("wine" "appellation")
-             :level 0
-             :id id))))
+            (vino-region-select))))
 
 (describe "vino-entry-consume"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
@@ -733,11 +586,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 
 (describe "vino-entry-set-grapes"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "replace grapes metadata with new data"
     (vino-entry-set-grapes id '("1c436b3b-ad14-4818-896d-1b7755f10fa1"
@@ -806,11 +656,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 (describe "vino-entry-set-region"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
         vino)
-  (before-all
-    (vino-test-init))
-
-  (after-all
-    (vino-test-teardown))
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
 
   (it "replace region metadata"
     (vino-entry-set-region id "f9ef759b-f39e-4121-ab19-9ab3daa318be")
