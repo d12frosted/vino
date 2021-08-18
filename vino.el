@@ -113,6 +113,11 @@ DATE arguments.")
 Function is called with ID of `vino-entry', AMOUNT, ACTION and
 DATE arguments.")
 
+(defvar vino-sources-fn nil
+  "Function to get the list of sources.
+
+Function is called with ID of `vino-entry'.")
+
 
 ;;; Setup
 
@@ -834,7 +839,12 @@ explicitly."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
          (id (vulpea-note-id note))
          (vino (vino-entry-get-by-id id))
-         (source (or source (read-string "Source: ")))
+         (source (or source
+                     (if vino-sources-fn
+                         (completing-read
+                          "Source: "
+                          (funcall vino-sources-fn id))
+                       (read-string "Source: "))))
          (amount (or amount (read-number "Amount: " 1)))
          (price (or price (vino-price-read vino)))
          (date (or date (org-read-date nil t))))

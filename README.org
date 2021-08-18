@@ -161,6 +161,9 @@ There are several things that you must configure before using =vino=:
 - =vino-availability-sub-fn= - function to subtract certain amount of
   =vino-entry= from your cellar. Function is called with =ID= of =vino-entry=,
   amount, action and date arguments.
+- =vino-sources-fn= - function to list wine sources. Used in, for example,
+  completion of sources when you acquire a wine. Function is called with =ID= of
+  =vino-entry=.
 
 Optionally you can configure the following variables:
 
@@ -200,32 +203,36 @@ Optionally you can configure the following variables:
 Mandatory values (uses functions from [[https://github.com/d12frosted/environment/blob/4164a5abd43d478fd314bb299ea4e1024d89c39c/emacs/lisp/+inventory.el][+inventory.el]]).
 
 #+begin_src emacs-lisp
-    (setq
-     org-roam-directory (concat (getenv "HOME")
-                                "/org-roam/")
+  (setq
+   org-roam-directory (concat (getenv "HOME")
+                              "/org-roam/")
 
-     vino-rating-props '((1 . (("SCORE" . 3)))
-                         (2 . (("AROMA_QUALITY" . 3)
-                               ("AROMA_INTENSITY" . 2)
-                               ("AROMA_COMPLEXITY" . 3)
-                               ("BALANCE" . 3)
-                               ("FLAVOURS" . 2)
-                               ("AFTERTASTE" . 3)
-                               ("GENERAL" . 4))))
+   vino-rating-props '((1 . (("SCORE" . 3)))
+                       (2 . (("AROMA_QUALITY" . 3)
+                             ("AROMA_INTENSITY" . 2)
+                             ("AROMA_COMPLEXITY" . 3)
+                             ("BALANCE" . 3)
+                             ("FLAVOURS" . 2)
+                             ("AFTERTASTE" . 3)
+                             ("GENERAL" . 4))))
 
-     vino-availability-fn
-     (lambda (id)
-       (cons
-        (inventory-total-in wine-inventory-file id)
-        (inventory-total-out wine-inventory-file id)))
+   vino-availability-fn
+   (lambda (id)
+     (cons
+      (inventory-total-in wine-inventory-file id)
+      (inventory-total-out wine-inventory-file id)))
 
-     vino-availability-add-fn
-     (lambda (id amount source date)
-       (inventory-add wine-inventory-file id amount source date))
+   vino-availability-add-fn
+   (lambda (id amount source date)
+     (inventory-add wine-inventory-file id amount source date))
 
-     vino-availability-sub-fn
-     (lambda (id amount action date)
-       (inventory-sub wine-inventory-file id amount action date)))
+   vino-availability-sub-fn
+   (lambda (id amount action date)
+     (inventory-sub wine-inventory-file id amount action date))
+
+   vino-sources-fn
+   (lambda (_)
+     (inventory-sources wine-inventory-file)))
 #+end_src
 
 Optional variables (with their default values):

@@ -12,6 +12,11 @@
 :ID:                     70359835-aff8-4cb6-92bd-ac857225a3d5
 :END:
 
+*Features*
+
+- [[https://github.com/d12frosted/vino/issues/55][vino#55]] Provide =vino-sources-fn= variable to allow completion of sources
+  when acquiring a wine.
+
 ** v0.3.0
 :PROPERTIES:
 :ID:                     81df6136-0ec8-415d-9350-279b22629fef
