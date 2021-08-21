@@ -90,8 +90,8 @@ be the first stable release. The goal is to have feature parity with
 - [X] [[https://github.com/d12frosted/vino/milestone/1][v0.1]] - feature parity with [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
 - [X] [[https://github.com/d12frosted/vino/milestone/2][v0.2]] - dedicated database for =vino= needs.
 - [X] v0.3 - migration to =org-roam= V2.
-- [ ] [[https://github.com/d12frosted/vino/milestone/3][v0.4]] - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/0b5bc480758fd7ceeebc513317732f6337744126/emacs/lisp/lib-inventory.el][lib-inventory.el]]).
-- [ ] [[https://github.com/d12frosted/vino/milestone/4][v0.5]] - querying and viewing.
+- [ ] [[https://github.com/d12frosted/vino/milestone/4][v0.4]] - querying and viewing.
+- [ ] [[https://github.com/d12frosted/vino/milestone/3][v0.5]] - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/0b5bc480758fd7ceeebc513317732f6337744126/emacs/lisp/lib-inventory.el][lib-inventory.el]]).
 
 * Getting started
 :PROPERTIES:
