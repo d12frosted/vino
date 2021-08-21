@@ -82,11 +82,6 @@ This project started as a rewrite of [[https://github.com/d12frosted/environment
 course, using [[https://github.com/d12frosted/vulpea][vulpea]]) in performance pursuit (it become critical as I have 1k+
 of wine entries and around 2k of grape, producers, appellations, regions notes).
 
-This library is in very early stages of development. Functions come and
-functions go. See [[https://github.com/d12frosted/vulpea/milestone/1][v0.1 milestone]] for some kind of progress tracking. It should
-be the first stable release. The goal is to have feature parity with
-[[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
-
 - [X] [[https://github.com/d12frosted/vino/milestone/1][v0.1]] - feature parity with [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
 - [X] [[https://github.com/d12frosted/vino/milestone/2][v0.2]] - dedicated database for =vino= needs.
 - [X] v0.3 - migration to =org-roam= V2.
