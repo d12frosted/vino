@@ -68,13 +68,14 @@
   "Initialize testing environment in DIR."
   (setq org-roam-directory dir
         vino-db-gc-threshold most-positive-fixnum)
-  (vulpea-db-setup)
+  (vulpea-db-autosync-enable)
   (org-roam-db-autosync-enable)
   (vino-setup)
   (vino-db-sync))
 
 (defun vino-test-teardown ()
   "Teardown testing environment."
+  (vulpea-db-autosync-disable)
   (org-roam-db-autosync-disable)
   (delete-file org-roam-db-location)
   (delete-file vino-db-location)
