@@ -77,7 +77,23 @@
              :type "cellar"
              :id "c9937e3e-c83d-4d8d-a612-6110e6706252"
              :title "Arianna Occhipinti Bombolieri BB 2017"
-             :basename "c9937e3e-c83d-4d8d-a612-6110e6706252"))))
+             :basename "c9937e3e-c83d-4d8d-a612-6110e6706252"
+             :meta '(("carbonation" "still")
+                     ("colour" "red")
+                     ("sweetness" "dry")
+                     ("producer" "[[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]")
+                     ("name" "Bombolieri BB")
+                     ("vintage" "2017")
+                     ("appellation" "[[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]")
+                     ("grapes" "[[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]")
+                     ("alcohol" "13")
+                     ("sugar" "1")
+                     ("price" "50.00 EUR")
+                     ("acquired" "2")
+                     ("consumed" "1")
+                     ("available" "1")
+                     ("resources" "[[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]")
+                     ("rating" "NA"))))))
 
 (describe "vino-entry-note-get-dwim"
   (before-all

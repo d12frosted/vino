@@ -68,20 +68,21 @@
   "Initialize testing environment in DIR."
   (setq org-roam-directory dir
         vino-db-gc-threshold most-positive-fixnum)
-  (org-roam-setup)
+  (vulpea-db-setup)
+  (org-roam-db-autosync-enable)
   (vino-setup)
   (vino-db-sync))
 
 (defun vino-test-teardown ()
   "Teardown testing environment."
-  (org-roam-teardown)
+  (org-roam-db-autosync-disable)
   (delete-file org-roam-db-location)
   (delete-file vino-db-location)
   (vino-db--close))
 
 
 
-(cl-defun mk-vulpea-note (&key type id title basename category tags)
+(cl-defun mk-vulpea-note (&key type id title basename category tags meta)
   "Constructor of `vulpea-note' for `vino' testing.
 
 It handles boilerplate of note creation that is actually
@@ -104,7 +105,9 @@ of the note. When omitted, equals to BASENAME.
 TAGS (optional) is tags slot of the future note. When omitted,
 equals to (TYPE wine) list. Unfortunately, since tags list order
 is fixed, but unpredictable, there is no generic solution for
-now."
+now.
+
+META (optional) is meta slot of the future note."
   (let* ((basename (or basename
                        (org-roam-node-slug
                         (org-roam-node-create :title title))))
@@ -123,7 +126,8 @@ now."
                   (cons "ID" id)
                   (cons "BLOCKED" "")
                   (cons "FILE" path)
-                  (cons "PRIORITY" "B")))))
+                  (cons "PRIORITY" "B"))
+     :meta meta)))
 
 (cl-defun mock-vulpea-note (&key type title tags)
   "Prepare system for note creation.
