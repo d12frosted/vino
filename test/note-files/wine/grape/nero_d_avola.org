@@ -3,4 +3,4 @@
 :ROAM_ALIASES: Calabrese
 :END:
 #+title: Nero d'Avola
-#+filetags: wine grape
+#+filetags: :wine:grape:

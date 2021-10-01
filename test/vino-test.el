@@ -218,7 +218,7 @@
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Grotte Alte 2014
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -325,7 +325,7 @@
 :ROAM_ALIASES: \"Frappato di Vittoria\"
 :END:
 #+title: Frappato
-#+filetags: wine grape
+#+filetags: :wine:grape:
 ")))
 
 (describe "vino-producer-create"
@@ -454,7 +454,7 @@
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -531,7 +531,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -599,7 +599,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -667,7 +667,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -728,7 +728,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -800,7 +800,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -947,7 +947,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red
@@ -1005,7 +1005,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017 - %s
-#+filetags: wine rating
+#+filetags: :wine:rating:
 
 - wine :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017]]
 - date :: %s

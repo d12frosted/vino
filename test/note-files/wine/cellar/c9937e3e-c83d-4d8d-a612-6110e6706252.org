@@ -2,7 +2,7 @@
 :ID:       c9937e3e-c83d-4d8d-a612-6110e6706252
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: wine cellar
+#+filetags: :wine:cellar:
 
 - carbonation :: still
 - colour :: red

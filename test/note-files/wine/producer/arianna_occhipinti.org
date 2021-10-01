@@ -2,4 +2,4 @@
 :ID:       9462dfad-603c-4094-9aca-a9042cec5dd2
 :END:
 #+title: Arianna Occhipinti
-#+filetags: wine producer
+#+filetags: :wine:producer:

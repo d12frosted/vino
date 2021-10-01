@@ -2,4 +2,4 @@
 :ID:       f9ef759b-f39e-4121-ab19-9ab3daa318be
 :END:
 #+title: Central Otago
-#+filetags: wine region
+#+filetags: :wine:region:

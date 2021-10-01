@@ -2,7 +2,7 @@
 :ID:       6a0819f3-0770-4481-9754-754ca397800b
 :END:
 #+title: Cerasuolo di Vittoria DOCG
-#+filetags: wine appellation
+#+filetags: :wine:appellation:
 
 The only DOCG of Sicily, located in Vittoria. Established as DOC in 1973 and
 promoted to DOCG in 2005. Cerasuolo di Vittoria is a red wine produced from

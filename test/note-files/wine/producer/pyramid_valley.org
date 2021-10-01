@@ -2,4 +2,4 @@
 :ID:       424696f0-0e9f-4f82-9504-89b59305d9db
 :END:
 #+title: Pyramid Valley
-#+filetags: wine producer
+#+filetags: :wine:producer:

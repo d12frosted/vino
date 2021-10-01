@@ -2,4 +2,4 @@
 :ID:       860f5505-d83c-4305-bc20-cb6a92f5d0be
 :END:
 #+title: Etna DOC
-#+filetags: wine appellation
+#+filetags: :wine:appellation:
