@@ -306,10 +306,9 @@ This is not stored in `vino-db', but can be retrieved from
                 note-or-id)))
     (when (and note (vino-rating-note-p note))
       (let*
-          ((meta (vulpea-meta note))
-           (wine (vulpea-buffer-meta-get! meta "wine" 'note))
-           (date (vulpea-buffer-meta-get! meta "date"))
-           (version (vulpea-buffer-meta-get! meta "version" 'number))
+          ((wine (vulpea-note-meta-get note "wine" 'note))
+           (date (vulpea-note-meta-get note "date"))
+           (version (vulpea-note-meta-get note "version" 'number))
            (info (seq-find
                   (lambda (x) (equal (car x) version))
                   vino-rating-props))
@@ -323,10 +322,10 @@ This is not stored in `vino-db', but can be retrieved from
                       (let ((name (downcase (car cfg))))
                         (list
                          name
-                         (vulpea-buffer-meta-get!
-                          meta name 'number)
-                         (vulpea-buffer-meta-get!
-                          meta (concat name "_max") 'number))))
+                         (vulpea-note-meta-get
+                          note name 'number)
+                         (vulpea-note-meta-get
+                          note (concat name "_max") 'number))))
                     props))
            (extra-meta (vino-rating--meta note)))
         (make-vino-rating
