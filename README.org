@@ -175,6 +175,8 @@ Optionally you can configure the following variables:
   value is list of sweetness levels (e.g. =dry=, =sweet=, etc).
 - =vino-rating-template= - template for a new wine ratings. See [[#configure-templates][template
   configuration]] section for more information.
+- =vino-rating-extra-meta= - a list of additional meta to be queried when
+  rating a wine. See it's documentation for more information.
 - =vino-entry-template= - template a for new wine entry. See [[#configure-templates][template
   configuration]] section for more information.
 - =vino-grape-template= - template for a new grape note. Useful when selecting a
@@ -252,6 +254,25 @@ Optional variables (with their default values):
                                             dry
                                             demi-sec
                                             doux))
+
+   vino-rating-extra-meta (list
+                           (list
+                            :name "location"
+                            :read-fn (lambda ()
+                                       (vulpea-select "Location"))
+                            :mode 'single
+                            :type 'note)
+                           (list
+                            :name "convive"
+                            :read-fn (lambda ()
+                                       (vulpea-select
+                                        "Convive"
+                                        :filter-fn (lambda (note)
+                                                     (seq-contains-p
+                                                      (vulpea-note-tags note)
+                                                      "people"))))
+                            :mode 'multiple
+                            :type 'note))
 
    vino-rating-template (list :file-name "wine/rating/${id}.org")
 

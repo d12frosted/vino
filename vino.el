@@ -162,7 +162,7 @@ Dynamically bind the BINDERS and evaluate the BODY."
 (cl-defstruct (vino-rating
                (:constructor
                 make-vino-rating
-                (&key wine date version values
+                (&key wine date version values meta
                       &aux
                       (score
                        (seq-reduce
@@ -210,7 +210,11 @@ Dynamically bind the BINDERS and evaluate the BODY."
   (values
    nil
    :type list
-   :documentation "Rating values based on `vino-rating-props'."))
+   :documentation "Rating values based on `vino-rating-props'.")
+  (meta
+   nil
+   :type list
+   :documentation "Extra meta defined by `vino-rating-extra-meta'."))
 
 ;;;###autoload
 (defvar vino-rating-template
@@ -275,6 +279,23 @@ Each PROP can be of one of the following types:
   during `vino-entry-rate' and `car' of the result is used as
   value.")
 
+(defvar vino-rating-extra-meta nil
+  "Extra `vulpea-meta' associated with rating.
+
+The value is a list, with each element being a plist of the
+following form:
+
+  (:name :read-fn :mode :type)
+
+where
+
+  :mode can be either single or multiple.
+
+  :type is any type supported by `vulpea-meta-get'
+
+This is not stored in `vino-db', but can be retrieved from
+`vulpea-db' if you properly configured meta persistence.")
+
 ;;;###autoload
 (defun vino-rating-get-by-id (note-or-id)
   "Get `vino-rating' represented by NOTE-OR-ID."
@@ -306,12 +327,14 @@ Each PROP can be of one of the following types:
                           meta name 'number)
                          (vulpea-buffer-meta-get!
                           meta (concat name "_max") 'number))))
-                    props)))
+                    props))
+           (extra-meta (vino-rating--meta note)))
         (make-vino-rating
          :wine wine
          :date date
          :version version
-         :values values)))))
+         :values values
+         :meta extra-meta)))))
 
 ;;;###autoload
 (defun vino-rating-note-p (note)
@@ -336,7 +359,7 @@ Each PROP can be of one of the following types:
     (vulpea-meta-set note "total"
                      (vino-rating-total rating) 'append)))
 
-(defun vino-rating--read (props)
+(defun vino-rating--read-values (props)
   "Read rating values from PROPS.
 
 Each value is a list (name score score-max)."
@@ -345,8 +368,8 @@ Each value is a list (name score score-max)."
      (cond
       ((functionp (cdr cfg))
        (let ((res (funcall (cdr cfg))))
-         (list (car cfg)
-               (car res)
+         (list (car res)
+               (car cfg)
                (cdr res))))
 
       ((numberp (cdr cfg))
@@ -367,6 +390,43 @@ Each value is a list (name score score-max)."
                (cdr res)
                (- (length (cdr cfg)) 1))))))
    props))
+
+(defun vino-rating--meta (note)
+  "Extract meta from NOTE according to `vino-rating-extra-meta'."
+  (seq-filter
+   #'identity
+   (seq-map
+    (lambda (x)
+      (let* ((name (plist-get x :name))
+             (type (or (plist-get x :type)))
+             (mode (or (plist-get x :mode)
+                       'single))
+             (value (pcase mode
+                      (`single
+                       (when-let ((v (vulpea-note-meta-get
+                                      note name type)))
+                         (list v)))
+                      (`multiple
+                       (vulpea-note-meta-get-list
+                        note name type)))))
+        (when value
+          (cons name value))))
+    vino-rating-extra-meta)))
+
+(defun vino-rating--read-meta ()
+  "Read extra meta defined by `vino-rating-extra-meta'."
+  (seq-map
+   (lambda (x)
+     (let ((name (plist-get x :name))
+           (read-fn (plist-get x :read-fn))
+           (mode (or (plist-get x :mode)
+                     'single)))
+       (cons
+        name
+        (pcase mode
+          (`single (list (funcall read-fn)))
+          (`multiple (+fun-collect-while read-fn nil))))))
+   vino-rating-extra-meta))
 
 (defun vino-rating--create (rating &optional id)
   "Create a note for RATING.
@@ -405,6 +465,10 @@ ID is generated unless passed."
                 "score_max" (vino-rating-score-max rating) 'append)
                (vulpea-buffer-meta-set
                 "total" (vino-rating-total rating) 'append)
+               (seq-do (lambda (meta)
+                         (vulpea-buffer-meta-set
+                          (car meta) (cdr meta) 'append))
+                       (vino-rating-meta rating))
                (buffer-substring (point-min)
                                  (point-max))))
        (note (vulpea-create
@@ -895,13 +959,15 @@ explicitly."
               (info (car (last vino-rating-props)))
               (version (car info))
               (props (cdr info))
-              (values (vino-rating--read props)))
+              (values (vino-rating--read-values props))
+              (extra-meta (vino-rating--read-meta)))
     (vino-rating--create
      (make-vino-rating
       :wine note
       :date (format-time-string "%Y-%m-%d" date)
       :version version
-      :values values))))
+      :values values
+      :meta extra-meta))))
 
 
 ;;; Vino entry note
@@ -1382,11 +1448,15 @@ string."
                :from ratings
                :where (= id $s1)]
               id))))
-    (make-vino-rating
-     :wine (vulpea-db-get-by-id (nth 0 row))
-     :date (nth 1 row)
-     :version (nth 2 row)
-     :values (nth 3 row))))
+    (let* ((wine-note (vulpea-db-get-by-id (nth 0 row)))
+           (rating-note (vulpea-db-get-by-id id))
+           (meta (vino-rating--meta rating-note)))
+      (make-vino-rating
+       :wine wine-note
+       :date (nth 1 row)
+       :version (nth 2 row)
+       :values (nth 3 row)
+       :meta meta))))
 
 (defun vino-db ()
   "Entrypoint to the `vino' sqlite database.
@@ -1411,10 +1481,10 @@ Performs a database upgrade when required."
             (emacsql-close conn)
             (user-error
              "The database was created with a newer vino version.  "
-             "You need to update the Org-roam package"))
+             "You need to update the vino package"))
            ((< version vino-db--version)
             (emacsql-close conn)
-            (error "BUG: The Org-roam database scheme changed %s"
+            (error "BUG: The vino database scheme changed %s"
                    "and there is no upgrade path")))))))
   (vino-db--get-connection))
 

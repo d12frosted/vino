@@ -892,7 +892,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
          (date-str (format-time-string "%Y-%m-%d" date))
          rating
          note)
-  (before-all
+  (before-each
     (setq vino-rating-props
           '((1 . (("score" 20)))
             (4 . (("property_1" 3)
@@ -900,12 +900,22 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                   ("property_3" 2)
                   ("property_4" 5)
                   ("property_5" 6))))
-          vino-availability-fn (lambda (_) (cons 5 2)))
+          vino-availability-fn (lambda (_) (cons 5 2))
+          vino-rating-extra-meta (list
+                                  (list
+                                   :name "location"
+                                   :mode 'single
+                                   :type 'string)
+                                  (list
+                                   :name "convive"
+                                   :mode 'multiple
+                                   :type 'string)))
     (vino-test-init))
 
-  (after-all
+  (after-each
     (setq vino-rating-props nil
-          vino-availability-fn nil)
+          vino-availability-fn nil
+          vino-rating-extra-meta nil)
     (vino-test-teardown))
 
   (it "should create rating note and update vino note"
@@ -917,8 +927,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                             ("property_2" 3 4)
                             ("property_3" 0 2)
                             ("property_4" 5 5)
-                            ("property_5" 5 6))))
+                            ("property_5" 5 6))
+                  :meta '(("location" . ("some distant location"))
+                          ("convive" . ("person 1" "person 2")))))
     (setq note (vino-rating--create rating))
+    (expect note :not :to-be nil)
     (expect (vino-entry-get-by-id id)
             :to-equal
             (make-vino-entry
@@ -1023,6 +1036,64 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - score :: 16
 - score_max :: 20
 - total :: 8.0
+- location :: some distant location
+- convive :: person 1
+- convive :: person 2
+"
+             (vulpea-note-id note)
+             date-str
+             id
+             date-str)))
+
+  (it "should accept unregistered meta"
+    (setq rating (make-vino-rating
+                  :wine (vulpea-db-get-by-id id)
+                  :date date-str
+                  :version 4
+                  :values '(("property_1" 3 3)
+                            ("property_2" 3 4)
+                            ("property_3" 0 2)
+                            ("property_4" 5 5)
+                            ("property_5" 6 6))
+                  :meta '(("weather" . ("good"))
+                          ("thoughts" . ("thought 1" "thought 2" "thought 3")))))
+    (setq note (vino-rating--create rating))
+    (expect note :not :to-be nil)
+
+    ;; and now all get methods should ignore meta
+    (setf (vino-rating-meta rating) nil)
+
+    (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
+    (expect (vino-db-get-rating (vulpea-note-id note)) :to-equal rating)
+    (expect (vulpea-note-path note)
+            :to-contain-exactly
+            (format
+             ":PROPERTIES:
+:ID:       %s
+:END:
+#+title: Arianna Occhipinti Bombolieri BB 2017 - %s
+#+filetags: :wine:rating:
+
+- wine :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017]]
+- date :: %s
+- version :: 4
+- property_1 :: 3
+- property_1_max :: 3
+- property_2 :: 3
+- property_2_max :: 4
+- property_3 :: 0
+- property_3_max :: 2
+- property_4 :: 5
+- property_4_max :: 5
+- property_5 :: 6
+- property_5_max :: 6
+- score :: 17
+- score_max :: 20
+- total :: 8.5
+- weather :: good
+- thoughts :: thought 1
+- thoughts :: thought 2
+- thoughts :: thought 3
 "
              (vulpea-note-id note)
              date-str
