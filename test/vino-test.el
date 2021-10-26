@@ -892,6 +892,16 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (expect (vino-rating--read-value (cons "prop_number" 10))
             :to-equal '("prop_number" 4 10)))
 
+  (it "should clip numbers - left"
+    (spy-on #'read-number :and-return-value -100)
+    (expect (vino-rating--read-value (cons "prop_number" 10))
+            :to-equal '("prop_number" 0 10)))
+
+  (it "should clip numbers - right"
+    (spy-on #'read-number :and-return-value 1000)
+    (expect (vino-rating--read-value (cons "prop_number" 10))
+            :to-equal '("prop_number" 10 10)))
+
   (it "should support list"
     (spy-on #'completing-read :and-return-value "avg")
     (expect (vino-rating--read-value (cons "prop_list" '(("max" . 2) ("avg" . 1) ("min" . 0))))

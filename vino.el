@@ -380,10 +380,14 @@ Return a list (name score score-max)."
 
    ((numberp (cdr prop))
     (list (car prop)
-          (read-number
-           (format "%s: (0 to %i): "
-                   (vino--format-prop (car prop))
-                   (cdr prop)))
+          (min
+           (cdr prop)
+           (max
+            0
+            (read-number
+             (format "%s: (0 to %i): "
+                     (vino--format-prop (car prop))
+                     (cdr prop)))))
           (cdr prop)))
 
    ((listp (cdr prop))
