@@ -264,20 +264,27 @@ And PROPS defines a specific version of rating system:
 
 Each PROP can be of one of the following types:
 
-- NUMBER - then the property value is a number inclusively
-  between 0 and PROP, user is prompted for a number using
+- NUMBER - then the property value is a number between 0 (inclusively)
+  and PROP (exclusively), user is prompted for a number using
   `read-number' during `vino-entry-rate';
 
-- LIST - then the property value is a number inclusively between
-  0 and the `length' of PROP, user is prompted to select one
-  element from the list `car's using `completing-read' during
+  Example: '(\"prop_number\" . 10)
+
+- LIST - then the property value is a number between 0 (inclusively)
+  and the `length' of PROP (exclusively), user is prompted to select
+  one element from the list `car's using `completing-read' during
   `vino-entry-rate' and the `cdr' of selected element is used as
   value;
 
-- FUNCTION - then the property value is a number between 0 and
-  `cdr' of PROP result, function is called with without arguments
-  during `vino-entry-rate' and `car' of the result is used as
-  value.")
+  Example: '(\"prop_list\" . ((\"max\" . 2)
+                              (\"avg\" . 1)
+                              (\"min\" . 0)))
+
+- FUNCTION - then the property value is a number between 0 and `cdr'
+  of PROP result, function is called with without arguments during
+  `vino-entry-rate' and `car' of the result is used as value.
+
+  Example: '(\"prop_function\" . (lambda () (cons 42 100))")
 
 (defvar vino-rating-extra-meta nil
   "Extra `vulpea-meta' associated with rating.
