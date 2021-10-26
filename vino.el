@@ -365,37 +365,36 @@ This is not stored in `vino-db', but can be retrieved from
     (vulpea-meta-set note "total"
                      (vino-rating-total rating) 'append)))
 
-(defun vino-rating--read-values (props)
-  "Read rating values from PROPS.
+(defun vino-rating--read-value (prop)
+  "Read a rating value defined by PROP.
 
-Each value is a list (name score score-max)."
-  (seq-map
-   (lambda (cfg)
-     (cond
-      ((functionp (cdr cfg))
-       (let ((res (funcall (cdr cfg))))
-         (list (car res)
-               (car cfg)
-               (cdr res))))
+See `vino-rating-props' for specification.
 
-      ((numberp (cdr cfg))
-       (list (car cfg)
-             (read-number
-              (format "%s: (0 to %i): "
-                      (vino--format-prop (car cfg))
-                      (cdr cfg)))
-             (cdr cfg)))
+Return a list (name score score-max)."
+  (cond
+   ((functionp (cdr prop))
+    (let ((res (funcall (cdr prop))))
+      (list (car res)
+            (car prop)
+            (cdr res))))
 
-      ((listp (cdr cfg))
-       (let* ((ans (completing-read
-                    (concat (vino--format-prop (car cfg))
-                            ": ")
-                    (seq-map #'car (cdr cfg))))
-              (res (assoc ans (cdr cfg))))
-         (list (car cfg)
-               (cdr res)
-               (- (length (cdr cfg)) 1))))))
-   props))
+   ((numberp (cdr prop))
+    (list (car prop)
+          (read-number
+           (format "%s: (0 to %i): "
+                   (vino--format-prop (car prop))
+                   (cdr prop)))
+          (cdr prop)))
+
+   ((listp (cdr prop))
+    (let* ((ans (completing-read
+                 (concat (vino--format-prop (car prop))
+                         ": ")
+                 (seq-map #'car (cdr prop))))
+           (res (assoc ans (cdr prop))))
+      (list (car prop)
+            (cdr res)
+            (- (length (cdr prop)) 1))))))
 
 (defun vino-rating--meta (note)
   "Extract meta from NOTE according to `vino-rating-extra-meta'."
@@ -965,7 +964,7 @@ explicitly."
               (info (car (last vino-rating-props)))
               (version (car info))
               (props (cdr info))
-              (values (vino-rating--read-values props))
+              (values (seq-map #'vino-rating--read-value props))
               (extra-meta (vino-rating--read-meta)))
     (vino-rating--create
      (make-vino-rating
@@ -1525,7 +1524,7 @@ Performs a database upgrade when required."
     'ignore
     (if (< version vino-db--version)
         (progn
-          (user-error "Not implemented"))))
+          (vino-db-sync 'force))))
   version)
 
 (defun vino-db-update-file (&optional file)
