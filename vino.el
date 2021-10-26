@@ -374,8 +374,8 @@ Return a list (name score score-max)."
   (cond
    ((functionp (cdr prop))
     (let ((res (funcall (cdr prop))))
-      (list (car res)
-            (car prop)
+      (list (car prop)
+            (car res)
             (cdr res))))
 
    ((numberp (cdr prop))

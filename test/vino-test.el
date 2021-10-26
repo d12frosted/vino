@@ -886,6 +886,21 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :ratings (list (vulpea-db-get-by-id "be7777a9-7993-44cf-be9e-0ae65297a35d")
                             (vulpea-db-get-by-id "f1ecb856-c009-4a65-a8d0-8191a9de66dd"))))))
 
+(describe "vino-rating--read-value"
+  (it "should support number"
+    (spy-on #'read-number :and-return-value 4)
+    (expect (vino-rating--read-value (cons "prop_number" 10))
+            :to-equal '("prop_number" 4 10)))
+
+  (it "should support list"
+    (spy-on #'completing-read :and-return-value "avg")
+    (expect (vino-rating--read-value (cons "prop_list" '(("max" . 2) ("avg" . 1) ("min" . 0))))
+            :to-equal '("prop_list" 1 2)))
+
+  (it "should support function"
+    (expect (vino-rating--read-value (cons "prop_function" (lambda () (cons 42 100))))
+            :to-equal '("prop_function" 42 100))))
+
 (describe "vino-rating--create"
   :var* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
          (date (current-time))
