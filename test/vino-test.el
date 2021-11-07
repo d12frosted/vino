@@ -78,6 +78,10 @@
              :id "c9937e3e-c83d-4d8d-a612-6110e6706252"
              :title "Arianna Occhipinti Bombolieri BB 2017"
              :basename "c9937e3e-c83d-4d8d-a612-6110e6706252"
+             :links '(("http" . "http://www.agricolaocchipinti.it/it/vinicontrada")
+                      ("id" . "8353e2fc-8034-4540-8254-4b63fb5a421a")
+                      ("id" . "9462dfad-603c-4094-9aca-a9042cec5dd2")
+                      ("id" . "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :meta '(("carbonation" "still")
                      ("colour" "red")
                      ("sweetness" "dry")
@@ -407,7 +411,9 @@
             (mk-vulpea-note
              :type "appellation"
              :id "6a0819f3-0770-4481-9754-754ca397800b"
-             :title "Cerasuolo di Vittoria DOCG")))
+             :title "Cerasuolo di Vittoria DOCG"
+             :links '(("id" . "3b38917f-6065-42e8-87ca-33dd39a92fc0")
+                      ("id" . "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")))))
 
   (it "creates a new region note when selecting non-existing name"
     (spy-on 'completing-read :and-return-values '("Codru" "Create region"))
