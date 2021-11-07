@@ -83,7 +83,7 @@
 
 
 
-(cl-defun mk-vulpea-note (&key type id title basename category tags meta)
+(cl-defun mk-vulpea-note (&key type id title basename category tags meta links)
   "Constructor of `vulpea-note' for `vino' testing.
 
 It handles boilerplate of note creation that is actually
@@ -108,7 +108,9 @@ equals to (TYPE wine) list. Unfortunately, since tags list order
 is fixed, but unpredictable, there is no generic solution for
 now.
 
-META (optional) is meta slot of the future note."
+META (optional) is meta slot of the future note.
+
+LINKS (optional) is list of (type . link) pairs."
   (let* ((basename (or basename
                        (org-roam-node-slug
                         (org-roam-node-create :title title))))
@@ -122,6 +124,7 @@ META (optional) is meta slot of the future note."
      :tags (or tags (list type "wine"))
      :level 0
      :id id
+     :links links
      :properties (list
                   (cons "CATEGORY" category)
                   (cons "ID" id)
