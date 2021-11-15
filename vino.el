@@ -37,7 +37,6 @@
 
 (require 'vulpea)
 (require 'org-roam)
-(require '+fun)
 
 
 ;;; Configurations variables
@@ -434,7 +433,7 @@ Return a list (name score score-max)."
         name
         (pcase mode
           (`single (list (funcall read-fn)))
-          (`multiple (+fun-collect-while read-fn nil))))))
+          (`multiple (vino--collect-while read-fn nil))))))
    vino-rating-extra-meta))
 
 (defun vino-rating--create (rating &optional id)
@@ -557,11 +556,11 @@ See `vulpea-create' for more information.")
 (defun vino-entry-read ()
   "Read a `vino-entry'."
   (let* ((producer (vino-producer-select))
-         (name (+fun-repeat-while
+         (name (vino--repeat-while
                 #'read-string
                 #'string-empty-p
                 "Name: "))
-         (vintage (+fun-repeat-while
+         (vintage (vino--repeat-while
                    #'read-number
                    (lambda (v) (< v 1900))
                    "Vintage (C-g for NV): "))
@@ -572,12 +571,12 @@ See `vulpea-create' for more information.")
          (appellation (when (seq-contains-p (vulpea-note-tags rora)
                                             "appellation")
                         rora))
-         (grapes (+fun-collect-while #'vino-grape-select nil))
-         (alcohol (+fun-repeat-while
+         (grapes (vino--collect-while #'vino-grape-select nil))
+         (alcohol (vino--repeat-while
                    #'read-number
                    (lambda (v) (< v 0))
                    "Alcohol: "))
-         (sugar (+fun-repeat-while
+         (sugar (vino--repeat-while
                  #'read-number
                  (lambda (v) (< v 0))
                  "Sugar g/l (C-g for N/A): "))
@@ -600,7 +599,7 @@ See `vulpea-create' for more information.")
                                  carbonation)
                       nil
                       'require-match)))
-         (resources (+fun-collect-while
+         (resources (vino--collect-while
                      #'read-string
                      (lambda (v) (not (string-empty-p v)))
                      "Resource: "))
@@ -757,7 +756,7 @@ explicitly."
   (interactive)
   (let* ((note (vino-entry-note-get-dwim note-or-id))
          (grapes (or grapes
-                     (+fun-collect-while #'vino-grape-select nil))))
+                     (vino--collect-while #'vino-grape-select nil))))
     (vulpea-meta-set note "grapes" grapes 'append)))
 
 ;;;###autoload
@@ -1754,7 +1753,7 @@ HASH is SHA1 of NOTE file."
   (seq-reduce
    (lambda (r a)
      (concat r "- resources :: " a "\n"))
-   (+fun-collect-while
+   (vino--collect-while
     (lambda ()
       (let ((resource (read-string "Resource: ")))
         (when (not (string-empty-p resource))
@@ -1772,6 +1771,50 @@ HASH is SHA1 of NOTE file."
 If STR is equal to NIL-STR, then nil is the result."
   (when (and str (not (string-equal str nil-str)))
     (string-to-number str)))
+
+
+
+(defun vino--collect-while (fn filter &rest args)
+  "Repeat FN and collect it's results until `C-g` is used.
+
+Repeat cycle stops when `C-g` is used or FILTER returns nil.
+
+If FILTER is nil, it does not affect repeat cycle.
+
+If FILTER returns nil, the computed value is not added to result.
+
+ARGS are passed to FN."
+  (let (result
+        value
+        (continue t)
+        (inhibit-quit t))
+    (with-local-quit
+      (while continue
+        (setq value (apply fn args))
+        (if (and filter
+                 (null (funcall filter value)))
+            (setq continue nil)
+          (setq result (cons value result)))))
+    (setq quit-flag nil)
+    (seq-reverse result)))
+
+(defun vino--repeat-while (fn filter &rest args)
+  "Repeat FN and return the first unfiltered result.
+
+Repeat cycle stops when `C-g` is used or FILTER returns nil.
+
+ARGS are passed to FN."
+  (let (value
+        (continue t)
+        (inhibit-quit t))
+    (with-local-quit
+      (while continue
+        (setq value (apply fn args))
+        (when (null (funcall filter value))
+          (setq continue nil))))
+    (setq quit-flag nil)
+    (when (null continue)
+      value)))
 
 
 

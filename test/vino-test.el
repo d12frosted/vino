@@ -1166,5 +1166,21 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
               :to-equal
               (seq-map #'vino-db-get-rating ids)))))
 
+(describe "vino--collect-while"
+  (it "repeats a function until filter returns nil"
+    (let ((n 0))
+      (expect (+fun-collect-while
+               (lambda () (setq n (+ 1 n)))
+               (lambda (v) (< v 5)))
+              :to-equal '(1 2 3 4)))))
+
+(describe "vino--repeat-while"
+  (it "repeats a function until filter returns nil"
+    (let ((n 0))
+      (expect (+fun-repeat-while
+               (lambda () (setq n (+ 1 n)))
+               (lambda (v) (< v 5)))
+              :to-equal 5))))
+
 (provide 'vino-test)
 ;;; vino-test.el ends here
