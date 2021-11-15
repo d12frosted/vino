@@ -67,6 +67,7 @@
 (defun vino-test-init-in (dir)
   "Initialize testing environment in DIR."
   (setq org-roam-directory dir
+        org-roam-db-location (expand-file-name "org-roam.db" dir)
         vino-db-gc-threshold most-positive-fixnum)
   (vulpea-db-autosync-enable)
   (org-roam-db-autosync-enable)
