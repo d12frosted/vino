@@ -992,14 +992,10 @@ explicitly."
 ;;;###autoload
 (defun vino-entry-note-select ()
   "Select and return a `vulpea-note' representing `vino-entry'."
-  (vulpea-select
+  (vulpea-select-from
    "Wine"
-   :require-match t
-   :filter-fn
-   (lambda (note)
-     (let ((tags (vulpea-note-tags note)))
-       (and (seq-contains-p tags "wine")
-            (seq-contains-p tags "cellar"))))))
+   (vulpea-db-query-by-tags-every '("wine" "cellar"))
+   :require-match t))
 
 ;;;###autoload
 (defun vino-entry-note-get-dwim (&optional note-or-id)
@@ -1147,14 +1143,13 @@ on user decision.
 
 Return `vulpea-note'."
   (let ((note
-         (vulpea-select
+         (vulpea-select-from
           "Region"
-          :filter-fn
-          (lambda (note)
-            (let ((tags (vulpea-note-tags note)))
-              (and (seq-contains-p tags "wine")
-                   (or (seq-contains-p tags "appellation")
-                       (seq-contains-p tags "region"))))))))
+          (seq-filter
+           (lambda (note)
+             (seq-contains-p (vulpea-note-tags note) "wine"))
+           (vulpea-db-query-by-tags-some
+            '("appellation" "region"))))))
     (if (vulpea-note-id note)
         note
       (pcase (completing-read
@@ -1230,13 +1225,9 @@ decides to do so.
 
 Return `vulpea-note'."
   (let ((note
-         (vulpea-select
+         (vulpea-select-from
           "Grape"
-          :filter-fn
-          (lambda (note)
-            (let ((tags (vulpea-note-tags note)))
-              (and (seq-contains-p tags "wine")
-                   (seq-contains-p tags "grape")))))))
+          (vulpea-db-query-by-tags-every '("wine" "grape")))))
     (if (vulpea-note-id note)
         note
       (pcase (completing-read
@@ -1248,13 +1239,10 @@ Return `vulpea-note'."
         (`"Create new grape"
          (vino-grape-create (vulpea-note-title note)))
         (`"Add a synonym to existing grape"
-         (let ((base (vulpea-select
+         (let ((base (vulpea-select-from
                       "Original grape"
-                      :filter-fn
-                      (lambda (note)
-                        (let ((tags (vulpea-note-tags note)))
-                          (and (seq-contains-p tags "wine")
-                               (seq-contains-p tags "grape")))))))
+                      (vulpea-db-query-by-tags-every
+                       '("wine" "grape")))))
            (vulpea-utils-with-note base
              (org-roam-alias-add (vulpea-note-title note))
              (org-roam-db-update-file
@@ -1322,13 +1310,9 @@ When producer note does not exist, it is created using
 `vino-producer-create' if user decides to do so.
 
 Return `vulpea-note'."
-  (let ((note (vulpea-select
+  (let ((note (vulpea-select-from
                "Producer"
-               :filter-fn
-               (lambda (note)
-                 (let ((tags (vulpea-note-tags note)))
-                   (and (seq-contains-p tags "wine")
-                        (seq-contains-p tags "producer")))))))
+               (vulpea-db-query-by-tags-every '("wine" "producer")))))
     (if (vulpea-note-id note)
         note
       (if (y-or-n-p
@@ -1559,30 +1543,12 @@ If FORCE, force a rebuild of the cache from scratch."
       (when force (delete-file vino-db-location))
       (vino-db--close)
       (vino-db)
-      (let* ((notes (vulpea-db-query
-                     (lambda (n)
-                       (let ((tags (vulpea-note-tags n)))
-                         (and
-                          (seq-contains-p tags "wine")
-                          (or
-                           (seq-contains-p tags "cellar")
-                           (seq-contains-p tags "rating")))))))
-             (entries-res (vino-db--build-cache
-                           'cellar
-                           (seq-filter
-                            (lambda (n)
-                              (seq-contains-p
-                               (vulpea-note-tags n)
-                               "cellar"))
-                            notes)))
-             (ratings-res (vino-db--build-cache
-                           'ratings
-                           (seq-filter
-                            (lambda (n)
-                              (seq-contains-p
-                               (vulpea-note-tags n)
-                               "rating"))
-                            notes))))
+      (let ((entries-res (vino-db--build-cache
+                          'cellar
+                          (vulpea-db-query-by-tags-every '("wine" "cellar"))))
+            (ratings-res (vino-db--build-cache
+                          'ratings
+                          (vulpea-db-query-by-tags-every '("wine" "rating")))))
         (message
          (concat
           "(vino)"
