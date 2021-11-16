@@ -122,7 +122,7 @@ LINKS (optional) is list of (type . link) pairs."
     (make-vulpea-note
      :path path
      :title title
-     :tags (or tags (list type "wine"))
+     :tags (or tags (list "wine" type))
      :level 0
      :id id
      :links links
