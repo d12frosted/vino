@@ -14,6 +14,16 @@
 ;; load dash.el
 (eldev-add-extra-dependencies 'test 'dash)
 
+;; Eldev-local is loaded after Eldev, meaning that it's impossible to
+;; set this env per user.
+(let ((path (expand-file-name "Developer/vulpea" (getenv "HOME"))))
+  (when (file-exists-p path)
+    (setenv "VULPEA_PATH" path)))
+
+;; Use local version of VULPEA if it exists
+(when-let ((vulpea-path (getenv "VULPEA_PATH")))
+  (eldev-use-local-dependency vulpea-path))
+
 ;; Tell checkdoc not to demand two spaces after a period.
 (setq sentence-end-double-space nil)
 
