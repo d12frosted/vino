@@ -194,6 +194,64 @@ now."
                    "Expected `%F' to have content equal to `%v', but instead `%F' has content equal to `%c'"
                    spec))))))
 
+(defun buttercup-enclose (args)
+  "Simply enclose ARGS for `buttercup' usage."
+  (mapcar
+   (lambda (expr) (lambda () expr))
+   args))
+
+(defun buttercup-and (&rest args)
+  "Combine matcher results represented as ARGS into one."
+  (or (seq-every-p #'car args)
+      (seq-find (lambda (a) (not (car a))) args)))
+
+(buttercup-define-matcher :to-be-note (a b)
+  (cl-destructuring-bind
+      ((_ . a) (_ . b))
+      (mapcar #'buttercup--expr-and-value (list a b))
+    (let ((a-id (vulpea-note-id a))
+          (a-path (vulpea-note-path a))
+          (a-level (vulpea-note-level a))
+          (a-title (vulpea-note-title a))
+          (a-primary-title (vulpea-note-primary-title a))
+          (a-aliases (vulpea-note-aliases a))
+          (a-tags (vulpea-note-tags a))
+          (a-links (vulpea-note-links a))
+          (a-properties (vulpea-note-properties a))
+          (a-meta (vulpea-note-meta a))
+          ;; b
+          (b-id (vulpea-note-id b))
+          (b-path (vulpea-note-path b))
+          (b-level (vulpea-note-level b))
+          (b-title (vulpea-note-title b))
+          (b-primary-title (vulpea-note-primary-title b))
+          (b-aliases (vulpea-note-aliases b))
+          (b-tags (vulpea-note-tags b))
+          (b-links (vulpea-note-links b))
+          (b-properties (vulpea-note-properties b))
+          (b-meta (vulpea-note-meta b)))
+      (buttercup-and
+       (buttercup--apply-matcher
+        :to-equal (buttercup-enclose (list a-id b-id)))
+       (buttercup--apply-matcher
+        :to-equal (buttercup-enclose (list a-path b-path)))
+       (buttercup--apply-matcher
+        :to-equal (buttercup-enclose (list a-level b-level)))
+       (buttercup--apply-matcher
+        :to-equal (buttercup-enclose (list a-title b-title)))
+       (buttercup--apply-matcher
+        :to-equal (buttercup-enclose (list a-primary-title b-primary-title)))
+       (buttercup--apply-matcher
+        :to-have-same-items-as (buttercup-enclose (list a-aliases b-aliases)))
+       (buttercup--apply-matcher
+        :to-have-same-items-as (buttercup-enclose (list a-tags b-tags)))
+       (buttercup--apply-matcher
+        :to-have-same-items-as (buttercup-enclose (list a-links b-links)))
+       (buttercup--apply-matcher
+        :to-have-same-items-as (buttercup-enclose (list a-properties b-properties)))
+       (buttercup--apply-matcher
+        :to-have-same-items-as (buttercup-enclose (list a-meta b-meta)))))))
+
 
 
 (defmacro vino-spy--return-values (res values orig-initform)
