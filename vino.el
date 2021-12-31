@@ -637,7 +637,12 @@ See `vulpea-create' for more information.")
          :colour (vulpea-buffer-meta-get! meta "colour" 'symbol)
          :sweetness (vulpea-buffer-meta-get!
                      meta "sweetness" 'symbol)
-         :producer (vulpea-buffer-meta-get! meta "producer" 'note)
+         :producer (if-let ((producer (vulpea-buffer-meta-get!
+                                       meta "producer" 'note)))
+                       producer
+                     (lwarn 'vino :error
+                      "Producer is not an existing note in entry %s"
+                      (vulpea-note-id note)))
          :name (vulpea-buffer-meta-get! meta "name" 'string)
          :vintage (vino--parse-opt-number
                    (vulpea-buffer-meta-get! meta "vintage")
