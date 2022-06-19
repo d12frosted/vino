@@ -24,8 +24,10 @@ manipulate these files.
 
 Please note, that =vino= does not ship with collection of Org file for wines,
 producers, grapes, appellations or wine regions. The idea is that each user
-creates his/her own collection and learns about huge world of wine in the
+creates their own collection and learns about huge world of wine in the
 process.
+
+Checkout [[https://barberry.io/][barberry.io]] as a showcase of what can be built on top of =vino= together with =vulpea=.
 
 * Table of Contents                                                :TOC_3_gh:
 :PROPERTIES:
