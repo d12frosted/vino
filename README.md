@@ -1,34 +1,34 @@
 
 # Table of Contents
 
-1.  [Goals](#org45b8a5d)
-2.  [Status and roadmap](#org698d0bb)
-3.  [Getting started](#orga911479)
-    1.  [Installing](#org6a7c54b)
-        1.  [straight.el](#org6c67819)
-    2.  [Configuration](#org5b2b5e0)
-        1.  [Example configuration](#orgb707e4d)
-    3.  [Interactive functions](#org7705606)
-4.  [Notes structure](#org27b00e2)
-    1.  [Appellation/region](#orgba38699)
-    2.  [Producer](#orgbd45119)
-    3.  [Grape](#orgaba1e80)
-    4.  [Vino entry](#orgda220d3)
-    5.  [Vino rating](#orgcc22c4e)
-    6.  [Tags](#org490e825)
-5.  [Database](#orgad81af9)
-6.  [How to &#x2026;](#orgd368d79)
-    1.  [Configure templates](#org0f54618)
-    2.  [Configure rating system](#org44b1bac)
-    3.  [Store images and other attachments](#orge062a22)
-    4.  [Query additional metadata when creating a new wine entry](#org7506d46)
-    5.  [Query additional metadata when rating a wine entry](#orgcfa03bb)
-7.  [Coding](#org630be9c)
-8.  [Building and testing](#orgb288678)
-9.  [FAQ](#orge1d7fd0)
-    1.  [Why not generalise?](#org050f87c)
-    2.  [Why not Cellar Tracker, Vivino, etc.?](#org1d3fa1e)
-10. [Acknowledgements](#orga329c9c)
+1.  [Goals](#orge02dd06)
+2.  [Status and roadmap](#orgbcbccc0)
+3.  [Getting started](#org4f82322)
+    1.  [Installing](#org251e6dd)
+        1.  [straight.el](#orgf0626ca)
+    2.  [Configuration](#orga439e64)
+        1.  [Example configuration](#orgfc37036)
+    3.  [Interactive functions](#org7d50894)
+4.  [Notes structure](#org6f124d9)
+    1.  [Appellation/region](#org94b6b05)
+    2.  [Producer](#org6db2c10)
+    3.  [Grape](#orgaf95b47)
+    4.  [Vino entry](#orgdd57a7e)
+    5.  [Vino rating](#org1d40bf1)
+    6.  [Tags](#org928c38d)
+5.  [Database](#orgc6feea6)
+6.  [How to &#x2026;](#org4bae89b)
+    1.  [Configure templates](#org997a129)
+    2.  [Configure rating system](#org726fda1)
+    3.  [Store images and other attachments](#org6d02485)
+    4.  [Query additional metadata when creating a new wine entry](#orgdcfaa21)
+    5.  [Query additional metadata when rating a wine entry](#org46d9b0b)
+7.  [Coding](#org2667c8a)
+8.  [Building and testing](#org4bf21c4)
+9.  [FAQ](#org326bb36)
+    1.  [Why not generalise?](#orgbeae03e)
+    2.  [Why not Cellar Tracker, Vivino, etc.?](#org215c4f7)
+10. [Acknowledgements](#org0caadc1)
 
 <h1 align="center">Vino</h1>
 <p align="center">
@@ -56,7 +56,7 @@ process.
 Checkout [barberry.io](https://barberry.io/) as a showcase of what can be built on top of `vino` together with `vulpea`.
 
 
-<a id="org45b8a5d"></a>
+<a id="orge02dd06"></a>
 
 # Goals
 
@@ -68,7 +68,7 @@ Checkout [barberry.io](https://barberry.io/) as a showcase of what can be built 
 -   Be able to handle big (1000+) collection of wine entries.
 
 
-<a id="org698d0bb"></a>
+<a id="orgbcbccc0"></a>
 
 # Status and roadmap
 
@@ -83,12 +83,12 @@ of wine entries and around 2k of grape, producers, appellations, regions notes).
 -   [ ] [v0.5](https://github.com/d12frosted/vino/milestone/3) - inventory solutions (built-in and external like [lib-inventory.el](https://github.com/d12frosted/environment/blob/0b5bc480758fd7ceeebc513317732f6337744126/emacs/lisp/lib-inventory.el)).
 
 
-<a id="orga911479"></a>
+<a id="org4f82322"></a>
 
 # Getting started
 
 
-<a id="org6a7c54b"></a>
+<a id="org251e6dd"></a>
 
 ## Installing
 
@@ -99,7 +99,7 @@ of wine entries and around 2k of grape, producers, appellations, regions notes).
 Keep in mind that `vino` depends on [vulpea](https://github.com/d12frosted/vulpea).
 
 
-<a id="org6c67819"></a>
+<a id="orgf0626ca"></a>
 
 ### straight.el
 
@@ -126,7 +126,7 @@ In case you have [integration](https://github.com/raxod502/straight.el/#integrat
       (vino-db-sync))
 
 
-<a id="org5b2b5e0"></a>
+<a id="orga439e64"></a>
 
 ## Configuration
 
@@ -183,7 +183,7 @@ Optionally you can configure the following variables:
     information.
 
 
-<a id="orgb707e4d"></a>
+<a id="orgfc37036"></a>
 
 ### Example configuration
 
@@ -274,7 +274,7 @@ Optional variables (with their default values):
      vino-appellation-template (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}.org"))
 
 
-<a id="org7705606"></a>
+<a id="org7d50894"></a>
 
 ## Interactive functions
 
@@ -318,7 +318,7 @@ Optional variables (with their default values):
 -   `vino-db-sync` - build `vino` database cache.
 
 
-<a id="org27b00e2"></a>
+<a id="org6f124d9"></a>
 
 # Notes structure
 
@@ -364,7 +364,7 @@ It's totally fine to have other notes in your `org-roam-directory` and even in
 it just better organises notes.
 
 
-<a id="orgba38699"></a>
+<a id="org94b6b05"></a>
 
 ## Appellation/region
 
@@ -391,7 +391,7 @@ information.
     located here.
 
 
-<a id="orgbd45119"></a>
+<a id="org6db2c10"></a>
 
 ## Producer
 
@@ -420,7 +420,7 @@ to `wine` tag. See **Tags** section for more information.
     ...
 
 
-<a id="orgaba1e80"></a>
+<a id="orgaf95b47"></a>
 
 ## Grape
 
@@ -467,7 +467,7 @@ to `wine` tag. See **Tags** section for more information.
     - cellar: 10+ years
 
 
-<a id="orgda220d3"></a>
+<a id="orgdd57a7e"></a>
 
 ## Vino entry
 
@@ -561,7 +561,7 @@ See **Tags** section for more information.
     #+end_quote
 
 
-<a id="orgcc22c4e"></a>
+<a id="org1d40bf1"></a>
 
 ## Vino rating
 
@@ -590,7 +590,7 @@ Rating files require the presence of `rating` tag in addition to `wine` tag. See
     - total :: 7.0
 
 
-<a id="org490e825"></a>
+<a id="org928c38d"></a>
 
 ## Tags
 
@@ -613,7 +613,7 @@ inheritance, you should add `vino` tags to `org-tags-exclude-from-inheritance`
 setting `org-use-tag-inheritance` to nil.
 
 
-<a id="orgad81af9"></a>
+<a id="orgc6feea6"></a>
 
 # Database
 
@@ -649,12 +649,12 @@ Right now only low level `vino-db-query` is available, more functions will
 become available in [v0.4](https://github.com/d12frosted/vino/milestone/4).
 
 
-<a id="orgd368d79"></a>
+<a id="org4bae89b"></a>
 
 # How to &#x2026;
 
 
-<a id="org0f54618"></a>
+<a id="org997a129"></a>
 
 ## Configure templates
 
@@ -673,6 +673,7 @@ Each template is a property list accepting following values:
 -   `:file-name` (mandatory) - file name relative to `org-roam-directory`;
 -   `:head` (optional) - extra header of the created note;
 -   `:body` (optional) - body of the created note;
+-   `:tags` (optional) - extra tags for the created note;
 -   `:properties` (optional) - extra properties to put into `PROPERTIES` block;
 -   `:context` (optional) - extra variables for `:file-name`, `:head`, `:body`
     templates.
@@ -686,7 +687,7 @@ The template is transformed into `vulpea-create` call by:
 -   setting `:unnarrowed` and `:immediate-finish` both to `t`.
 
 
-<a id="org44b1bac"></a>
+<a id="org726fda1"></a>
 
 ## Configure rating system
 
@@ -812,7 +813,7 @@ Here are several examples to illustrate.
                         ("bad wine, only for enemies" . 0)))))))
 
 
-<a id="orge062a22"></a>
+<a id="org6d02485"></a>
 
 ## Store images and other attachments
 
@@ -821,21 +822,21 @@ store images as well as other attachments. Refer to [Org mode documentation](htt
 more information.
 
 
-<a id="org7506d46"></a>
+<a id="orgdcfaa21"></a>
 
 ## Query additional metadata when creating a new wine entry
 
 See [vino#65](https://github.com/d12frosted/vino/issues/65).
 
 
-<a id="orgcfa03bb"></a>
+<a id="org46d9b0b"></a>
 
 ## Query additional metadata when rating a wine entry
 
 See [vino#64](https://github.com/d12frosted/vino/issues/64).
 
 
-<a id="org630be9c"></a>
+<a id="org2667c8a"></a>
 
 # Coding
 
@@ -844,7 +845,7 @@ also use [flycheck-eldev](https://github.com/flycheck/flycheck-eldev), as it mak
 thus mitigating false negative results from default Emacs Lisp checker.
 
 
-<a id="orgb288678"></a>
+<a id="org4bf21c4"></a>
 
 # Building and testing
 
@@ -860,12 +861,12 @@ it as well:
     $ make lint
 
 
-<a id="orge1d7fd0"></a>
+<a id="org326bb36"></a>
 
 # FAQ
 
 
-<a id="org050f87c"></a>
+<a id="orgbeae03e"></a>
 
 ## Why not generalise?
 
@@ -880,7 +881,7 @@ That being said, please contact me if you wish to use it for other things, I
 would love to hear your use case and help you with building solution for you.
 
 
-<a id="org1d3fa1e"></a>
+<a id="org215c4f7"></a>
 
 ## Why not Cellar Tracker, Vivino, etc.?
 
@@ -908,7 +909,7 @@ That being said, I still use Vivino for:
 So you can use both!
 
 
-<a id="orga329c9c"></a>
+<a id="org0caadc1"></a>
 
 # Acknowledgements
 

@@ -17,6 +17,7 @@
 - [[https://github.com/d12frosted/vino/issues/55][vino#55]] Provide =vino-sources-fn= variable to allow completion of sources
   when acquiring a wine.
 - [[https://github.com/d12frosted/vino/issues/64][vino#64]] Allow to provide extra meta when rating a wine.
+- Allow to provide extra tags in all templates.
 
 ** v0.3.0
 :PROPERTIES:

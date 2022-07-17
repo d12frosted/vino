@@ -5,7 +5,7 @@
 ;; Author: Boris Buliga <boris@d12frosted.io>
 ;; Maintainer: Boris Buliga <boris@d12frosted.io>
 ;; Version: 0.3.0
-;; Package-Requires: ((emacs "27.1") (vulpea "0.1") (org-roam "2.0.0"))
+;; Package-Requires: ((emacs "28.1") (vulpea "0.1") (org-roam "2.0.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -483,7 +483,8 @@ ID is generated unless passed."
               title
               (plist-get vino-rating-template :file-name)
               :id id
-              :tags '("wine" "rating")
+              :tags (seq-union (plist-get vino-rating-template :tags)
+                               '("wine" "rating"))
               :head (plist-get vino-rating-template :head)
               :body (concat (plist-get vino-rating-template :body)
                             body)
@@ -739,7 +740,8 @@ ID is generated unless passed."
            title
            (plist-get vino-entry-template :file-name)
            :id id
-           :tags '("wine" "cellar")
+           :tags (seq-union (plist-get vino-entry-template :tags)
+                            '("wine" "cellar"))
            :head (plist-get vino-entry-template :head)
            :body (concat (plist-get vino-entry-template :body)
                          body)
@@ -1104,7 +1106,8 @@ Return `vulpea-note'."
     (vulpea-create
      title
      (plist-get vino-region-template :file-name)
-     :tags '("wine" "region")
+     :tags (seq-union (plist-get vino-region-template :tags)
+                      '("wine" "region"))
      :head (plist-get vino-region-template :head)
      :body (plist-get vino-region-template :body)
      :context (plist-get vino-region-template :context)
@@ -1124,7 +1127,8 @@ Return `vulpea-note'."
     (vulpea-create
      title
      (plist-get vino-appellation-template :file-name)
-     :tags '("wine" "appellation")
+     :tags (seq-union (plist-get vino-appellation-template :tags)
+                      '("wine" "appellation"))
      :head (plist-get vino-appellation-template :head)
      :body (plist-get vino-appellation-template :body)
      :context (plist-get vino-appellation-template :context)
@@ -1206,7 +1210,8 @@ Return `vulpea-note'."
     (vulpea-create
      title
      (plist-get vino-grape-template :file-name)
-     :tags '("wine" "grape")
+     :tags (seq-union (plist-get vino-grape-template :tags)
+                      '("wine" "grape"))
      :head (plist-get vino-grape-template :head)
      :body (plist-get vino-grape-template :body)
      :context (plist-get vino-grape-template :context)
@@ -1293,7 +1298,8 @@ Return `vulpea-note'."
     (vulpea-create
      title
      (plist-get vino-producer-template :file-name)
-     :tags '("wine" "producer")
+     :tags (seq-union (plist-get vino-producer-template :tags)
+                      '("wine" "producer"))
      :head (plist-get vino-producer-template :head)
      :body (plist-get vino-producer-template :body)
      :context (plist-get vino-producer-template :context)

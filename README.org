@@ -2,7 +2,7 @@
 :ID:                     e2554430-e28e-4b63-b598-5718bea73a62
 :END:
 
-#+begin_html
+#+begin_export html
 <h1 align="center">Vino</h1>
 <p align="center">
   <img width="256px" src="images/logo.png" alt="Banner">
@@ -16,7 +16,7 @@
     <img src="https://github.com/d12frosted/vino/workflows/CI/badge.svg" alt="CI Status Badge">
   </a>
 </p>
-#+end_html
+#+end_export
 
 =vino= is an Emacs program for cellar tracking and wine rating. Every entity is
 stored as separate Org file, =vino= provides convenient functions to query and
@@ -28,40 +28,6 @@ creates their own collection and learns about huge world of wine in the
 process.
 
 Checkout [[https://barberry.io/][barberry.io]] as a showcase of what can be built on top of =vino= together with =vulpea=.
-
-* Table of Contents                                                :TOC_3_gh:
-:PROPERTIES:
-:ID:                     6383aaf3-05fc-403f-b3f5-05dab6501d57
-:END:
-
-- [[#goals][Goals]]
-- [[#status-and-roadmap][Status and roadmap]]
-- [[#getting-started][Getting started]]
-  - [[#installing][Installing]]
-    - [[#straightel][straight.el]]
-  - [[#configuration][Configuration]]
-    - [[#example-configuration][Example configuration]]
-  - [[#interactive-functions][Interactive functions]]
-- [[#notes-structure][Notes structure]]
-  - [[#appellationregion][Appellation/region]]
-  - [[#producer][Producer]]
-  - [[#grape][Grape]]
-  - [[#vino-entry][Vino entry]]
-  - [[#vino-rating][Vino rating]]
-  - [[#tags][Tags]]
-- [[#database][Database]]
-- [[#how-to-][How to ...]]
-  - [[#configure-templates][Configure templates]]
-  - [[#configure-rating-system][Configure rating system]]
-  - [[#store-images-and-other-attachments][Store images and other attachments]]
-  - [[#query-additional-metadata-when-creating-a-new-wine-entry][Query additional metadata when creating a new wine entry]]
-  - [[#query-additional-metadata-when-rating-a-wine-entry][Query additional metadata when rating a wine entry]]
-- [[#coding][Coding]]
-- [[#building-and-testing][Building and testing]]
-- [[#faq][FAQ]]
-  - [[#why-not-generalise][Why not generalise?]]
-  - [[#why-not-cellar-tracker-vivino-etc][Why not Cellar Tracker, Vivino, etc.?]]
-- [[#acknowledgements][Acknowledgements]]
 
 * Goals
 :PROPERTIES:
@@ -145,9 +111,9 @@ In case you have [[https://github.com/raxod502/straight.el/#integration-with-use
 There are several things that you must configure before using =vino=:
 
 - =org-roam-directory= - this is where your =vino= files will be located. See
-  [[#notes-structure][Notes structure]] for more information on how to structure this directory.
+  *Notes structure* for more information on how to structure this directory.
 - =vino-rating-props= - this variable describes your rating system. See
-  [[#configure-rating-system][Configure rating system]] for more information on how to setup this variable.
+  *Configure rating system* for more information on how to setup this variable.
 - =vino-availability-fn= - function to check availability of =vino-entry=. It is
   called with =ID= of =vino-entry= and must return a cons of acquired and
   consumed numbers, e.g. =(const 10 4)= means that this particular wine was
@@ -175,23 +141,23 @@ Optionally you can configure the following variables:
   You might want to add =orange= unless you are marking them as =white=.
 - =vino-sweetness-levels= - a property list where key is carbonation type and
   value is list of sweetness levels (e.g. =dry=, =sweet=, etc).
-- =vino-rating-template= - template for a new wine ratings. See [[#configure-templates][template
-  configuration]] section for more information.
+- =vino-rating-template= - template for a new wine ratings. See *template
+  configuration* section for more information.
 - =vino-rating-extra-meta= - a list of additional meta to be queried when
   rating a wine. See it's documentation for more information.
-- =vino-entry-template= - template a for new wine entry. See [[#configure-templates][template
-  configuration]] section for more information.
+- =vino-entry-template= - template a for new wine entry. See *template
+  configuration* section for more information.
 - =vino-grape-template= - template for a new grape note. Useful when selecting a
   grape for wine entry that does not exist or when calling =vino-grape-create=.
-  See [[#configure-templates][template configuration]] section for more information.
+  See *template configuration* section for more information.
 - =vino-producer-template= - template for a new producer note. Used by
-  =vino-producer-create=. See [[#configure-templates][template configuration]] section for more
+  =vino-producer-create=. See *template configuration* section for more
   information.
 - =vino-region-template= - template for a new region note. Used by
-  =vino-region-create=. See [[#configure-templates][template configuration]] section for more
+  =vino-region-create=. See *template configuration* section for more
   information.
 - =vino-appellation-template= - template for a new appellation note. Used by
-  =vino-appellation-create=. See [[#configure-templates][template configuration]] section for more
+  =vino-appellation-create=. See *template configuration* section for more
   information.
 
 *** Example configuration
@@ -389,7 +355,7 @@ it just better organises notes.
 Each file represents either an appellation (like Cerasuolo di Vittoria DOCG or
 Morgon AOC) or a wine region (like Central Otago in New Zealand or Codru in
 Moldova). There are no restrictions on these files, except for presence of
-=appellation= or =region= tag in addition to =wine= tag. See [[#tags][Tags]] for more
+=appellation= or =region= tag in addition to =wine= tag. See *Tags* section for more
 information.
 
 #+begin_example
@@ -417,7 +383,7 @@ information.
 
 Each file represents a producer (like Occhipinti or Vino di Anna). There are no
 restrictions on these files, except for presence of =producer= tag in addition
-to =wine= tag. See [[#tags][Tags]] for more information.
+to =wine= tag. See *Tags* section for more information.
 
 #+begin_example
   $ cat wine/producer/20200511140611-arianna_occhipinti.org
@@ -448,7 +414,7 @@ to =wine= tag. See [[#tags][Tags]] for more information.
 
 Each file represents a producer (like Occhipinti or Vino di Anna). There are no
 restrictions on these files, except for presence of =producer= tag in addition
-to =wine= tag. See [[#tags][Tags]] for more information.
+to =wine= tag. See *Tags* section for more information.
 
 #+begin_example
   $ cat wine/grape/20200406154953-nerello_mascalese.org
@@ -547,7 +513,7 @@ Rating is updated automatically upon using =vino-entry-rate= and can be updated
 using =vino-entry-update= if you modify any rating note manually.
 
 Vino entry files require the presence of =cellar= tag in addition to =wine= tag.
-See [[#tags][Tags]] for more information.
+See *Tags* section for more information.
 
 #+begin_example
   $ cat wine/cellar/c9937e3e-c83d-4d8d-a612-6110e6706252.org
@@ -600,7 +566,7 @@ file name) and fills it will provided information. Then it links newly created
 rating from vino entry and updates the latter.
 
 Rating files require the presence of =rating= tag in addition to =wine= tag. See
-[[#tags][Tags]] for more information.
+*Tags* section for more information.
 
 #+begin_example
   $ cat wine/rating/f1ecb856-c009-4a65-a8d0-8191a9de66dd.org
@@ -656,15 +622,15 @@ something on your own.
 
 Available tables (see =vino-db--schemata= for full specification):
 
-- =cellar= - contains =vino-entry= (see [[#vino-entry][Vino entry]]) with some technical metadata
+- =cellar= - contains =vino-entry= (see *Vino entry*) with some technical metadata
   (=id=, =file= and =hash=);
-- =ratings= - contains =vino-rating= (see [[#vino-rating][Vino rating]]) with some technical
+- =ratings= - contains =vino-rating= (see *Vino rating*) with some technical
   metadata (=id=, =file= and =hash=).
 
 In order to build database you need to manually call =vino-db-sync= (either from
 your =init.el= file after =vino-setup= or interactively).
 
-If you properly [[#installing][installed]] =vino= (e.g. called =vino-setup=), then every time you
+If you properly installed =vino= (e.g. called =vino-setup=), then every time you
 modify and save a file, database will be automatically updated via
 =vino-db-update-file= function.
 
@@ -707,6 +673,7 @@ Each template is a property list accepting following values:
 - =:file-name= (mandatory) - file name relative to =org-roam-directory=;
 - =:head= (optional) - extra header of the created note;
 - =:body= (optional) - body of the created note;
+- =:tags= (optional) - extra tags for the created note;
 - =:properties= (optional) - extra properties to put into =PROPERTIES= block;
 - =:context= (optional) - extra variables for =:file-name=, =:head=, =:body=
   templates.
@@ -960,4 +927,4 @@ So you can use both!
 :ID:                     a38c690d-0667-481e-8f93-62bb39659144
 :END:
 
-[[images/logo.png][Logo]] was created by [[https://www.behance.net/irynarutylo][Iryna Rutylo]].
+[[file:images/logo.png][Logo]] was created by [[https://www.behance.net/irynarutylo][Iryna Rutylo]].
