@@ -1,11 +1,9 @@
 ;;; vino-test-utils.el --- Vino test utils -*- lexical-binding: t; -*-
 ;;
-;; Copyright (c) 2020-2021 Boris Buliga
+;; Copyright (c) 2020-2022 Boris Buliga
 ;;
 ;; Author: Boris Buliga <d12frosted@d12frosted.local>
 ;; Maintainer: Boris Buliga <d12frosted@d12frosted.local>
-;; Version: 0.1.1
-;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; Created: 08 Mar 2021
 ;;
