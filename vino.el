@@ -235,6 +235,8 @@ Template is a property list accepting following values:
   :context (optional) - extra variables for :file-name, :head,
   :body
 
+  :tags (optional) - extra tags in addition to wine and rating
+
 See `vulpea-create' for more information.")
 
 (defvar vino-rating-props nil
@@ -524,6 +526,8 @@ Template is a property list accepting following values:
 
   :context (optional) - extra variables for :file-name, :head,
   :body
+
+  :tags (optional) - extra tags in addition to wine and cellar
 
 See `vulpea-create' for more information.")
 
@@ -1070,6 +1074,8 @@ Template is a property list accepting following values:
   :context (optional) - extra variables for :file-name, :head,
   :body
 
+  :tags (optional) - extra tags in addition to wine and region
+
 See `vulpea-create' for more information.")
 
 ;;;###autoload
@@ -1091,6 +1097,9 @@ Template is a property list accepting following values:
 
   :context (optional) - extra variables for :file-name, :head,
   :body
+
+  :tags (optional) - extra tags in addition to wine and
+  appellation
 
 See `vulpea-create' for more information.")
 
@@ -1196,6 +1205,8 @@ Template is a property list accepting following values:
   :context (optional) - extra variables for :file-name, :head,
   :body
 
+  :tags (optional) - extra tags in addition to wine and grape
+
 See `vulpea-create' for more information.")
 
 ;;;###autoload
@@ -1283,6 +1294,8 @@ Template is a property list accepting following values:
 
   :context (optional) - extra variables for :file-name, :head,
   :body
+
+  :tags (optional) - extra tags in addition to wine and producer
 
 See `vulpea-create' for more information.")
 
