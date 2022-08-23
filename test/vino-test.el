@@ -70,7 +70,7 @@
      (completion-for :title "Arianna Occhipinti Bombolieri BB 2017"
                      :tags '("cellar")))
     (expect (vino-entry-note-select)
-            :to-be-note
+            :to-equal
             (mk-vulpea-note
              :type "cellar"
              :id "c9937e3e-c83d-4d8d-a612-6110e6706252"
@@ -280,7 +280,7 @@
 
   (it "creates a new grape note"
     (expect (mock-vulpea-note :type "grape" :title "Slarina")
-            :to-be-note
+            :to-equal
             (vino-grape-create "Slarina"))))
 
 (describe "vino-grape-select"
@@ -294,7 +294,7 @@
      (completion-for :title "Frappato"
                      :tags '("grape")))
     (expect (vino-grape-select)
-            :to-be-note
+            :to-equal
             (mk-vulpea-note
              :type "grape"
              :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
@@ -303,7 +303,7 @@
   (it "creates a new grape note when selecting non-existing name"
     (spy-on 'completing-read :and-return-values '("Slarina" "Create new grape"))
     (expect (mock-vulpea-note :type "grape" :title "Slarina")
-            :to-be-note
+            :to-equal
             (vino-grape-select)))
 
   (it "adds a synonym when selecting non-existing name"
@@ -314,7 +314,7 @@
              "Add a synonym to existing grape"
              (completion-for :title "Frappato" :tags '("grape"))))
     (expect (vino-grape-select)
-            :to-be-note
+            :to-equal
             (mk-vulpea-note :type "grape"
                             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
                             :title "Frappato di Vittoria"
@@ -336,7 +336,7 @@
 
   (it "creates a new producer note"
     (expect (mock-vulpea-note :type "producer" :title "Vino di Anna")
-            :to-be-note
+            :to-equal
             (vino-producer-create "Vino di Anna")
             )))
 
@@ -351,7 +351,7 @@
      (completion-for :title "Arianna Occhipinti"
                      :tags '("producer")))
     (expect (vino-producer-select)
-            :to-be-note
+            :to-equal
             (mk-vulpea-note
              :type "producer"
              :id "9462dfad-603c-4094-9aca-a9042cec5dd2"
@@ -364,7 +364,7 @@
      "Vino di Anna")
     (spy-on 'y-or-n-p :and-return-value t)
     (expect (mock-vulpea-note :type "producer" :title "Vino di Anna")
-            :to-be-note
+            :to-equal
             (vino-producer-select))))
 
 (describe "vino-region-create"
@@ -373,7 +373,7 @@
 
   (it "creates a new region note"
     (expect (mock-vulpea-note :type "region" :title "Codru")
-            :to-be-note
+            :to-equal
             (vino-region-create "Codru"))))
 
 (describe "vino-appellation-create"
@@ -382,7 +382,7 @@
 
   (it "creates a new appellation note"
     (expect (mock-vulpea-note :type "appellation" :title "Gattinara DOCG")
-            :to-be-note
+            :to-equal
             (vino-appellation-create "Gattinara DOCG"))))
 
 (describe "vino-region-select"
@@ -394,7 +394,7 @@
             :and-return-value
             (completion-for :title "Central Otago" :tags '("region")))
     (expect (vino-region-select)
-            :to-be-note
+            :to-equal
             (mk-vulpea-note
              :type "region"
              :id "f9ef759b-f39e-4121-ab19-9ab3daa318be"
@@ -405,7 +405,7 @@
             :and-return-value
             (completion-for :title "Cerasuolo di Vittoria DOCG" :tags '("appellation")))
     (expect (vino-region-select)
-            :to-be-note
+            :to-equal
             (mk-vulpea-note
              :type "appellation"
              :id "6a0819f3-0770-4481-9754-754ca397800b"
@@ -417,14 +417,14 @@
     (spy-on 'completing-read :and-return-values '("Codru" "Create region"))
     (spy-on 'read-string :and-return-value "")
     (expect (mock-vulpea-note :type "region" :title "Codru")
-            :to-be-note
+            :to-equal
             (vino-region-select)))
 
   (it "creates a new appellation note when selecting non-existing name"
     (spy-on 'completing-read :and-return-values '("Gattinara DOCG" "Create appellation"))
     (spy-on 'read-string :and-return-value "")
     (expect (mock-vulpea-note :type "appellation" :title "Gattinara DOCG")
-            :to-be-note
+            :to-equal
             (vino-region-select))))
 
 (describe "vino-entry-consume"
