@@ -130,7 +130,13 @@ LINKS (optional) is list of (type . link) pairs."
                   (cons "BLOCKED" "")
                   (cons "FILE" path)
                   (cons "PRIORITY" "B"))
-     :meta meta)))
+     :meta meta
+     :attach-dir (expand-file-name
+                  (format "wine/%s/data/%s/%s"
+                          type
+                          (s-left 2 id)
+                          (s-chop-prefix (s-left 2 id) id))
+                  org-roam-directory))))
 
 (cl-defun mock-vulpea-note (&key type title tags)
   "Prepare system for note creation.
