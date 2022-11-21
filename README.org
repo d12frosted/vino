@@ -5,7 +5,7 @@
 :ID:                     d66740b4-55b6-4af8-8a29-bf618d7c2a70
 :END:
 
-#+begin_export html
+#+begin_html
 <p align="center">
   <img width="256px" src="images/logo.png" alt="Banner">
 </p>
@@ -18,7 +18,7 @@
     <img src="https://github.com/d12frosted/vino/workflows/CI/badge.svg" alt="CI Status Badge">
   </a>
 </p>
-#+end_export
+#+end_html
 
 =vino= is an Emacs program for cellar tracking and wine rating. Every entity is stored as separate Org file, =vino= provides convenient functions to query and manipulate these files.
 
