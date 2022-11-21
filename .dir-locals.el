@@ -3,4 +3,4 @@
                      (elisp-lint-indent-specs . ((vulpea-utils-with-file . 1)
                                                  (vulpea-utils-with-note . 1)
                                                  (vino-dlet . 1)))))
- (org-mode . ((fill-column . 80))))
+ (org-mode . ((vulpea-id-auto-targets . (headings)))))
