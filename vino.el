@@ -131,8 +131,47 @@ Function is called with ID of `vino-entry'.")
      "grape"
      "region"
      "appellation"))
-  (add-hook 'find-file-hook #'vino-db--update-on-save-h)
-  (add-hook 'kill-emacs-hook #'vino-db--close-all))
+
+  ;; define tables
+  (vulpea-db-define-table
+   'cellar 1
+   '([(id :unique :primary-key)
+      (file :unique)
+      (hash :not-null)
+      (carbonation :not-null)
+      (colour :not-null)
+      (sweetness :not-null)
+      (producer :not-null)
+      (name :not-null)
+      (vintage)
+      (appellation)
+      (region)
+      (grapes)
+      (alcohol :not-null)
+      (sugar)
+      (resources)
+      (prices)
+      (acquired :not-null)
+      (consumed :not-null)
+      (rating)
+      (ratings)]
+     (:foreign-key [id] :references nodes [id] :on-delete :cascade)))
+  (vulpea-db-define-table
+   'ratings 1
+   '([(id :unique :primary-key)
+      (file :unique)
+      (hash :not-null)
+      (wine :not-null)
+      (date :not-null)
+      (version :not-null)
+      (score :not-null)
+      (score-max :not-null)
+      (total :not-null)
+      (values :not-null)]
+     (:foreign-key [id] :references nodes [id] :on-delete :cascade)))
+
+  ;; setup required hooks
+  (add-hook 'vulpea-db-insert-note-functions #'vino-db--insert-handle))
 
 
 ;;; Compat
@@ -163,25 +202,9 @@ Dynamically bind the BINDERS and evaluate the BODY."
                 make-vino-rating
                 (&key wine date version values meta
                       &aux
-                      (score
-                       (seq-reduce
-                        #'+
-                        (seq-map
-                         (lambda (value)
-                           (nth 1 value))
-                         values)
-                        0))
-                      (score-max
-                       (seq-reduce
-                        #'+
-                        (seq-map
-                         (lambda (value)
-                           (nth 2 value))
-                         values)
-                        0))
-                      (total (* 10.0
-                                (/ (float score)
-                                   (float score-max)))))))
+                      (score (vino-rating--score values))
+                      (score-max (vino-rating--score-max values))
+                      (total (vino-rating--total score score-max)))))
   (wine
    nil
    :type vulpea-note
@@ -214,6 +237,31 @@ Dynamically bind the BINDERS and evaluate the BODY."
    nil
    :type list
    :documentation "Extra meta defined by `vino-rating-extra-meta'."))
+
+(defun vino-rating--score (values)
+  "Calculate score of a rating from VALUES."
+  (seq-reduce
+   #'+
+   (seq-map
+    (lambda (value)
+      (nth 1 value))
+    values)
+   0))
+
+(defun vino-rating--score-max (values)
+  "Calculate max score of a rating from VALUES."
+  (seq-reduce
+   #'+
+   (seq-map
+    (lambda (value)
+      (nth 2 value))
+    values)
+   0))
+
+(defun vino-rating--total (score score-max)
+  "Calculate total score of a rating from SCORE and SCORE-MAX."
+  (* 10.0 (/ (float score)
+             (float score-max))))
 
 ;;;###autoload
 (defvar vino-rating-template
@@ -500,7 +548,7 @@ ID is generated unless passed."
      (cons note
            (vulpea-meta-get-list wine-note "ratings" 'note))
      'append)
-    (vino-db-update-rating rating note)
+    (vino-db-insert-note (vulpea-db-get-by-id (vulpea-note-id note)))
     (vino-entry-update wine-note)
     note))
 
@@ -646,8 +694,8 @@ See `vulpea-create' for more information.")
                                        meta "producer" 'note)))
                        producer
                      (lwarn 'vino :error
-                      "Producer is not an existing note in entry %s"
-                      (vulpea-note-id note)))
+                            "Producer is not an existing note in entry %s"
+                            (vulpea-note-id note)))
          :name (vulpea-buffer-meta-get! meta "name" 'string)
          :vintage (vino--parse-opt-number
                    (vulpea-buffer-meta-get! meta "vintage")
@@ -753,7 +801,7 @@ ID is generated unless passed."
            :properties (plist-get vino-entry-template :properties)
            :unnarrowed t
            :immediate-finish t)))
-    (vino-db-update-entry vino note)
+    (vino-db-insert-note note)
     note))
 
 ;;;###autoload
@@ -1359,54 +1407,7 @@ Return `vulpea-note'."
 
 ;;; Database
 
-(defvar vino-db--connection (make-hash-table :test #'equal)
-  "Database connection to `vino' database.")
-
-(defconst vino-db--version 1
-  "Version of `vino' database.")
-
-(defconst vino-db--schemata
-  '((cellar
-     [(id :unique :primary-key)
-      (file :unique)
-      (hash :not-null)
-      (carbonation :not-null)
-      (colour :not-null)
-      (sweetness :not-null)
-      (producer :not-null)
-      (name :not-null)
-      (vintage)
-      (appellation)
-      (region)
-      (grapes)
-      (alcohol :not-null)
-      (sugar)
-      (resources)
-      (prices)
-      (acquired :not-null)
-      (consumed :not-null)
-      (rating)
-      (ratings)])
-    (ratings
-     [(id :unique :primary-key)
-      (file :unique)
-      (hash :not-null)
-      (wine :not-null)
-      (date :not-null)
-      (version :not-null)
-      (score :not-null)
-      (score-max :not-null)
-      (total :not-null)
-      (values :not-null)])))
-
-(defun vino-db-query (sql &rest args)
-  "Run SQL query on `vino' database with ARGS.
-
-SQL can be either the emacsql vector representation, or a
-string."
-  (if (stringp sql)
-      (emacsql (vino-db) (apply #'format sql args))
-    (apply #'emacsql (vino-db) sql args)))
+(defalias 'vino-db-query #'org-roam-db-query)
 
 (defun vino-db-get-entry (id)
   "Get `vino-entry' by ID from db."
@@ -1474,252 +1475,79 @@ string."
        :values (nth 3 row)
        :meta meta))))
 
-(defun vino-db ()
-  "Entrypoint to the `vino' sqlite database.
+(defun vino-db-insert-note (note)
+  "Insert NOTE to `vino' tables in `vulpea-db'."
+  (cond
+   ((vino-entry-note-p note)
+    (vino-db--clear-note 'cellar note)
+    (vino-db-query
+     [:insert :into cellar
+      :values $v1]
+     (list
+      (vector
+       (vulpea-note-id note)
+       (vulpea-note-path note)
+       (vulpea-utils-note-hash note)
+       (vulpea-note-meta-get note "carbonation" 'symbol)
+       (vulpea-note-meta-get note "colour" 'symbol)
+       (vulpea-note-meta-get note "sweetness" 'symbol)
+       (vulpea-note-meta-get note "producer" 'link)
+       (vulpea-note-meta-get note "name")
+       (vino--parse-opt-number (vulpea-note-meta-get note "vintage") "NV")
+       (vulpea-note-meta-get note "appellation" 'link)
+       (vulpea-note-meta-get note "region" 'link)
+       (vulpea-note-meta-get-list note "grapes" 'link)
+       (vulpea-note-meta-get note "alcohol" 'number)
+       (vulpea-note-meta-get note "sugar" 'number)
+       (vulpea-note-meta-get-list note "resources" 'link)
+       (vulpea-note-meta-get-list note "price")
+       (vulpea-note-meta-get note "acquired" 'number)
+       (vulpea-note-meta-get note "consumed" 'number)
+       (vino--parse-opt-number (vulpea-note-meta-get note "rating") "NA")
+       (vulpea-note-meta-get-list note "ratings" 'link)))))
 
-Initializes and stores the database, and the database connection.
-Performs a database upgrade when required."
-  (unless (and (vino-db--get-connection)
-               (emacsql-live-p (vino-db--get-connection)))
-    (let ((init-db (not (file-exists-p vino-db-location))))
-      (make-directory (file-name-directory vino-db-location) t)
-      (let ((conn (emacsql-sqlite vino-db-location)))
-        (set-process-query-on-exit-flag (emacsql-process conn) nil)
-        (puthash (expand-file-name vino-db-location)
-                 conn
-                 vino-db--connection)
-        (when init-db
-          (vino-db--init conn))
-        (let* ((version (caar (emacsql conn "PRAGMA user_version")))
-               (version (vino-db--upgrade-maybe conn version)))
-          (cond
-           ((> version vino-db--version)
-            (emacsql-close conn)
-            (user-error
-             "The database was created with a newer vino version.  "
-             "You need to update the vino package"))
-           ((< version vino-db--version)
-            (emacsql-close conn)
-            (error "BUG: The vino database scheme changed %s"
-                   "and there is no upgrade path")))))))
-  (vino-db--get-connection))
+   ((vino-rating-note-p note)
+    (vino-db--clear-note 'ratings note)
+    (let* ((version (vulpea-note-meta-get note "version" 'number))
+           (info (seq-find
+                  (lambda (x) (equal (car x) version))
+                  vino-rating-props))
+           (_ (unless info
+                (user-error
+                 "Could not find ratings props of version %s"
+                 version)))
+           (props (cdr info))
+           (values (seq-map
+                    (lambda (cfg)
+                      (let ((name (downcase (car cfg))))
+                        (list
+                         name
+                         (vulpea-note-meta-get
+                          note name 'number)
+                         (vulpea-note-meta-get
+                          note (concat name "_max") 'number))))
+                    props))
+           (score (vino-rating--score values))
+           (score-max (vino-rating--score-max values)))
+      (vino-db-query
+       [:insert :into ratings
+        :values $v1]
+       (list
+        (vector
+         (vulpea-note-id note)
+         (vulpea-note-path note)
+         (vulpea-utils-note-hash note)
+         (vulpea-note-meta-get note "wine" 'link)
+         (vulpea-note-meta-get note "date")
+         version
+         score
+         score-max
+         (vino-rating--total score score-max)
+         values)))))))
 
-(defun vino-db--init (db)
-  "Initialize DB with the correct schema and user version."
-  (emacsql-with-transaction db
-    (pcase-dolist (`(,table . ,schema) vino-db--schemata)
-      (emacsql db [:create-table $i1 $S2] table schema))
-    (emacsql db (format "PRAGMA user_version = %s"
-                        vino-db--version))))
-
-(defun vino-db--get-connection ()
-  "Return the database connection, if any."
-  (gethash (expand-file-name vino-db-location)
-           vino-db--connection))
-
-(defun vino-db--close-all ()
-  "Closes all database connections made by Org-roam."
-  (dolist (conn (hash-table-values vino-db--connection))
-    (vino-db--close conn)))
-
-(defun vino-db--close (&optional db)
-  "Closes the database connection for database DB."
-  (unless db
-    (setq db (vino-db--get-connection)))
-  (when (and db (emacsql-live-p db))
-    (emacsql-close db)))
-
-(defun vino-db--upgrade-maybe (db version)
-  "Upgrades the database schema for DB, if VERSION is old."
-  (emacsql-with-transaction db
-    'ignore
-    (if (< version vino-db--version)
-        (progn
-          (vino-db-sync 'force))))
-  version)
-
-(defun vino-db-update-file (&optional file)
-  "Update cache for FILE."
-  (setq file (or file (buffer-file-name (buffer-base-buffer))))
-  (when-let* ((id (vulpea-db-get-id-by-file file))
-              (note (vulpea-db-get-by-id id))
-              (tags (vulpea-note-tags note))
-              (table (or (and (seq-contains-p tags "cellar")
-                              'cellar)
-                         (and (seq-contains-p tags "rating")
-                              'ratings)))
-              (hash (vulpea-utils-note-hash note)))
-    (unless (string-equal
-             hash
-             (caar (vino-db-query
-                    `[:select hash
-                      :from ,table])))
-      (vino-db--update-note table hash note))))
-
-(defun vino-db-sync (&optional force)
-  "Build the cache for `vino'.
-
-If FORCE, force a rebuild of the cache from scratch."
-  (interactive "P")
-  (vino-dlet ((agenda-files nil)
-              (gc-cons-threshold vino-db-gc-threshold))
-    (let ((t1 (current-time)))
-      (when force (delete-file vino-db-location))
-      (vino-db--close)
-      (vino-db)
-      (let ((entries-res (vino-db--build-cache
-                          'cellar
-                          (vulpea-db-query-by-tags-every '("wine" "cellar"))))
-            (ratings-res (vino-db--build-cache
-                          'ratings
-                          (vulpea-db-query-by-tags-every '("wine" "rating")))))
-        (message
-         (concat
-          "(vino)"
-          " Cellar (total: %s, modified: %s, deleted: %s)"
-          " Ratings (total: %s, modified: %s, deleted: %s)"
-          " in %s ms")
-         (plist-get entries-res :total)
-         (plist-get entries-res :modified)
-         (plist-get entries-res :deleted)
-         (plist-get ratings-res :total)
-         (plist-get ratings-res :modified)
-         (plist-get ratings-res :deleted)
-         (car (time-convert
-               (time-subtract (current-time) t1)
-               1000)))))))
-
-(defun vino-db--build-cache (table notes)
-  "Build cache for TABLE from NOTES.
-
-Return a property list (:total NUM :modified NUM :deleted NUM)"
-  (let* ((current-notes (vino-db--get-current-notes table))
-         (modified-notes nil)
-         (deleted-count 0))
-    (dolist (note notes)
-      (let* ((contents-hash (vulpea-utils-note-hash note)))
-        (unless (string=
-                 (gethash (vulpea-note-id note)
-                          current-notes)
-                 contents-hash)
-          (push (cons note contents-hash) modified-notes)))
-      (remhash (vulpea-note-id note) current-notes))
-    (dolist (note (hash-table-keys current-notes))
-      ;; These notes are no longer around, remove from cache...
-      (vino-db--clear-note table note)
-      (setq deleted-count (1+ deleted-count)))
-    (vino-db--update-notes table modified-notes)
-    (list :total (length notes)
-          :modified (length modified-notes)
-          :deleted deleted-count)))
-
-(defun vino-db--get-current-notes (table)
-  "Return a hash-table of note id to the hash of its content.
-
-Data is retrieved from TABLE."
-  (let* ((rows (vino-db-query `[:select [id hash] :from ,table]))
-         (ht (make-hash-table :test #'equal)))
-    (dolist (row rows)
-      (puthash (nth 0 row) (nth 1 row) ht))
-    ht))
-
-(defun vino-db--update-notes (table notes)
-  "Update TABLE cache for a list of modified NOTES.
-
-Notes is a list of (note . hash) pairs."
-  (pcase-dolist (`(,note . _) notes)
-    (vino-db--clear-note table note))
-  (let ((modified-count 0))
-    (pcase-dolist (`(,note . ,hash) notes)
-      (vino-db--update-note table hash note)
-      (setq modified-count (1+ modified-count))
-      (message "(vino) Processed %s/%s modified notes from %s..."
-               modified-count
-               (length notes)
-               table))))
-
-(defun vino-db--update-note (table hash note)
-  "Update TABLE cache for a NOTE with HASH."
-  (let ((id (vulpea-note-id note)))
-    (pcase table
-      ('cellar
-       (vino-db--update-entry
-        (vino-entry-get-by-id id)
-        note
-        hash))
-      ('ratings
-       (vino-db--update-rating
-        (vino-rating-get-by-id id)
-        note
-        hash)))))
-
-(defun vino-db-update-entry (entry note)
-  "Update cache for ENTRY stored in NOTE."
-  (vino-db--update-entry
-   entry
-   note
-   (vulpea-utils-note-hash note)))
-
-(defun vino-db--update-entry (entry note hash)
-  "Update `vino' cache for ENTRY stored in NOTE.
-
-HASH is SHA1 of NOTE file."
-  (vino-db--clear-note 'cellar note)
-  (vino-db-query
-   [:insert :into cellar
-    :values $v1]
-   (list
-    (vector
-     (vulpea-note-id note)
-     (vulpea-note-path note)
-     hash
-     (vino-entry-carbonation entry)
-     (vino-entry-colour entry)
-     (vino-entry-sweetness entry)
-     (vulpea-note-id (vino-entry-producer entry))
-     (vino-entry-name entry)
-     (vino-entry-vintage entry)
-     (when-let ((n (vino-entry-appellation entry)))
-       (vulpea-note-id n))
-     (when-let ((n (vino-entry-region entry)))
-       (vulpea-note-id n))
-     (seq-map #'vulpea-note-id (vino-entry-grapes entry))
-     (vino-entry-alcohol entry)
-     (vino-entry-sugar entry)
-     (vino-entry-resources entry)
-     (vino-entry-price entry)
-     (vino-entry-acquired entry)
-     (vino-entry-consumed entry)
-     (vino-entry-rating entry)
-     (seq-map #'vulpea-note-id (vino-entry-ratings entry))))))
-
-(defun vino-db-update-rating (rating note)
-  "Update cache for RATING stored in NOTE."
-  (vino-db--update-rating
-   rating
-   note
-   (vulpea-utils-note-hash note)))
-
-(defun vino-db--update-rating (rating note hash)
-  "Update `vino' cache for RATING stored in NOTE.
-
-HASH is SHA1 of NOTE file."
-  (vino-db--clear-note 'ratings note)
-  (vino-db-query
-   [:insert :into ratings
-    :values $v1]
-   (list
-    (vector
-     (vulpea-note-id note)
-     (vulpea-note-path note)
-     hash
-     (vulpea-note-id (vino-rating-wine rating))
-     (vino-rating-date rating)
-     (vino-rating-version rating)
-     (vino-rating-score rating)
-     (vino-rating-score-max rating)
-     (vino-rating-total rating)
-     (vino-rating-values rating)))))
+(defun vino-db--insert-handle (note)
+  "Handle NOTE insertion to `vulpea-db'."
+  (vino-db-insert-note note))
 
 (defun vino-db--clear-note (table note)
   "Remove any db information from TABLE related to NOTE."
@@ -1728,11 +1556,6 @@ HASH is SHA1 of NOTE file."
      `[:delete :from ,table
        :where (= id $s1)]
      id)))
-
-(defun vino-db--update-on-save-h ()
-  "Locally setup file update for `vino' files."
-  (when (org-roam-file-p)
-    (add-hook 'after-save-hook #'vino-db-update-file nil 'local)))
 
 
 ;;; Utilities
