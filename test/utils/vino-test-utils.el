@@ -77,19 +77,19 @@ a call to `save-match-data', as `format-spec' modifies that."
   "Initialize testing environment in DIR."
   (setq org-roam-directory dir
         org-roam-db-location (expand-file-name "org-roam.db" dir)
-        vino-db-gc-threshold most-positive-fixnum)
-  (vulpea-db-autosync-enable)
-  (org-roam-db-autosync-enable)
+        vino-db-gc-threshold most-positive-fixnum
+        vino-rating-props '((1 . (("score" 20)))))
+  (vulpea-db-reset-tables)
   (vino-setup)
-  (vino-db-sync))
+  (vulpea-db-autosync-enable)
+  (org-roam-db-autosync-enable))
 
 (defun vino-test-teardown ()
   "Teardown testing environment."
   (vulpea-db-autosync-disable)
   (org-roam-db-autosync-disable)
   (delete-file org-roam-db-location)
-  (delete-file vino-db-location)
-  (vino-db--close))
+  (delete-file vino-db-location))
 
 
 

@@ -922,6 +922,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
          rating
          note)
   (before-each
+    (vino-test-init)
     (setq vino-rating-props
           '((1 . (("score" 20)))
             (4 . (("property_1" 3)
@@ -938,8 +939,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                                   (list
                                    :name "convive"
                                    :mode 'multiple
-                                   :type 'string)))
-    (vino-test-init))
+                                   :type 'string))))
 
   (after-each
     (setq vino-rating-props nil
@@ -1130,7 +1130,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              date-str))))
 
 (describe "vino-db"
-  (before-all
+  (before-each
     (setq vino-rating-props
           '((1 . (("score" 20)))
             (4 . (("property_1" 3)
@@ -1140,15 +1140,9 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                   ("property_5" 6)))))
     (vino-test-init))
 
-  (after-all
+  (after-each
     (vino-test-teardown)
     (setq vino-rating-props nil))
-
-  (it "subsequent call of vino-db-sync is fast when the cache is warm"
-    (let ((duration (benchmark-run 1
-                      (vino-db-sync))))
-      (message "duration = %s" duration)
-      (expect (car duration) :to-be-less-than 1.0)))
 
   (it "reading entries from file leads to the same result as reading from db"
     (let* ((notes (vulpea-db-query #'vino-entry-note-p))
@@ -1162,7 +1156,21 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
            (ids (seq-map #'vulpea-note-id notes)))
       (expect (seq-map #'vino-rating-get-by-id ids)
               :to-equal
-              (seq-map #'vino-db-get-rating ids)))))
+              (seq-map #'vino-db-get-rating ids))))
+
+  (it "removing a cellar file removes it from database"
+    (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
+           (note (vulpea-db-get-by-id id))
+           (file (vulpea-note-path note)))
+      (org-roam-db-clear-file file)
+      (expect (vino-db-get-rating id) :to-be nil)))
+
+  (it "removing a rating file removes it from database"
+    (let* ((id "f1ecb856-c009-4a65-a8d0-8191a9de66dd")
+           (note (vulpea-db-get-by-id id))
+           (file (vulpea-note-path note)))
+      (org-roam-db-clear-file file)
+      (expect (vino-db-get-rating id) :to-be nil))))
 
 (describe "vino--collect-while"
   (it "repeats a function until filter returns nil"

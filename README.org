@@ -48,8 +48,40 @@ This project started as a rewrite of [[https://github.com/d12frosted/environment
 - [X] [[https://github.com/d12frosted/vino/milestone/1][v0.1]] - feature parity with [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]].
 - [X] [[https://github.com/d12frosted/vino/milestone/2][v0.2]] - dedicated database for =vino= needs.
 - [X] v0.3 - migration to =org-roam= V2.
-- [ ] [[https://github.com/d12frosted/vino/milestone/4][v0.4]] - querying and viewing.
-- [ ] [[https://github.com/d12frosted/vino/milestone/3][v0.5]] - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/0b5bc480758fd7ceeebc513317732f6337744126/emacs/lisp/lib-inventory.el][lib-inventory.el]]).
+- [ ] v0.4 - migration to Vulpea database extension capabilities.
+- [ ] [[https://github.com/d12frosted/vino/milestone/4][v0.5]] - querying and viewing.
+- [ ] [[https://github.com/d12frosted/vino/milestone/3][v0.6]] - inventory solutions (built-in and external like [[https://github.com/d12frosted/environment/blob/0b5bc480758fd7ceeebc513317732f6337744126/emacs/lisp/lib-inventory.el][lib-inventory.el]]).
+
+** Migration to v0.4
+:PROPERTIES:
+:ID:                     a702da58-6da9-48ca-9ca7-e2adab94c2a7
+:END:
+
+As part of [[https://github.com/d12frosted/vino/pull/121][vino#121]], =vino= stopped maintaining its own database and instead started to use Vulpea database extension mechanism that basically allows to extend Org Roam database. So all your =vino= data is now stored inside =org-orma-db-location=. This is a change that breaks API by removing some variables and functions.
+
+The decision to use Vulpea database extension capabilities is dictated by desire to (a) reduce parsing duplication, (b) to align database lifecycle with vulpea and Org Roam, (c) to reduce code and (d) to get all Vulpea goodies related to database out of box (more to come).
+
+*** Removed public variables
+:PROPERTIES:
+:ID:                     ef9d3858-c919-4bd5-b506-08e884683570
+:END:
+
+- =vino-db-location=, use =org-roam-db-location= instead.
+- =vino-db-gc-threshold=, use =org-roam-db-gc-threshold= instead.
+
+*** Removed public functions
+:PROPERTIES:
+:ID:                     f7dc613c-ee60-47bc-8117-8aa528143468
+:END:
+
+- =vino-db-sync=, use =org-roam-db-sync= instead.
+
+*** Anything else?
+:PROPERTIES:
+:ID:                     e6b69c9b-b40c-46f6-bd38-21bee50ee13d
+:END:
+
+If you encounter troubles migrating to =v0.4=, feel free to open an issue.
 
 ** Getting started
 :PROPERTIES:
@@ -78,7 +110,7 @@ Keep in mind that =vino= depends on [[https://github.com/d12frosted/vulpea][vulp
    '(vino :type git :host github :repo "d12frosted/vino"))
   (vino-setup)
   ;; optionally sync the database
-  (vino-db-sync)
+  (org-roam-db-sync)
 #+end_src
 
 In case you have [[https://github.com/raxod502/straight.el/#integration-with-use-package][integration]] with [[https://github.com/jwiegley/use-package][use-package]]:
@@ -93,7 +125,7 @@ In case you have [[https://github.com/raxod502/straight.el/#integration-with-use
     (after-init . vino-setup)
     :config
     ;; optionally sync the database when vino is loaded
-    (vino-db-sync))
+    (org-roam-db-sync))
 #+end_src
 
 *** Configuration
@@ -112,8 +144,6 @@ There are several things that you must configure before using =vino=:
 
 Optionally you can configure the following variables:
 
-- =vino-db-location= - the full path to file where =vino= database is stored.
-- =vino-db-gc-threshold= - the temporary value for =gc-cons-threshold= to use during heavy operations like =vino-db-sync=. For performance considerations, you might set it to some high value (like =most-positive-fixnum=).
 - =vino-carbonation-types= - list of carbonation types, e.g. =still= and =sparkling=. Modify it in case you want to be more granular, e.g. =traditional-sparkling=, =pet-nat=, etc.
 - =vino-colour-types= - list of wine colours, e.g. =red=, =white= and =rose=. You might want to add =orange= unless you are marking them as =white=.
 - =vino-sweetness-levels= - a property list where key is carbonation type and value is list of sweetness levels (e.g. =dry=, =sweet=, etc).
@@ -241,7 +271,6 @@ Optional variables (with their default values):
 - =vino-region-create= - create a new =region= note according to =vino-region-template=.
 - =vino-appellation-create= - create a new =appellation= note according to =vino-appellation-template=.
 - =vino-region-find-file= - select and visit =region= or =appellation= note.
-- =vino-db-sync= - build =vino= database cache.
 
 ** Notes structure
 :PROPERTIES:
@@ -527,29 +556,27 @@ Files are tagged automatically by =vino= when entities are being created. You ca
 :ID:                     a0a87902-0a63-47c0-88f5-179355819cdd
 :END:
 
-=vino= provides a dedicated database (just like =org-roam=) that can be used for fast querying of information. Right now there are no interactive uses for this database, they are planned in [[https://github.com/d12frosted/vino/milestone/3][v.0.3]] and [[https://github.com/d12frosted/vino/milestone/4][v0.4]]. But you already can build something on your own.
+=vino= extends Org Roam database with tables that can be used for fast querying of information. Right now there are no interactive uses for this database, they are planned in [[https://github.com/d12frosted/vino/milestone/3][v0.6]] and [[https://github.com/d12frosted/vino/milestone/4][v0.5]]. But you already can build something on your own.
 
-Available tables (see =vino-db--schemata= for full specification):
+Available tables (see =vulpea-db--tables= for full specification):
 
 - =cellar= - contains =vino-entry= (see *Vino entry*) with some technical metadata (=id=, =file= and =hash=);
 - =ratings= - contains =vino-rating= (see *Vino rating*) with some technical metadata (=id=, =file= and =hash=).
 
-In order to build database you need to manually call =vino-db-sync= (either from your =init.el= file after =vino-setup= or interactively).
+In order to build database you need to manually call =org-roam-db-sync= (either from your =init.el= file after =vino-setup= or interactively).
 
-If you properly installed =vino= (e.g. called =vino-setup=), then every time you modify and save a file, database will be automatically updated via =vino-db-update-file= function.
+If you properly installed =vino= (e.g. called =vino-setup=), then every time you modify and save a file, database will be automatically updated.
 
-In order to query information from database you might use =vino-db-query=:
+In order to query information from database you might use =org-roam-db-query=:
 
 #+begin_src emacs-lisp
   ;; query top rated wines with rating >= 9
-  (vino-db-query
+  (org-roam-db-query
    [:select [producer name vintage rating]
     :from cellar
     :where (>= rating 9)
     :order-by rating :desc])
 #+end_src
-
-Right now only low level =vino-db-query= is available, more functions will become available in [[https://github.com/d12frosted/vino/milestone/4][v0.4]].
 
 ** How to ...
 :PROPERTIES:
