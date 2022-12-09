@@ -127,11 +127,12 @@ LINKS (optional) is list of (type . link) pairs."
          (category (or category basename))
          (path (expand-file-name
                 (format "wine/%s/%s.org" type basename)
-                org-roam-directory)))
+                org-roam-directory))
+         (tags (or tags (list "wine" type))))
     (make-vulpea-note
      :path path
      :title title
-     :tags (or tags (list "wine" type))
+     :tags tags
      :level 0
      :id id
      :links links
@@ -139,6 +140,7 @@ LINKS (optional) is list of (type . link) pairs."
                   (cons "CATEGORY" category)
                   (cons "ID" id)
                   (cons "BLOCKED" "")
+                  (cons "ALLTAGS" ":wine:")
                   (cons "FILE" path)
                   (cons "PRIORITY" "B"))
      :meta meta
@@ -182,7 +184,7 @@ now."
      :id id
      :title title
      :basename basename
-     :tags (or tags (list "wine" type)))))
+     :tags tags)))
 
 
 
