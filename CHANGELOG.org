@@ -2,6 +2,8 @@
 
 ** TBD
 
+** v0.3.1
+
 *Features*
 
 - [[https://github.com/d12frosted/vino/issues/55][vino#55]] Provide =vino-sources-fn= variable to allow completion of sources
