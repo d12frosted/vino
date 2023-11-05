@@ -299,10 +299,10 @@ This variable is a list of all rating systems, stating with the
 first version up to the current one. This variable has the
 following format:
 
-  '((1 . PROPS)
-    (2 . PROPS)
-    (3 . PROPS)
-    ...)
+  ((1 . PROPS)
+   (2 . PROPS)
+   (3 . PROPS)
+   ...)
 
 And PROPS defines a specific version of rating system:
 
@@ -317,7 +317,7 @@ Each PROP can be of one of the following types:
   and PROP (exclusively), user is prompted for a number using
   `read-number' during `vino-entry-rate';
 
-  Example: '(\"prop_number\" . 10)
+  Example: (\"prop_number\" . 10)
 
 - LIST - then the property value is a number between 0 (inclusively)
   and the `length' of PROP (exclusively), user is prompted to select
@@ -325,15 +325,15 @@ Each PROP can be of one of the following types:
   `vino-entry-rate' and the `cdr' of selected element is used as
   value;
 
-  Example: '(\"prop_list\" . ((\"max\" . 2)
-                              (\"avg\" . 1)
-                              (\"min\" . 0)))
+  Example: (\"prop_list\" . ((\"max\" . 2)
+                             (\"avg\" . 1)
+                             (\"min\" . 0)))
 
 - FUNCTION - then the property value is a number between 0 and `cdr'
   of PROP result, function is called with without arguments during
   `vino-entry-rate' and `car' of the result is used as value.
 
-  Example: '(\"prop_function\" . (lambda () (cons 42 100))")
+  Example: (\"prop_function\" . (lambda () (cons 42 100))")
 
 (defvar vino-rating-extra-meta nil
   "Extra `vulpea-meta' associated with rating.
