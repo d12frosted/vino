@@ -551,33 +551,6 @@ Each vino file must contain a =wine= tag in addition to type tag (=appellation=,
 
 Files are tagged automatically by =vino= when entities are being created. You can not change that. But since tags in =#+filetags= property are subject to inheritance, you should add =vino= tags to =org-tags-exclude-from-inheritance= (which is done for you in =vino-setup=) or disable inheritance completely by setting =org-use-tag-inheritance= to nil.
 
-** Database
-:PROPERTIES:
-:ID:                     a0a87902-0a63-47c0-88f5-179355819cdd
-:END:
-
-=vino= extends Org Roam database with tables that can be used for fast querying of information. Right now there are no interactive uses for this database, they are planned in [[https://github.com/d12frosted/vino/milestone/3][v0.6]] and [[https://github.com/d12frosted/vino/milestone/4][v0.5]]. But you already can build something on your own.
-
-Available tables (see =vulpea-db--tables= for full specification):
-
-- =cellar= - contains =vino-entry= (see *Vino entry*) with some technical metadata (=id=, =file= and =hash=);
-- =ratings= - contains =vino-rating= (see *Vino rating*) with some technical metadata (=id=, =file= and =hash=).
-
-In order to build database you need to manually call =org-roam-db-sync= (either from your =init.el= file after =vino-setup= or interactively).
-
-If you properly installed =vino= (e.g. called =vino-setup=), then every time you modify and save a file, database will be automatically updated.
-
-In order to query information from database you might use =org-roam-db-query=:
-
-#+begin_src emacs-lisp
-  ;; query top rated wines with rating >= 9
-  (org-roam-db-query
-   [:select [producer name vintage rating]
-    :from cellar
-    :where (>= rating 9)
-    :order-by rating :desc])
-#+end_src
-
 ** How to ...
 :PROPERTIES:
 :ID:                     c730ed42-0347-4778-b3fd-feab7f361db3

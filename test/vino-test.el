@@ -212,7 +212,6 @@
                 :price '("50.00 EUR")))
     (setq note (vino-entry--create vino))
     (expect (vino-entry-get-by-id (vulpea-note-id note)) :to-equal vino)
-    (expect (vino-db-get-entry (vulpea-note-id note)) :to-equal vino)
     (expect (expand-file-name (vulpea-note-path note))
             :to-contain-exactly
             (format
@@ -981,7 +980,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :rating 8.0
              :ratings (list note)))
     (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
-    (expect (vino-db-get-rating (vulpea-note-id note)) :to-equal rating)
     (expect (vulpea-db-get-file-by-id id)
             :to-contain-exactly
             (format
@@ -1093,7 +1091,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (setf (vino-rating-meta rating) nil)
 
     (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
-    (expect (vino-db-get-rating (vulpea-note-id note)) :to-equal rating)
     (expect (vulpea-note-path note)
             :to-contain-exactly
             (format
@@ -1128,49 +1125,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              date-str
              id
              date-str))))
-
-(describe "vino-db"
-  (before-each
-    (setq vino-rating-props
-          '((1 . (("score" 20)))
-            (4 . (("property_1" 3)
-                  ("property_2" 4)
-                  ("property_3" 2)
-                  ("property_4" 5)
-                  ("property_5" 6)))))
-    (vino-test-init))
-
-  (after-each
-    (vino-test-teardown)
-    (setq vino-rating-props nil))
-
-  (it "reading entries from file leads to the same result as reading from db"
-    (let* ((notes (vulpea-db-query #'vino-entry-note-p))
-           (ids (seq-map #'vulpea-note-id notes)))
-      (expect (seq-map #'vino-entry-get-by-id ids)
-              :to-equal
-              (seq-map #'vino-db-get-entry ids))))
-
-  (it "reading ratings from file leads to the same result as reading from db"
-    (let* ((notes (vulpea-db-query #'vino-rating-note-p))
-           (ids (seq-map #'vulpea-note-id notes)))
-      (expect (seq-map #'vino-rating-get-by-id ids)
-              :to-equal
-              (seq-map #'vino-db-get-rating ids))))
-
-  (it "removing a cellar file removes it from database"
-    (let* ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-           (note (vulpea-db-get-by-id id))
-           (file (vulpea-note-path note)))
-      (org-roam-db-clear-file file)
-      (expect (vino-db-get-rating id) :to-be nil)))
-
-  (it "removing a rating file removes it from database"
-    (let* ((id "f1ecb856-c009-4a65-a8d0-8191a9de66dd")
-           (note (vulpea-db-get-by-id id))
-           (file (vulpea-note-path note)))
-      (org-roam-db-clear-file file)
-      (expect (vino-db-get-rating id) :to-be nil))))
 
 (describe "vino--collect-while"
   (it "repeats a function until filter returns nil"

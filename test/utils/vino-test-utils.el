@@ -77,7 +77,6 @@ a call to `save-match-data', as `format-spec' modifies that."
   "Initialize testing environment in DIR."
   (setq org-roam-directory dir
         org-roam-db-location (expand-file-name "org-roam.db" dir)
-        vino-db-gc-threshold most-positive-fixnum
         vino-rating-props '((1 . (("score" 20)))))
   (vulpea-db-reset-tables)
   (vino-setup)
@@ -88,8 +87,7 @@ a call to `save-match-data', as `format-spec' modifies that."
   "Teardown testing environment."
   (vulpea-db-autosync-disable)
   (org-roam-db-autosync-disable)
-  (delete-file org-roam-db-location)
-  (delete-file vino-db-location))
+  (delete-file org-roam-db-location))
 
 
 
@@ -155,7 +153,7 @@ LINKS (optional) is list of (type . link) pairs."
   "Prepare system for note creation.
 
 This function is needed when you want to create a note, but want
-to be able to fix 'random' stuff - id generation and clock to be
+to be able to fix random stuff - id generation and clock to be
 able to compare result.
 
 This function mocks whatever is needed for proper note creation

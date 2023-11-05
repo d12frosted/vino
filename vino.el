@@ -71,26 +71,6 @@ Orange wine is marked as white.")
                      doux))
   "List of valid sweetness levels per carbonation type.")
 
-(defvar vino-db-location (expand-file-name
-                          "vino.db"
-                          user-emacs-directory)
-  "The full path to file where the `vino' database is stored.
-
-If this is non-nil, the `vino' sqlite database is saved here.")
-
-(defvar vino-db-gc-threshold gc-cons-threshold
-  "The value to temporarily set the `gc-cons-threshold' threshold to.
-During large, heavy operations like `vino-db-sync', many
-GC operations happen because of the large number of temporary
-structures generated (e.g. parsed ASTs). Temporarily increasing
-`gc-cons-threshold' will help reduce the number of GC operations,
-at the cost of temporary memory usage.
-
-This defaults to the original value of `gc-cons-threshold', but
-tweaking this number may lead to better overall performance. For
-example, to reduce the number of GCs, one may set it to a large
-value like `most-positive-fixnum'.")
-
 
 ;;; Availability
 
@@ -130,48 +110,7 @@ Function is called with ID of `vino-entry'.")
      "producer"
      "grape"
      "region"
-     "appellation"))
-
-  ;; define tables
-  (vulpea-db-define-table
-   'cellar 1
-   '([(id :unique :primary-key)
-      (file :unique)
-      (hash :not-null)
-      (carbonation :not-null)
-      (colour :not-null)
-      (sweetness :not-null)
-      (producer :not-null)
-      (name :not-null)
-      (vintage)
-      (appellation)
-      (region)
-      (grapes)
-      (alcohol :not-null)
-      (sugar)
-      (resources)
-      (prices)
-      (acquired :not-null)
-      (consumed :not-null)
-      (rating)
-      (ratings)]
-     (:foreign-key [id] :references nodes [id] :on-delete :cascade)))
-  (vulpea-db-define-table
-   'ratings 1
-   '([(id :unique :primary-key)
-      (file :unique)
-      (hash :not-null)
-      (wine :not-null)
-      (date :not-null)
-      (version :not-null)
-      (score :not-null)
-      (score-max :not-null)
-      (total :not-null)
-      (values :not-null)]
-     (:foreign-key [id] :references nodes [id] :on-delete :cascade)))
-
-  ;; setup required hooks
-  (add-hook 'vulpea-db-insert-note-functions #'vino-db--insert-handle))
+     "appellation")))
 
 
 ;;; Compat
@@ -349,8 +288,8 @@ where
 
   :type is any type supported by `vulpea-meta-get'
 
-This is not stored in `vino-db', but can be retrieved from
-`vulpea-db' if you properly configured meta persistence.")
+This can be retrieved from `vulpea-db' if you properly configured
+meta persistence.")
 
 ;;;###autoload
 (defun vino-rating-get-by-id (note-or-id)
@@ -548,7 +487,6 @@ ID is generated unless passed."
      (cons note
            (vulpea-meta-get-list wine-note "ratings" 'note))
      'append)
-    (vino-db-insert-note (vulpea-db-get-by-id (vulpea-note-id note)))
     (vino-entry-update wine-note)
     note))
 
@@ -801,7 +739,6 @@ ID is generated unless passed."
            :properties (plist-get vino-entry-template :properties)
            :unnarrowed t
            :immediate-finish t)))
-    (vino-db-insert-note note)
     note))
 
 ;;;###autoload
@@ -1403,159 +1340,6 @@ Return `vulpea-note'."
       (read-string (format "Price (default %s): " price)
                    nil nil price)
     (read-string "Price: ")))
-
-
-;;; Database
-
-(defalias 'vino-db-query #'org-roam-db-query)
-
-(defun vino-db-get-entry (id)
-  "Get `vino-entry' by ID from db."
-  (when-let
-      ((row (car-safe
-             (vino-db-query
-              [:select [carbonation     ; 0
-                        colour          ; 1
-                        sweetness       ; 2
-                        producer        ; 3
-                        name            ; 4
-                        vintage         ; 5
-                        appellation     ; 6
-                        region          ; 7
-                        grapes          ; 8
-                        alcohol         ; 9
-                        sugar           ; 10
-                        resources       ; 11
-                        prices          ; 12
-                        acquired        ; 13
-                        consumed        ; 14
-                        rating          ; 15
-                        ratings]        ; 16
-               :from cellar
-               :where (= id $s1)]
-              id))))
-    (make-vino-entry
-     :carbonation (nth 0 row)
-     :colour (nth 1 row)
-     :sweetness (nth 2 row)
-     :producer (vulpea-db-get-by-id (nth 3 row))
-     :name (nth 4 row)
-     :vintage (nth 5 row)
-     :appellation (vulpea-db-get-by-id (nth 6 row))
-     :region (vulpea-db-get-by-id (nth 7 row))
-     :grapes (seq-map #'vulpea-db-get-by-id (nth 8 row))
-     :alcohol (nth 9 row)
-     :sugar (nth 10 row)
-     :resources (nth 11 row)
-     :price (nth 12 row)
-     :acquired (nth 13 row)
-     :consumed (nth 14 row)
-     :rating (nth 15 row)
-     :ratings (seq-map #'vulpea-db-get-by-id (nth 16 row)))))
-
-(defun vino-db-get-rating (id)
-  "Get `vino-rating' by ID from db."
-  (when-let
-      ((row (car-safe
-             (vino-db-query
-              [:select [wine            ; 0
-                        date            ; 1
-                        version         ; 2
-                        values]         ; 3
-               :from ratings
-               :where (= id $s1)]
-              id))))
-    (let* ((wine-note (vulpea-db-get-by-id (nth 0 row)))
-           (rating-note (vulpea-db-get-by-id id))
-           (meta (vino-rating--meta rating-note)))
-      (make-vino-rating
-       :wine wine-note
-       :date (nth 1 row)
-       :version (nth 2 row)
-       :values (nth 3 row)
-       :meta meta))))
-
-(defun vino-db-insert-note (note)
-  "Insert NOTE to `vino' tables in `vulpea-db'."
-  (cond
-   ((vino-entry-note-p note)
-    (vino-db--clear-note 'cellar note)
-    (vino-db-query
-     [:insert :into cellar
-      :values $v1]
-     (list
-      (vector
-       (vulpea-note-id note)
-       (vulpea-note-path note)
-       (vulpea-utils-note-hash note)
-       (vulpea-note-meta-get note "carbonation" 'symbol)
-       (vulpea-note-meta-get note "colour" 'symbol)
-       (vulpea-note-meta-get note "sweetness" 'symbol)
-       (vulpea-note-meta-get note "producer" 'link)
-       (vulpea-note-meta-get note "name")
-       (vino--parse-opt-number (vulpea-note-meta-get note "vintage") "NV")
-       (vulpea-note-meta-get note "appellation" 'link)
-       (vulpea-note-meta-get note "region" 'link)
-       (vulpea-note-meta-get-list note "grapes" 'link)
-       (vulpea-note-meta-get note "alcohol" 'number)
-       (vulpea-note-meta-get note "sugar" 'number)
-       (vulpea-note-meta-get-list note "resources" 'link)
-       (vulpea-note-meta-get-list note "price")
-       (vulpea-note-meta-get note "acquired" 'number)
-       (vulpea-note-meta-get note "consumed" 'number)
-       (vino--parse-opt-number (vulpea-note-meta-get note "rating") "NA")
-       (vulpea-note-meta-get-list note "ratings" 'link)))))
-
-   ((vino-rating-note-p note)
-    (vino-db--clear-note 'ratings note)
-    (let* ((version (vulpea-note-meta-get note "version" 'number))
-           (info (seq-find
-                  (lambda (x) (equal (car x) version))
-                  vino-rating-props))
-           (_ (unless info
-                (user-error
-                 "Could not find ratings props of version %s"
-                 version)))
-           (props (cdr info))
-           (values (seq-map
-                    (lambda (cfg)
-                      (let ((name (downcase (car cfg))))
-                        (list
-                         name
-                         (vulpea-note-meta-get
-                          note name 'number)
-                         (vulpea-note-meta-get
-                          note (concat name "_max") 'number))))
-                    props))
-           (score (vino-rating--score values))
-           (score-max (vino-rating--score-max values)))
-      (vino-db-query
-       [:insert :into ratings
-        :values $v1]
-       (list
-        (vector
-         (vulpea-note-id note)
-         (vulpea-note-path note)
-         (vulpea-utils-note-hash note)
-         (vulpea-note-meta-get note "wine" 'link)
-         (vulpea-note-meta-get note "date")
-         version
-         score
-         score-max
-         (vino-rating--total score score-max)
-         values)))))))
-
-(defun vino-db--insert-handle (note)
-  "Handle NOTE insertion to `vulpea-db'."
-  (vino-db-insert-note note))
-
-(defun vino-db--clear-note (table note)
-  "Remove any db information from TABLE related to NOTE."
-  (when-let ((id (if (stringp note) note (vulpea-note-id note))))
-    (vino-db-query
-     `[:delete :from ,table
-       :where (= id $s1)]
-     id)))
 
 
 ;;; Utilities
