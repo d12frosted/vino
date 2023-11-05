@@ -1,16 +1,6 @@
-:PROPERTIES:
-:ID:                     f9a623b7-0123-4845-ae03-8369426d961d
-:END:
-
 * Changelog
-:PROPERTIES:
-:ID:                     e08b1bd9-0803-4266-9049-36a8174b999e
-:END:
 
 ** TBD
-:PROPERTIES:
-:ID:                     70359835-aff8-4cb6-92bd-ac857225a3d5
-:END:
 
 *Features*
 
@@ -20,9 +10,6 @@
 - Allow to provide extra tags in all templates.
 
 ** v0.3.0
-:PROPERTIES:
-:ID:                     81df6136-0ec8-415d-9350-279b22629fef
-:END:
 
 Primarily migration to =org-roam= v2 that has many improvements and breaking
 changes. See [[https://org-roam.discourse.group/t/the-org-roam-v2-great-migration/1505][The Org-roam v2 Great Migration]] for more information on automatic
@@ -56,9 +43,6 @@ migration. There will be a separate script to migrate all =vino= entries.
     templates.
 
 ** v0.2
-:PROPERTIES:
-:ID: 16a41084-d445-47a2-adb5-eff9569dd8d4
-:END:
 
 Focus of this release is fulfilling [[https://github.com/d12frosted/vino/milestone/2][milestone#2]] goal - dedicated database for
 =vino= needs.
@@ -76,9 +60,6 @@ Focus of this release is fulfilling [[https://github.com/d12frosted/vino/milesto
 - =vino-grape-template= does not include =vino-resources-template= anymore.
 
 ** v0.1.1
-:PROPERTIES:
-:ID: 26667ab6-6896-44bc-94b1-2526bde8cca4
-:END:
 
 Primarily a stabilization and bug-fix release.
 
@@ -114,9 +95,6 @@ Primarily a stabilization and bug-fix release.
   not covered by =vino=.
 
 ** v0.1
-:PROPERTIES:
-:ID:                     81aaf405-b49b-4b96-811d-fb6989e6a26f
-:END:
 
 Initial release of =vino= application. The main goal of this release is to
 achieve feature parity with [[https://github.com/d12frosted/environment/blob/3d387cb95353cfe79826d24abbfd1b6091669957/emacs/lisp/%2Borg-wine.el][+org-wine.el]]. See [[README.org][README]] for more information.

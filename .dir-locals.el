@@ -2,5 +2,4 @@
                      (indent-tabs-mode . nil)
                      (elisp-lint-indent-specs . ((vulpea-utils-with-file . 1)
                                                  (vulpea-utils-with-note . 1)
-                                                 (vino-dlet . 1)))))
- (org-mode . ((vulpea-id-auto-targets . (headings)))))
+                                                 (vino-dlet . 1))))))
