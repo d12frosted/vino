@@ -926,7 +926,7 @@ explicitly.
                     (vulpea-meta-get rn "total" 'number))
                   ratings))
          (rating (if (null values)
-                     0
+                     "NA"
                    (/ (apply #'+ values)
                       (float (length values))))))
     (vulpea-meta-set note "rating" rating 'append)
