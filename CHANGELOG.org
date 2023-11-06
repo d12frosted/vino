@@ -6,6 +6,10 @@
 
 - Completely get rid of =vino-db=. Why? TL;DR =vulpea-db= is powerful enough to cover all the use cases I have ever faced. Over the last 2 years I have never used =vino-db=.
 
+*Features*
+
+- Introduce rating precision, controlled by =vino-rating-precision=. See its documentation for more information.
+
 ** v0.3.1
 
 *Features*

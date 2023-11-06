@@ -165,30 +165,53 @@ Function is called with ID of `vino-entry'.")
    :type list
    :documentation "Extra meta defined by `vino-rating-extra-meta'."))
 
+(defvar vino-rating-precision 2
+  "Precision used for rating calculations.
+
+When set to number, all ratings are __rounded__ to N digits after
+point.
+
+When the value is nil, no rounding happens.")
+
+(defvar vino-rating-precision--fmt nil)
+
+(defun vino-rating--round (num)
+  "Round NUM using `vino-rating-precision'."
+  (when (numberp vino-rating-precision)
+    (unless vino-rating-precision--fmt
+      (setq vino-rating-precision--fmt
+            (concat "%." (number-to-string vino-rating-precision) "f"))))
+  (if vino-rating-precision--fmt
+      (string-to-number (format vino-rating-precision--fmt num))
+    num))
+
 (defun vino-rating--score (values)
   "Calculate score of a rating from VALUES."
-  (seq-reduce
-   #'+
-   (seq-map
-    (lambda (value)
-      (nth 1 value))
-    values)
-   0))
+  (vino-rating--round
+   (seq-reduce
+    #'+
+    (seq-map
+     (lambda (value)
+       (nth 1 value))
+     values)
+    0)))
 
 (defun vino-rating--score-max (values)
   "Calculate max score of a rating from VALUES."
-  (seq-reduce
-   #'+
-   (seq-map
-    (lambda (value)
-      (nth 2 value))
-    values)
-   0))
+  (vino-rating--round
+   (seq-reduce
+    #'+
+    (seq-map
+     (lambda (value)
+       (nth 2 value))
+     values)
+    0)))
 
 (defun vino-rating--total (score score-max)
   "Calculate total score of a rating from SCORE and SCORE-MAX."
-  (* 10.0 (/ (float score)
-             (float score-max))))
+  (vino-rating--round
+   (* 10.0 (/ (float score)
+              (float score-max)))))
 
 ;;;###autoload
 (defvar vino-rating-template

@@ -1060,8 +1060,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - property_4_max :: 5
 - property_5 :: 5
 - property_5_max :: 6
-- score :: 16
-- score_max :: 20
+- score :: 16.0
+- score_max :: 20.0
 - total :: 8.0
 - location :: some distant location
 - convive :: person 1
@@ -1113,8 +1113,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - property_4_max :: 5
 - property_5 :: 6
 - property_5_max :: 6
-- score :: 17
-- score_max :: 20
+- score :: 17.0
+- score_max :: 20.0
 - total :: 8.5
 - weather :: good
 - thoughts :: thought 1
