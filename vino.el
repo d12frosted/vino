@@ -79,6 +79,11 @@ Orange wine is marked as white.")
 
 Each function accepts a `vulpea-note'.")
 
+(defvar vino-rating-create-handle-functions nil
+  "Abnormal hooks to run after vino rating is created.
+
+Each function accepts a `vulpea-note'.")
+
 
 ;;; Inventory API
 
@@ -428,6 +433,7 @@ ID is generated unless passed."
               :properties (plist-get vino-rating-template :properties)
               :unnarrowed t
               :immediate-finish t)))
+    (run-hook-with-args 'vino-rating-create-handle-functions note)
     (vulpea-meta-set
      wine-note
      "ratings"
