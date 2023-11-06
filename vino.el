@@ -121,26 +121,6 @@ Function is called with ID of `vino-entry'.")
      "appellation")))
 
 
-;;; Compat
-
-;; Remove with support of Emacs 27.
-(defmacro vino-dlet (binders &rest body)
-  "Like `let*' but using dynamic scoping.
-
-Dynamically bind the BINDERS and evaluate the BODY."
-  (declare (indent 1) (debug let))
-  ;; (defvar FOO) only affects the current scope, but in order for
-  ;; this not to affect code after the `let*' we need to create a new
-  ;; scope, which is what the surrounding `let' is for.
-  ;; FIXME: (let () ...) currently doesn't actually create a new
-  ;; scope, which is why we use (let (_) ...).
-  `(let (_)
-     ,@(mapcar (lambda (binder)
-                 `(defvar ,(if (consp binder) (car binder) binder)))
-               binders)
-     (let* ,binders ,@body)))
-
-
 ;;; Rating
 
 ;;;###autoload
