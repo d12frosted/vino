@@ -127,7 +127,7 @@ Function is called with ID of `vino-entry'.")
 (cl-defstruct (vino-rating
                (:constructor
                 make-vino-rating
-                (&key wine date version values meta
+                (&key wine date version values
                       &aux
                       (score (vino-rating--score values))
                       (score-max (vino-rating--score-max values))
@@ -159,11 +159,7 @@ Function is called with ID of `vino-entry'.")
   (values
    nil
    :type list
-   :documentation "Rating values based on `vino-rating-props'.")
-  (meta
-   nil
-   :type list
-   :documentation "Extra meta defined by `vino-rating-extra-meta'."))
+   :documentation "Rating values based on `vino-rating-props'."))
 
 (defvar vino-rating-precision 2
   "Precision used for rating calculations.
@@ -285,23 +281,6 @@ Each PROP can be of one of the following types:
 
   Example: (\"prop_function\" . (lambda () (cons 42 100))")
 
-(defvar vino-rating-extra-meta nil
-  "Extra `vulpea-meta' associated with rating.
-
-The value is a list, with each element being a plist of the
-following form:
-
-  (:name :read-fn :mode :type)
-
-where
-
-  :mode can be either single or multiple.
-
-  :type is any type supported by `vulpea-meta-get'
-
-This can be retrieved from `vulpea-db' if you properly configured
-meta persistence.")
-
 ;;;###autoload
 (defun vino-rating-get-by-id (note-or-id)
   "Get `vino-rating' represented by NOTE-OR-ID."
@@ -332,14 +311,12 @@ meta persistence.")
                           note name 'number)
                          (vulpea-note-meta-get
                           note (concat name "_max") 'number))))
-                    props))
-           (extra-meta (vino-rating--meta note)))
+                    props)))
         (make-vino-rating
          :wine wine
          :date date
          :version version
-         :values values
-         :meta extra-meta)))))
+         :values values)))))
 
 ;;;###autoload
 (defun vino-rating-note-p (note)
@@ -399,44 +376,6 @@ Return a list (name score score-max)."
             (cdr res)
             (- (length (cdr prop)) 1))))))
 
-(defun vino-rating--meta (note)
-  "Extract meta from NOTE according to `vino-rating-extra-meta'."
-  (seq-filter
-   #'identity
-   (seq-map
-    (lambda (x)
-      (let* ((name (plist-get x :name))
-             (type (or (plist-get x :type)))
-             (mode (or (plist-get x :mode)
-                       'single))
-             (value (pcase mode
-                      (`single
-                       (when-let ((v (vulpea-note-meta-get
-                                      note name type)))
-                         (list v)))
-                      (`multiple
-                       (vulpea-note-meta-get-list
-                        note name type)))))
-        (when value
-          (cons name value))))
-    vino-rating-extra-meta)))
-
-;; TODO: add argument (see my private usage)
-(defun vino-rating--read-meta (_note)
-  "Read extra meta defined by `vino-rating-extra-meta'."
-  (seq-map
-   (lambda (x)
-     (let ((name (plist-get x :name))
-           (read-fn (plist-get x :read-fn))
-           (mode (or (plist-get x :mode)
-                     'single)))
-       (cons
-        name
-        (pcase mode
-          (`single (list (funcall read-fn)))
-          (`multiple (vino--collect-while read-fn nil))))))
-   vino-rating-extra-meta))
-
 (defun vino-rating--create (rating &optional id)
   "Create a note for RATING.
 
@@ -474,10 +413,6 @@ ID is generated unless passed."
                 "score_max" (vino-rating-score-max rating) 'append)
                (vulpea-buffer-meta-set
                 "total" (vino-rating-total rating) 'append)
-               (seq-do (lambda (meta)
-                         (vulpea-buffer-meta-set
-                          (car meta) (cdr meta) 'append))
-                       (vino-rating-meta rating))
                (buffer-substring (point-min)
                                  (point-max))))
        (note (vulpea-create
@@ -948,15 +883,13 @@ explicitly."
               (info (car (last vino-rating-props)))
               (version (car info))
               (props (cdr info))
-              (values (seq-map #'vino-rating--read-value props))
-              (extra-meta (vino-rating--read-meta note)))
+              (values (seq-map #'vino-rating--read-value props)))
     (vino-rating--create
      (make-vino-rating
       :wine note
       :date (format-time-string "%Y-%m-%d" date)
       :version version
-      :values values
-      :meta extra-meta))))
+      :values values))))
 
 
 ;;; Vino entry note
