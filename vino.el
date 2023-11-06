@@ -72,7 +72,15 @@ Orange wine is marked as white.")
   "List of valid sweetness levels per carbonation type.")
 
 
-;;; Availability
+;;; Hooks
+
+(defvar vino-entry-create-handle-functions nil
+  "Abnormal hooks to run after vino entry is created.
+
+Each function accepts a `vulpea-note'.")
+
+
+;;; Inventory API
 
 (defvar vino-availability-fn nil
   "Function to check availability of `vino-entry'.
@@ -658,11 +666,13 @@ See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defun vino-entry-create ()
-  "Create a `vino-entry'."
+  "Create a `vino-entry'.
+
+The `vulpea-insert-handle-functions' are called with the created
+note as the only argument."
   (interactive)
   (let ((note (vino-entry--create (vino-entry-read))))
-    (when (y-or-n-p "Acquire? ")
-      (vino-entry-acquire note))))
+    (run-hook-with-args 'vino-entry-create-handle-functions note)))
 
 (defun vino-entry--create (vino &optional id)
   "Create an entry for VINO.
@@ -894,35 +904,6 @@ explicitly."
     (vulpea-meta-set note "acquired" in 'append)
     (vulpea-meta-set note "consumed" out 'append)
     (vulpea-meta-set note "available" cur 'append)))
-
-;;;###autoload
-(defun vino-entry-acquire (&optional note-or-id
-                                     amount source price date)
-  "Acquire AMOUNT of `vino-entry' from SOURCE for PRICE at DATE.
-
-When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
-Otherwise if current buffer is visiting `vino-entry', it used
-instead. Otherwise user is prompted to select a `vino-entry'
-explicitly."
-  (interactive)
-  (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (id (vulpea-note-id note))
-         (vino (vino-entry-get-by-id id))
-         (source (or source
-                     (if vino-sources-fn
-                         (completing-read
-                          "Source: "
-                          (funcall vino-sources-fn id))
-                       (read-string "Source: "))))
-         (amount (or amount (read-number "Amount: " 1)))
-         (price (or price (vino-price-read vino)))
-         (date (or date (org-read-date nil t))))
-    (funcall vino-availability-add-fn
-             id amount source date)
-    (let ((prices (vino-entry-price vino)))
-      (unless (seq-contains-p prices price)
-        (vulpea-meta-set note "price" (cons price prices))))
-    (vino-entry-update-availability id)))
 
 ;;;###autoload
 (defun vino-entry-consume (&optional note-or-id amount action date)
