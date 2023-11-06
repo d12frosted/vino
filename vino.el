@@ -410,7 +410,8 @@ Return a list (name score score-max)."
           (cons name value))))
     vino-rating-extra-meta)))
 
-(defun vino-rating--read-meta ()
+;; TODO: add argument (see my private usage)
+(defun vino-rating--read-meta (_note)
   "Read extra meta defined by `vino-rating-extra-meta'."
   (seq-map
    (lambda (x)
@@ -964,7 +965,7 @@ explicitly."
               (version (car info))
               (props (cdr info))
               (values (seq-map #'vino-rating--read-value props))
-              (extra-meta (vino-rating--read-meta)))
+              (extra-meta (vino-rating--read-meta note)))
     (vino-rating--create
      (make-vino-rating
       :wine note
