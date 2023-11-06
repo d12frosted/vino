@@ -997,9 +997,8 @@ case, linked `vino-entry' is extracted."
                      (org-id-get)))
                (note (vulpea-db-get-by-id id)))
           (cond
-           ((vino-entry-note-p note) (vino-entry-note-get-dwim note))
-           ((vino-rating-note-p note)
-            (vino-rating-wine (vino-rating-get-by-id id)))
+           ((vino-entry-note-p note) note)
+           ((vino-rating-note-p note) (vulpea-note-meta-get note "wine" 'note))
            (t (vino-entry-note-select))))
       (vino-entry-note-select)))
    ((stringp note-or-id)
