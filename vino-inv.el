@@ -107,6 +107,60 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
 
 ;; * queries
 
+(defun vino-inv-get-source (id)
+  "Get source by ID."
+  (let ((row (car (emacsql (vino-inv-db)
+                           [:select [source-id name]
+                            :from source
+                            :where (= source-id $s1)]
+                           id))))
+    (make-vino-inv-source
+     :id (nth 0 row)
+     :name (nth 1 row))))
+
+(defun vino-inv-get-location (id)
+  "Get location by ID."
+  (let ((row (car (emacsql (vino-inv-db)
+                           [:select [location-id name]
+                            :from location
+                            :where (= location-id $s1)]
+                           id))))
+    (make-vino-inv-location
+     :id (nth 0 row)
+     :name (nth 1 row))))
+
+(defun vino-inv-get-bottle (id)
+  "Get bottle by ID."
+  (let* ((rows (->> (emacsql
+                     (vino-inv-db)
+                     [:select
+                      [bottle-id     ; 0
+                       wine-id       ; 1
+                       volume        ; 2
+                       purchase-date ; 3
+                       price         ; 4
+                       price-usd     ; 5
+                       location-id   ; 6
+                       source-id     ; 7
+                       comment]      ; 8
+                      :from [bottle]
+                      :where (= bottle:bottle-id $s1)]
+                     id)))
+         (row (car rows))
+         (wine (vulpea-db-get-by-id (nth 1 row)))
+         (location (vino-inv-get-location (nth 6 row)))
+         (source (vino-inv-get-source (nth 7 row))))
+    (make-vino-inv-bottle
+     :id (nth 0 row)
+     :wine wine
+     :volume (nth 2 row)
+     :purchase-date (nth 3 row)
+     :price (nth 4 row)
+     :price-usd (nth 5 row)
+     :location location
+     :source source
+     :comment (nth 8 row))))
+
 (defun vino-inv-query-sources ()
   "Return list of sources."
   (->> (emacsql (vino-inv-db) [:select [source-id name] :from source])
