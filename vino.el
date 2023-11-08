@@ -496,6 +496,37 @@ See `vulpea-create' for more information.")
   (interactive)
   (find-file (vulpea-note-path (vino-entry-note-select))))
 
+(defun vino-entry-insert ()
+  "Select and insert vino note."
+  (interactive)
+  (unwind-protect
+      (atomic-change-group
+        (let* (region-text
+               beg end
+               (_ (when (region-active-p)
+                    (setq
+                     beg (set-marker
+                          (make-marker) (region-beginning))
+                     end (set-marker
+                          (make-marker) (region-end))
+                     region-text
+                     (org-link-display-format
+                      (buffer-substring-no-properties
+                       beg end)))))
+               (note (vino-entry-note-select))
+               (description (or region-text (vulpea-note-title note))))
+          (unless (vulpea-note-id note)
+            (setq note (vino-entry-create)))
+          (when region-text
+            (delete-region beg end)
+            (set-marker beg nil)
+            (set-marker end nil))
+          (insert (org-link-make-string
+                   (concat "id:" (vulpea-note-id note))
+                   description))
+          (run-hook-with-args 'vulpea-insert-handle-functions note)))
+    (deactivate-mark)))
+
 ;;;###autoload
 (defun vino-entry-read ()
   "Read a `vino-entry'."

@@ -13,6 +13,7 @@
 - Introduce rating precision, controlled by =vino-rating-precision=. See its documentation for more information.
 - Introduce =vino-entry-create-handle-functions= as an extension point for vino entry.
 - Introduce =vino-rating-create-handle-functions= as an extension point for vino rating.
+- New function - =vino-entry-insert=.
 
 ** v0.3.1
 
