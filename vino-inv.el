@@ -303,13 +303,13 @@ duplicates."
      (make-vino-inv-bottle
       :id (nth 0 it)
       :wine wine
-      :volume (nth 2 it)
-      :purchase-date (nth 3 it)
-      :price (nth 4 it)
-      :price-usd (nth 5 it)
-      :location (gethash (nth 6 it) locations-tbl)
-      :source (gethash (nth 7 it) sources-tbl)
-      :comment (nth 8 it))
+      :volume (nth 1 it)
+      :purchase-date (nth 2 it)
+      :price (nth 3 it)
+      :price-usd (nth 4 it)
+      :location (gethash (nth 5 it) locations-tbl)
+      :source (gethash (nth 6 it) sources-tbl)
+      :comment (nth 7 it))
      rows)))
 
 (defun vino-inv-count-purchased-bottles-for (wine-id)
