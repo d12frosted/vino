@@ -616,7 +616,8 @@ The `vulpea-insert-handle-functions' are called with the created
 note as the only argument."
   (interactive)
   (let ((note (vino-entry--create (vino-entry-read))))
-    (run-hook-with-args 'vino-entry-create-handle-functions note)))
+    (run-hook-with-args 'vino-entry-create-handle-functions note)
+    note))
 
 (defun vino-entry--create (vino &optional id)
   "Create an entry for VINO.
