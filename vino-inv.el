@@ -52,6 +52,20 @@
     (vulpea-meta-set note "consumed" out 'append)
     (vulpea-meta-set note "available" cur 'append)))
 
+;; * commands
+
+;;;###autoload
+(defun vino-inv-find-file-available ()
+  "Select and visit available wine."
+  (interactive)
+  (let* ((available (vino-inv-query-available-wines))
+         (res (vulpea-select-from "Wine" available)))
+    (if (vulpea-note-id res)
+        (find-file (vulpea-note-path res))
+      (user-error
+       "Can not visit vino entry that does not exist: %s"
+       (vulpea-note-title res)))))
+
 ;; * database
 
 (defvar vino-inv-db-file (expand-file-name "wine.db" org-directory)
