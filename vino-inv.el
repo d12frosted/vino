@@ -38,6 +38,7 @@
 
 ;; * vino hooks
 
+;;;###autoload
 (defun vino-inv-setup ()
   "Setup `vino-inv' module."
   (add-hook 'vino-entry-update-handle-functions #'vino-inv-update-availability))
