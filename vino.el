@@ -82,7 +82,8 @@ Each function accepts a `vulpea-note'.")
 (defvar vino-rating-create-handle-functions nil
   "Abnormal hooks to run after vino rating is created.
 
-Each function accepts a `vulpea-note'.")
+Each function accepts a `vulpea-note' and extra-data passed to
+`vino-entry-rate'.")
 
 
 ;;; Inventory API
@@ -381,10 +382,12 @@ Return a list (name score score-max)."
             (cdr res)
             (- (length (cdr prop)) 1))))))
 
-(defun vino-rating--create (rating &optional id)
+(defun vino-rating--create (rating &optional id extra-data)
   "Create a note for RATING.
 
-ID is generated unless passed."
+ID is generated unless passed.
+
+EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
   (when-let*
       ((wine-note (vino-rating-wine rating))
        (vino-entry (vino-entry-get-by-id wine-note))
@@ -433,7 +436,7 @@ ID is generated unless passed."
               :properties (plist-get vino-rating-template :properties)
               :unnarrowed t
               :immediate-finish t)))
-    (run-hook-with-args 'vino-rating-create-handle-functions note)
+    (run-hook-with-args 'vino-rating-create-handle-functions note extra-data)
     (vulpea-meta-set
      wine-note
      "ratings"
@@ -908,13 +911,15 @@ explicitly."
       (vino-entry-rate id date))))
 
 ;;;###autoload
-(defun vino-entry-rate (&optional note-or-id date)
+(defun vino-entry-rate (&optional note-or-id date extra-data)
   "Rate a `vino-entry' on DATE.
 
 When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
 Otherwise if current buffer is visiting `vino-entry', it used
 instead. Otherwise user is prompted to select a `vino-entry'
-explicitly."
+explicitly.
+
+EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
   (interactive)
   (when-let* ((note (vino-entry-note-get-dwim note-or-id))
               (date (or date (org-read-date nil t)))
@@ -927,7 +932,8 @@ explicitly."
       :wine note
       :date (format-time-string "%Y-%m-%d" date)
       :version version
-      :values values))))
+      :values values)
+     extra-data)))
 
 
 ;;; Vino entry note
