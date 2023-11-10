@@ -36,7 +36,19 @@
 (require 'dash)
 (require 's)
 
-;; * vino hooks
+;; * hooks
+
+(defvar vino-inv-acquire-handle-functions nil
+  "Abnormal hooks to run after a bottle is acquired.
+
+Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
+
+(defvar vino-inv-consume-handle-functions nil
+  "Abnormal hooks to run after a bottle is consumed.
+
+Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
+
+;; * inv setup
 
 ;;;###autoload
 (defun vino-inv-setup ()
@@ -65,6 +77,110 @@
       (user-error
        "Can not visit vino entry that does not exist: %s"
        (vulpea-note-title res)))))
+
+;;;###autoload
+(defun vino-inv-acquire (&optional note)
+  "Acquire wine represented as NOTE."
+  (interactive)
+  (let* ((note (or note (vino-entry-note-get-dwim)))
+
+         ;; source
+         (sources (vino-inv-query-sources))
+         (source (completing-read "Source: " (-map #'vino-inv-source-name sources)))
+         (source-id (vino-inv-source-id
+                     (if-let ((s (--find (string-equal (vino-inv-source-name it) source) sources)))
+                         s (vino-inv-add-source source))))
+
+         ;; location
+         (locations (vino-inv-query-locations))
+         (location (completing-read "Initial location: " (-map #'vino-inv-location-name locations)))
+         (location-id (vino-inv-location-id
+                       (if-let ((s (--find (string-equal (vino-inv-location-name it) location) locations)))
+                           s (vino-inv-add-location location))))
+
+
+         ;; price
+         (prices-public (vulpea-note-meta-get-list note "price"))
+         (prices-private (vulpea-note-meta-get-list note "price private"))
+         (prices (-uniq (-concat prices-public prices-private)))
+         (price (if prices
+                    (completing-read "Price: " prices)
+                  (read-string "Price: ")))
+         (price-usd (cond
+                     ((s-suffix-p "USD" price) price)
+                     ((= 0 (string-to-number price)) "0 USD")
+                     (t (format "%.2f USD" (read-number (format "Convert %s to USD: " price))))))
+         (price-add-as (cond
+                        ((seq-contains-p prices-public price) nil)
+                        ((seq-contains-p prices-private price) nil)
+                        (t (completing-read "Add this price as: "
+                                            '(private public) nil t))))
+
+         ;; etc
+         (amount (read-number "Amount: " 1))
+         (volume (read-number "Volume (ml): " 750))
+         (date (format-time-string "%Y-%m-%d" (org-read-date nil t))))
+
+    ;; add price if needed
+    (when price-add-as
+      (vulpea-meta-set
+       note
+       (pcase price-add-as
+         (`"public" "price")
+         (`"private" "price private"))
+       (cons price (pcase price-add-as
+                     (`"public" prices-public)
+                     (`"private" prices-private)))
+       'append))
+
+    (--each (-iota amount)
+      (let ((bottle (vino-inv-add-bottle
+                     :wine-id (vulpea-note-id note)
+                     :volume volume
+                     :date date
+                     :price price
+                     :price-usd price-usd
+                     :location-id location-id
+                     :source-id source-id)))
+        (run-hook-with-args 'vino-inv-acquire-handle-functions bottle note)))
+
+    (vino-inv-update-availability note)))
+
+;;;###autoload
+(defun vino-inv-consume (&optional note)
+  "Consume wine represented as NOTE."
+  (interactive)
+  (let* ((note (or note (vino-entry-note-get-dwim)))
+         (bottles (vino-inv-query-available-bottles-for (vulpea-note-id note)))
+         (_ (unless bottles (user-error "There are no bottles to consume")))
+         (bottle (completing-read
+                  "Bottle: "
+                  (--map
+                   (concat
+                    (propertize (concat (number-to-string (vino-inv-bottle-id it)) " ")
+                                'invisible t)
+                    (propertize (concat "#" (number-to-string (vino-inv-bottle-id it)))
+                                'face 'barberry-theme-face-salient)
+                    (propertize " [" 'face 'barberry-theme-face-faded)
+                    (vino-inv-bottle-purchase-date it)
+                    (propertize "] @" 'face 'barberry-theme-face-faded)
+                    (vino-inv-location-name (vino-inv-bottle-location it))
+                    (propertize " - " 'face 'barberry-theme-face-faded)
+                    (vino-inv-bottle-price it)
+                    (propertize " from " 'face 'barberry-theme-face-faded)
+                    (vino-inv-source-name (vino-inv-bottle-source it)))
+                   bottles)
+                  nil t))
+         ;; we use invisible part as a hack
+         (bottle-id (string-to-number bottle))
+         (action (read-string "Action: " "consume"))
+         (date (org-read-date nil t)))
+    (vino-inv-consume-bottle :bottle-id bottle-id :date (format-time-string "%Y-%m-%d" date))
+    (vino-inv-update-availability note)
+    (run-hook-with-args 'vino-inv-consume-handle-functions bottle note)
+    (when (and (string-equal action "consume")
+               (y-or-n-p "Rate? "))
+      (vino-entry-rate note date `((bottle-id . ,bottle-id))))))
 
 ;; * database
 
@@ -388,7 +504,7 @@ duplicates."
 
 ;; * bottle operations
 
-(cl-defun vino-inv-add-bottle (&key wine-id
+(cl-defun vino-inv-add-bottle (&key wine
                                     volume
                                     date
                                     price
@@ -398,7 +514,7 @@ duplicates."
                                     comment)
   "Purchase a bottle.
 
-- WINE-ID is a id of relevant `vulpea-note'.
+- WINE is a `vulpea-note'.
 - VOLUME is measured in milliliters (750 default).
 - DATE is purchase date.
 - PRICE is price of the purchase in any currency.
@@ -406,7 +522,9 @@ duplicates."
 - LOCATION-ID is id of the initial location.
 - SOURCE-ID is id of the source.
 - COMMENT is optional."
-  (let ((db (vino-inv-db)))
+  (let ((volume (or volume 750))
+        (db (vino-inv-db))
+        (bottle-id))
     (emacsql-with-transaction db
       (emacsql db
                [:insert
@@ -419,21 +537,31 @@ duplicates."
                               source-id
                               comment]
                 :values $v1]
-               `([,wine-id
-                  ,(or volume 750)
+               `([,(vulpea-note-id wine)
+                  ,volume
                   ,date
                   ,price
                   ,price-usd
                   ,location-id
                   ,source-id
                   ,comment]))
-      (let ((bottle-id (caar (emacsql db [:select (funcall last_insert_rowid)]))))
-        (emacsql db
-                 [:insert :into transaction [bottle-id
-                                             transaction-type
-                                             transaction-date]
-                  :values $v1]
-                 `([,bottle-id purchase ,date]))))))
+      (setq bottle-id (caar (emacsql db [:select (funcall last_insert_rowid)])))
+      (emacsql db
+               [:insert :into transaction [bottle-id
+                                           transaction-type
+                                           transaction-date]
+                        :values $v1]
+               `([,bottle-id purchase ,date])))
+    (make-vino-inv-bottle
+     :id bottle-id
+     :wine wine
+     :volume volume
+     :purchase-date date
+     :price price
+     :price-usd price-usd
+     :location (vino-inv-get-location location-id)
+     :source (vino-inv-get-source source-id)
+     :comment comment)))
 
 (cl-defun vino-inv-consume-bottle (&key bottle-id date)
   "Consume BOTTLE-ID on a DATE."
