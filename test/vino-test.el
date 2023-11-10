@@ -426,163 +426,6 @@
             :to-equal
             (vino-region-select))))
 
-(describe "vino-entry-consume"
-  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-        (initial-in 5)
-        (initial-out 2)
-        (extra-out 0)
-        vino)
-  (before-all
-    (setq vino-availability-sub-fn (lambda (_id amount _source _date)
-                                     (setq  extra-out amount))
-          vino-availability-fn (lambda (_) (cons initial-in (+ initial-out extra-out))))
-    (vino-test-init))
-
-  (after-all
-    (setq vino-availability-sub-fn nil
-          vino-availability-fn nil)
-    (vino-test-teardown))
-
-  (it "updates availability based on vino-availability-sub-fn result"
-    (spy-on 'y-or-n-p :and-return-value nil)
-    (vino-entry-consume id 3 "consume" (current-time))
-    (setq vino (vino-entry-get-by-id id))
-    (expect 'y-or-n-p :to-have-been-called-times 1)
-    (expect (vino-entry-acquired vino) :to-equal 5)
-    (expect (vino-entry-consumed vino) :to-equal 5)
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
-            :to-contain-exactly
-            (format
-             ":PROPERTIES:
-:ID:       %s
-:END:
-#+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: :wine:cellar:
-
-- carbonation :: still
-- colour :: red
-- sweetness :: dry
-- producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
-- name :: Bombolieri BB
-- vintage :: 2017
-- appellation :: [[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]
-- grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
-- alcohol :: 13
-- sugar :: 1
-- price :: 50.00 EUR
-- acquired :: 5
-- consumed :: 5
-- available :: 0
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
-- rating :: NA
-
-#+begin_quote
-Il Frappato stems from a dream which I had when I was a girl to make a wine that
-knows the land that I work, the air I breath, and my own thoughts. It is bitter,
-bloody and elegant. That is Vittoria and the Iblei Mountains. It is the wine
-that most resembles me, brave, original and rebellious. But not only. It has
-peasant origins, for this it loves its roots and the past that it brings in;
-but, at the same time, it is able to fight to improve itself. It knows
-refinement without forgetting itself.
-
-Arianna Occhipinti
-#+end_quote
-
-* Additional information
-:PROPERTIES:
-:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
-:END:
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
-consequat pulvinar. Nullam ac dapibus arcu. Phasellus ornare tincidunt justo in
-tincidunt. Vestibulum dignissim arcu erat, in viverra ligula tristique vel.
-Etiam ac euismod lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-Phasellus nec urna sit amet arcu laoreet sagittis ac et dolor. Sed molestie mi
-dui, eu posuere diam faucibus eget. Nullam fringilla ante in laoreet
-scelerisque. Nam feugiat neque id odio accumsan sodales. Quisque eu nibh diam.
-Aliquam varius, nibh vel pretium molestie, velit lorem consectetur erat, quis
-pretium eros dui eu eros. Vestibulum at turpis lacus. Donec tempor nec ipsum sed
-dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
-"
-             id))))
-
-(describe "vino-entry-acquire"
-  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-        (initial-in 2)
-        (extra-in 0)
-        vino)
-  (before-all
-    (setq vino-availability-add-fn (lambda (_id amount _source _date)
-                                     (setq  extra-in amount))
-          vino-availability-fn (lambda (_) (cons(+ initial-in extra-in) 2)))
-    (vino-test-init))
-
-  (after-all
-    (setq vino-availability-add-fn nil
-          vino-availability-fn nil)
-    (vino-test-teardown))
-
-  (it "updates availability based on vino-availability-add-fn result"
-    (vino-entry-acquire id 3 "some source" "50.00 EUR" (current-time))
-    (setq vino (vino-entry-get-by-id id))
-    (expect (vino-entry-acquired vino) :to-equal 5)
-    (expect (vino-entry-consumed vino) :to-equal 2)
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
-            :to-contain-exactly
-            (format
-             ":PROPERTIES:
-:ID:       %s
-:END:
-#+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: :wine:cellar:
-
-- carbonation :: still
-- colour :: red
-- sweetness :: dry
-- producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
-- name :: Bombolieri BB
-- vintage :: 2017
-- appellation :: [[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]
-- grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
-- alcohol :: 13
-- sugar :: 1
-- price :: 50.00 EUR
-- acquired :: 5
-- consumed :: 2
-- available :: 3
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
-- rating :: NA
-
-#+begin_quote
-Il Frappato stems from a dream which I had when I was a girl to make a wine that
-knows the land that I work, the air I breath, and my own thoughts. It is bitter,
-bloody and elegant. That is Vittoria and the Iblei Mountains. It is the wine
-that most resembles me, brave, original and rebellious. But not only. It has
-peasant origins, for this it loves its roots and the past that it brings in;
-but, at the same time, it is able to fight to improve itself. It knows
-refinement without forgetting itself.
-
-Arianna Occhipinti
-#+end_quote
-
-* Additional information
-:PROPERTIES:
-:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
-:END:
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
-consequat pulvinar. Nullam ac dapibus arcu. Phasellus ornare tincidunt justo in
-tincidunt. Vestibulum dignissim arcu erat, in viverra ligula tristique vel.
-Etiam ac euismod lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-Phasellus nec urna sit amet arcu laoreet sagittis ac et dolor. Sed molestie mi
-dui, eu posuere diam faucibus eget. Nullam fringilla ante in laoreet
-scelerisque. Nam feugiat neque id odio accumsan sodales. Quisque eu nibh diam.
-Aliquam varius, nibh vel pretium molestie, velit lorem consectetur erat, quis
-pretium eros dui eu eros. Vestibulum at turpis lacus. Donec tempor nec ipsum sed
-dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
-"
-             id))))
-
 (describe "vino-entry-set-grapes"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
   (before-all (vino-test-init))
@@ -780,88 +623,13 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 "
              id))))
 
-(describe "vino-entry-update-availability"
-  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-        vino)
-  (before-all
-    (setq vino-availability-fn (lambda (_) (cons 10 8)))
-    (vino-test-init))
-
-  (after-all
-    (setq vino-availability-fn nil)
-    (vino-test-teardown))
-
-  (it "updates availability based on vino-availability-fn result"
-    (vino-entry-update-availability id)
-    (setq vino (vino-entry-get-by-id id))
-    (expect (vino-entry-acquired vino) :to-equal 10)
-    (expect (vino-entry-consumed vino) :to-equal 8)
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
-            :to-contain-exactly
-            (format
-             ":PROPERTIES:
-:ID:       %s
-:END:
-#+title: Arianna Occhipinti Bombolieri BB 2017
-#+filetags: :wine:cellar:
-
-- carbonation :: still
-- colour :: red
-- sweetness :: dry
-- producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
-- name :: Bombolieri BB
-- vintage :: 2017
-- appellation :: [[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]
-- grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
-- alcohol :: 13
-- sugar :: 1
-- price :: 50.00 EUR
-- acquired :: 10
-- consumed :: 8
-- available :: 2
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
-- rating :: NA
-
-#+begin_quote
-Il Frappato stems from a dream which I had when I was a girl to make a wine that
-knows the land that I work, the air I breath, and my own thoughts. It is bitter,
-bloody and elegant. That is Vittoria and the Iblei Mountains. It is the wine
-that most resembles me, brave, original and rebellious. But not only. It has
-peasant origins, for this it loves its roots and the past that it brings in;
-but, at the same time, it is able to fight to improve itself. It knows
-refinement without forgetting itself.
-
-Arianna Occhipinti
-#+end_quote
-
-* Additional information
-:PROPERTIES:
-:ID:       71715128-3d6f-4e36-8d70-d35fcb057609
-:END:
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt urna id
-consequat pulvinar. Nullam ac dapibus arcu. Phasellus ornare tincidunt justo in
-tincidunt. Vestibulum dignissim arcu erat, in viverra ligula tristique vel.
-Etiam ac euismod lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-Phasellus nec urna sit amet arcu laoreet sagittis ac et dolor. Sed molestie mi
-dui, eu posuere diam faucibus eget. Nullam fringilla ante in laoreet
-scelerisque. Nam feugiat neque id odio accumsan sodales. Quisque eu nibh diam.
-Aliquam varius, nibh vel pretium molestie, velit lorem consectetur erat, quis
-pretium eros dui eu eros. Vestibulum at turpis lacus. Donec tempor nec ipsum sed
-dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
-"
-             id))))
-
 (describe "vino-entry-update"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
   (before-all
-    (setq vino-rating-props '((1 . (("score" 20))))
-          vino-availability-fn (lambda (_) (cons 5 2)))
     (vino-test-init))
 
   (after-all
-    (setq vino-rating-props nil
-          vino-availability-fn nil)
+    (setq vino-rating-props nil)
     (vino-test-teardown))
 
   (it "should update rating to average of ratings"
@@ -881,8 +649,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :alcohol 13
              :sugar 1
-             :acquired 5
-             :consumed 2
+             :acquired 2
+             :consumed 1
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
@@ -928,12 +696,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                   ("property_2" 4)
                   ("property_3" 2)
                   ("property_4" 5)
-                  ("property_5" 6))))
-          vino-availability-fn (lambda (_) (cons 5 2))))
+                  ("property_5" 6))))))
 
   (after-each
-    (setq vino-rating-props nil
-          vino-availability-fn nil)
+    (setq vino-rating-props nil)
     (vino-test-teardown))
 
   (it "should create rating note and update vino note"
@@ -961,8 +727,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :alcohol 13
              :sugar 1
-             :acquired 5
-             :consumed 2
+             :acquired 2
+             :consumed 1
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
              :rating 8.0
@@ -988,9 +754,9 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - alcohol :: 13
 - sugar :: 1
 - price :: 50.00 EUR
-- acquired :: 5
-- consumed :: 2
-- available :: 3
+- acquired :: 2
+- consumed :: 1
+- available :: 1
 - resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: 8.0
 - ratings :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017 - %s]]

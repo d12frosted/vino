@@ -36,6 +36,21 @@
 (require 'dash)
 (require 's)
 
+;; * vino hooks
+
+(defun vino-inv-setup ()
+  "Setup `vino-inv' module."
+  (add-hook 'vino-entry-update-handle-functions #'vino-inv-update-availability))
+
+(defun vino-inv-update-availability (note)
+  "Update available metadata in wine NOTE."
+  (let* ((in (vino-inv-count-purchased-bottles-for (vulpea-note-id note)))
+         (out (vino-inv-count-consumed-bottles-for (vulpea-note-id note)))
+         (cur (- in out)))
+    (vulpea-meta-set note "acquired" in 'append)
+    (vulpea-meta-set note "consumed" out 'append)
+    (vulpea-meta-set note "available" cur 'append)))
+
 ;; * database
 
 (defvar vino-inv-db-file (expand-file-name "wine.db" org-directory)

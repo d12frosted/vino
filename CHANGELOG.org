@@ -6,7 +6,7 @@
 
 - Completely get rid of =vino-db=. Why? TL;DR =vulpea-db= is powerful enough to cover all the use cases I have ever faced. Over the last 2 years I have never used =vino-db=.
 - Get rid of meta slot in =vino-rating=.
-- Get rid of inventory flow, which is going to be introduced as a plugin.
+- Get rid of 'generic' inventory flow in favour of =vino-inv= plugin.
 
 *Features*
 

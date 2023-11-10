@@ -91,32 +91,6 @@ Each function accepts a `vulpea-note' and extra-data passed to
 `vino-entry-rate'.")
 
 
-;;; Inventory API
-
-(defvar vino-availability-fn nil
-  "Function to check availability of `vino-entry'.
-
-Function is called with ID of `vino-entry' and returns a cons of
-acquired and consumed numbers.")
-
-(defvar vino-availability-add-fn nil
-  "Function to add AMOUNT of `vino-entry' to inventory.
-
-Function is called with ID of `vino-entry', AMOUNT, SOURCE and
-DATE arguments.")
-
-(defvar vino-availability-sub-fn nil
-  "Function to subtract AMOUNT of `vino-entry' from inventory.
-
-Function is called with ID of `vino-entry', AMOUNT, ACTION and
-DATE arguments.")
-
-(defvar vino-sources-fn nil
-  "Function to get the list of sources.
-
-Function is called with ID of `vino-entry'.")
-
-
 ;;; Setup
 
 (defun vino-setup ()
@@ -792,8 +766,7 @@ The following things are updated:
   (interactive)
   (let* ((note (vino-entry-note-get-dwim note-or-id)))
     (vino-entry-update-rating note)
-    (run-hook-with-args 'vino-entry-update-handle-functions note)
-    (vino-entry-update-availability note)))
+    (run-hook-with-args 'vino-entry-update-handle-functions note)))
 
 ;;;###autoload
 (defun vino-entry-update-title (&optional note-or-id)
@@ -870,51 +843,6 @@ explicitly.
                   #'string<
                   ratings)
      'append)))
-
-;;;###autoload
-(defun vino-entry-update-availability (note-or-id)
-  "Update available metadata of `vino-entry'.
-
-When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
-Otherwise if current buffer is visiting `vino-entry', it used
-instead. Otherwise user is prompted to select a `vino-entry'
-explicitly."
-  (unless vino-availability-fn
-    (user-error "`vino-availability-fn' is nil"))
-  (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (res (funcall vino-availability-fn (vulpea-note-id note)))
-         (in (car res))
-         (out (cdr res))
-         (cur (- in out)))
-    (vulpea-meta-set note "acquired" in 'append)
-    (vulpea-meta-set note "consumed" out 'append)
-    (vulpea-meta-set note "available" cur 'append)))
-
-;;;###autoload
-(defun vino-entry-consume (&optional note-or-id amount action date)
-  "Consume AMOUNT of `vino-entry' because of ACTION at DATE.
-
-When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
-Otherwise if current buffer is visiting `vino-entry', it used
-instead. Otherwise user is prompted to select a `vino-entry'
-explicitly."
-  (interactive)
-  (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (id (vulpea-note-id note))
-         (action (or action (read-string "Action: " "consume")))
-         (amount (or amount
-                     (read-number
-                      "Amount: "
-                      (or (min 1.0 (vulpea-meta-get
-                                    note "available" 'number))
-                          1))))
-         (date (or date (org-read-date nil t))))
-    (funcall vino-availability-sub-fn
-             id amount action date)
-    (vino-entry-update-availability id)
-    (when (and (string-equal action "consume")
-               (y-or-n-p "Rate? "))
-      (vino-entry-rate id date))))
 
 ;;;###autoload
 (defun vino-entry-rate (&optional note-or-id date extra-data)
