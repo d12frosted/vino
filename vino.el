@@ -79,6 +79,11 @@ Orange wine is marked as white.")
 
 Each function accepts a `vulpea-note'.")
 
+(defvar vino-entry-update-handle-functions nil
+  "Abnormal hooks to run after vino rating is updated.
+
+Each function accepts a `vulpea-note'.")
+
 (defvar vino-rating-create-handle-functions nil
   "Abnormal hooks to run after vino rating is created.
 
@@ -787,6 +792,7 @@ The following things are updated:
   (interactive)
   (let* ((note (vino-entry-note-get-dwim note-or-id)))
     (vino-entry-update-rating note)
+    (run-hook-with-args 'vino-entry-update-handle-functions note)
     (vino-entry-update-availability note)))
 
 ;;;###autoload
