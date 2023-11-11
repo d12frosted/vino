@@ -633,6 +633,25 @@ duplicates."
                               'face 'font-lock-comment-face))
       (k (user-error "Unexpected cell key '%s'" k)))))
 
+(defun vino-inv-ui-render-header (bottles)
+  "Render header line for BOTTLES."
+  (concat
+   "Total "
+   (propertize (format "%d" (seq-length bottles)) 'face 'bold)
+   " bottles of "
+   (propertize (format "%d" (->> bottles
+                                 (-map #'vino-inv-bottle-wine)
+                                 (-map #'vulpea-note-id)
+                                 (-uniq)
+                                 (seq-length)))
+               'face 'bold)
+   " wines purchased for "
+   (propertize (format "%.2f USD" (->> bottles
+                                       (-map #'vino-inv-bottle-price-usd)
+                                       (-map #'string-to-number)
+                                       (-sum)))
+               'face 'bold)))
+
 ;;;###autoload
 (defun vino-inv-ui ()
   "Open inventory UI."
@@ -641,16 +660,14 @@ duplicates."
     (switch-to-buffer buffer)
     (unless (eq major-mode 'vino-inv-ui-mode)
       (vino-inv-ui-mode))
-    (setq tabulated-list-format vino-inv-ui-columns)
-    (setq tabulated-list-sort-key nil)
-    (tabulated-list-init-header)
     (vino-inv-ui-update)))
 
 (defun vino-inv-ui-update ()
   "Update inventory entries."
   (interactive)
   (let* ((bottles (vino-inv-query-available-bottles)))
-    (setq tabulated-list-entries
+    (setq tabulated-list-format vino-inv-ui-columns
+          tabulated-list-entries
           (->> bottles
                (--sort (string< (vulpea-note-title (vino-inv-bottle-wine it))
                                 (vulpea-note-title (vino-inv-bottle-wine other))))
@@ -663,7 +680,11 @@ duplicates."
                   #'vector
                   (-map (lambda (col)
                           (vino-inv-ui-render-cell (car col) it))
-                        vino-inv-ui-columns)))))))
+                        vino-inv-ui-columns)))))
+          tabulated-list-sort-key nil
+          tabulated-list-use-header-line nil
+          header-line-format (vino-inv-ui-render-header bottles)))
+  (tabulated-list-init-header)
   (tabulated-list-print 'rembember-pos))
 
 ;; ** utils
