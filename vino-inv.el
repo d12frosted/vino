@@ -586,6 +586,7 @@ duplicates."
       (define-key map (kbd "ep") #'vino-inv-ui-edit-price)
       (define-key map (kbd "ed") #'vino-inv-ui-edit-date)
       (define-key map (kbd "ev") #'vino-inv-ui-edit-volume)
+      (define-key map (kbd "ec") #'vino-inv-ui-edit-comment)
       (define-key map (kbd "<RET>") #'vino-inv-ui-visit)))
   "Keymap for `vino-inv-ui-mode'.")
 
@@ -603,6 +604,7 @@ and COLS."
   (setf (aref cols 0) (propertize (aref cols 0) 'face 'barberry-theme-face-faded))
   (setf (aref cols 1) (propertize (aref cols 1) 'face 'barberry-theme-face-faded))
   (setf (aref cols 6) (propertize (aref cols 6) 'face 'barberry-theme-face-faded))
+  (setf (aref cols 7) (propertize (aref cols 7) 'face 'barberry-theme-face-faded))
   (tabulated-list-print-entry id cols))
 
 ;;;###autoload
@@ -620,7 +622,8 @@ and COLS."
                                  ("Vintage" 8 t . (:right-align t))
                                  ("Price" 10 t . (:right-align t))
                                  ("Date" 10 t)
-                                 ("Location" 10 t)])
+                                 ("Location" 16 t)
+                                 ("Comment" 20 t)])
     (setq tabulated-list-sort-key nil)
     (tabulated-list-init-header)
     (vino-inv-ui-update)))
@@ -636,7 +639,8 @@ and COLS."
                      bottle:volume
                      bottle:purchase-date
                      bottle:price
-                     location:name]
+                     location:name
+                     bottle:comment]
                     :from [bottle]
                     :join location :on (= bottle:location-id location:location-id)
                     :left-join (as [:select
@@ -679,7 +683,8 @@ and COLS."
                     (or (vulpea-note-meta-get wine "vintage") "NV")
                     (nth 4 it)
                     (nth 3 it)
-                    (nth 5 it))))))))
+                    (nth 5 it)
+                    (or (nth 6 it) ""))))))))
   (tabulated-list-print 'rembember-pos))
 
 ;; ** utils
