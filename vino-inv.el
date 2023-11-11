@@ -574,6 +574,17 @@ duplicates."
 
 ;; * inventory ui
 
+(defvar vino-inv-ui-columns
+  [("ID" 5 t)
+   ("Volume" 6 t . (:right-align t))
+   ("Producer" 26 t . (:pad-right 2))
+   ("Wine" 44 t . (:pad-right 2))
+   ("Vintage" 8 t . (:right-align t))
+   ("Price" 10 t . (:right-align t))
+   ("Date" 10 t)
+   ("Location" 16 t)
+   ("Comment" 20 t)])
+
 ;; ** mode definition
 
 (defvar vino-inv-ui-mode-map
@@ -592,20 +603,34 @@ duplicates."
 
 (define-derived-mode vino-inv-ui-mode tabulated-list-mode "vino-inventory"
   "Major mode for listing inventory entries."
-  (setq tabulated-list-printer #'vino-inv-ui--list-printer))
+  (setq tabulated-list-printer nil))
 
 ;; ** rendering
 
-(defun vino-inv-ui--list-printer (id cols)
-  "Propertize entries.
-
-Consult with `tabulated-list-printer' for information about ID
-and COLS."
-  (setf (aref cols 0) (propertize (aref cols 0) 'face 'barberry-theme-face-faded))
-  (setf (aref cols 1) (propertize (aref cols 1) 'face 'barberry-theme-face-faded))
-  (setf (aref cols 6) (propertize (aref cols 6) 'face 'barberry-theme-face-faded))
-  (setf (aref cols 7) (propertize (aref cols 7) 'face 'barberry-theme-face-faded))
-  (tabulated-list-print-entry id cols))
+(defun vino-inv-ui-render-cell (key bottle)
+  "Render KEY cell for BOTTLE."
+  (let ((wine (vino-inv-bottle-wine bottle)))
+    (pcase (s-downcase key)
+      (`"id" (propertize (number-to-string (vino-inv-bottle-id bottle))
+                         'face 'font-lock-comment-face))
+      (`"volume" (propertize (number-to-string (vino-inv-bottle-volume bottle))
+                             'face 'font-lock-comment-face))
+      (`"producer" (let ((str (vulpea-note-meta-get wine "producer")))
+                     (string-match org-link-bracket-re str)
+                     (match-string 2 str)))
+      (`"wine" (propertize (vulpea-note-meta-get wine "name")
+                           'face 'link))
+      (`"vintage" (or (vulpea-note-meta-get wine "vintage") "NV"))
+      (`"price" (vino-inv-bottle-price bottle))
+      (`"date" (propertize (vino-inv-bottle-purchase-date bottle)
+                           'face 'font-lock-comment-face))
+      (`"location" (propertize (vino-inv-location-name (vino-inv-bottle-location bottle))
+                               'face 'font-lock-comment-face))
+      (`"source" (propertize (vino-inv-source-name (vino-inv-bottle-source bottle))
+                             'face 'font-lock-comment-face))
+      (`"comment" (propertize (or (vino-inv-bottle-comment bottle) "")
+                              'face 'font-lock-comment-face))
+      (k (user-error "Unexpected cell key '%s'" k)))))
 
 ;;;###autoload
 (defun vino-inv-ui ()
@@ -615,15 +640,7 @@ and COLS."
     (switch-to-buffer buffer)
     (unless (eq major-mode 'vino-inv-ui-mode)
       (vino-inv-ui-mode))
-    (setq tabulated-list-format [("ID" 5 t)
-                                 ("Volume" 6 t . (:right-align t))
-                                 ("Producer" 26 t . (:pad-right 2))
-                                 ("Wine" 44 t . (:pad-right 2))
-                                 ("Vintage" 8 t . (:right-align t))
-                                 ("Price" 10 t . (:right-align t))
-                                 ("Date" 10 t)
-                                 ("Location" 16 t)
-                                 ("Comment" 20 t)])
+    (setq tabulated-list-format vino-inv-ui-columns)
     (setq tabulated-list-sort-key nil)
     (tabulated-list-init-header)
     (vino-inv-ui-update)))
@@ -631,60 +648,21 @@ and COLS."
 (defun vino-inv-ui-update ()
   "Update inventory entries."
   (interactive)
-  (let* ((bottles (emacsql
-                   (vino-inv-db)
-                   [:select
-                    [bottle:bottle-id
-                     bottle:wine-id
-                     bottle:volume
-                     bottle:purchase-date
-                     bottle:price
-                     location:name
-                     bottle:comment]
-                    :from [bottle]
-                    :join location :on (= bottle:location-id location:location-id)
-                    :left-join (as [:select
-                                    [bottle-id
-                                     (as
-                                      (funcall sum
-                                               [:case :when (= transaction-type 'purchase) :then 1
-                                                :when (= transaction-type 'consume) :then -1
-                                                :else 0
-                                                :end])
-                                      total-amount)]
-                                    :from [transaction]
-                                    :group-by bottle-id]
-                                   t)
-                    :on (= bottle:bottle-id t:bottle-id)
-                    :where (> (funcall coalesce t:total-amount 0) 0)]))
-         (wines-all (->> bottles
-                         (--map (nth 1 it))
-                         (-uniq)
-                         (vulpea-db-query-by-ids)))
-         (wines-tbl (let ((tbl (make-hash-table :test 'equal)))
-                      (--each wines-all
-                        (puthash (vulpea-note-id it) it tbl))
-                      tbl)))
+  (let* ((bottles (vino-inv-query-available-bottles)))
     (setq tabulated-list-entries
           (->> bottles
-               (--sort (string< (vulpea-note-title (gethash (nth 1 it) wines-tbl))
-                                (vulpea-note-title (gethash (nth 1 other) wines-tbl))))
+               (--sort (string< (vulpea-note-title (vino-inv-bottle-wine it))
+                                (vulpea-note-title (vino-inv-bottle-wine other))))
                (--map
                 (list
-                 (concat (nth 1 it) ":" (number-to-string (nth 0 it)))
-                 (let ((wine (gethash (nth 1 it) wines-tbl)))
-                   (vector
-                    (number-to-string (nth 0 it))
-                    (number-to-string (nth 2 it))
-                    (let ((str (vulpea-note-meta-get wine "producer")))
-                      (string-match org-link-bracket-re str)
-                      (match-string 2 str))
-                    (vulpea-note-meta-get wine "name")
-                    (or (vulpea-note-meta-get wine "vintage") "NV")
-                    (nth 4 it)
-                    (nth 3 it)
-                    (nth 5 it)
-                    (or (nth 6 it) ""))))))))
+                 (concat (vulpea-note-id (vino-inv-bottle-wine it))
+                         ":"
+                         (number-to-string (vino-inv-bottle-id it)))
+                 (apply
+                  #'vector
+                  (-map (lambda (col)
+                          (vino-inv-ui-render-cell (car col) it))
+                        vino-inv-ui-columns)))))))
   (tabulated-list-print 'rembember-pos))
 
 ;; ** utils
