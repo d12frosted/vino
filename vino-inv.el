@@ -622,6 +622,7 @@ duplicates."
                            'face 'link))
       (`"vintage" (or (vulpea-note-meta-get wine "vintage") "NV"))
       (`"price" (vino-inv-bottle-price bottle))
+      (`"price usd" (vino-inv-bottle-price-usd bottle))
       (`"date" (propertize (vino-inv-bottle-purchase-date bottle)
                            'face 'font-lock-comment-face))
       (`"location" (propertize (vino-inv-location-name (vino-inv-bottle-location bottle))
