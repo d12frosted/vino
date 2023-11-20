@@ -114,7 +114,7 @@ Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
                         ((seq-contains-p prices-public price) nil)
                         ((seq-contains-p prices-private price) nil)
                         (t (completing-read "Add this price as: "
-                                            '(private public) nil t))))
+                                            '(private public skip) nil t))))
 
          ;; etc
          (amount (read-number "Amount: " 1))
@@ -122,16 +122,9 @@ Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
          (date (format-time-string "%Y-%m-%d" (org-read-date nil t))))
 
     ;; add price if needed
-    (when price-add-as
-      (vulpea-meta-set
-       note
-       (pcase price-add-as
-         (`"public" "price")
-         (`"private" "price private"))
-       (cons price (pcase price-add-as
-                     (`"public" prices-public)
-                     (`"private" prices-private)))
-       'append))
+    (pcase price-add-as
+      (`"public" (vulpea-meta-set note "price" (cons price prices-public) 'append))
+      (`"private" (vulpea-meta-set note "price private" (cons price prices-private) 'append)))
 
     (--each (-iota amount)
       (let ((bottle (vino-inv-add-bottle
