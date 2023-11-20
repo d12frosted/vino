@@ -128,7 +128,7 @@ Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
 
     (--each (-iota amount)
       (let ((bottle (vino-inv-add-bottle
-                     :wine-id (vulpea-note-id note)
+                     :wine note
                      :volume volume
                      :date date
                      :price price
