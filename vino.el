@@ -867,6 +867,7 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
       :date (format-time-string "%Y-%m-%d" date)
       :version version
       :values values)
+     nil
      extra-data)))
 
 
