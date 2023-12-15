@@ -46,7 +46,8 @@ Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
 (defvar vino-inv-consume-handle-functions nil
   "Abnormal hooks to run after a bottle is consumed.
 
-Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
+Each function accepts a `vino-inv-bottle', a
+`vulpea-note' (wine), an action (string) and date.")
 
 ;; * inv setup
 
@@ -166,11 +167,12 @@ Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
                   nil t))
          ;; we use invisible part as a hack
          (bottle-id (string-to-number bottle))
+         (bottle (vino-inv-get-bottle bottle-id))
          (action (read-string "Action: " "consume"))
          (date (org-read-date nil t)))
     (vino-inv-consume-bottle :bottle-id bottle-id :date (format-time-string "%Y-%m-%d" date))
     (vino-inv-update-availability note)
-    (run-hook-with-args 'vino-inv-consume-handle-functions bottle note)
+    (run-hook-with-args 'vino-inv-consume-handle-functions bottle note action date)
     (when (and (string-equal action "consume")
                (y-or-n-p "Rate? "))
       (vino-entry-rate note date `((bottle-id . ,bottle-id))))))
