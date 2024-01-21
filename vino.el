@@ -146,7 +146,17 @@ Each function accepts a `vulpea-note' and extra-data passed to
    :type list
    :documentation "Rating values based on `vino-rating-props'."))
 
-(defvar vino-rating-precision 2
+(defvar vino-rating-scale 5.0
+  "Scale used for rating calculations.
+
+There are a few commonly used scales:
+
+- 5.0 - as used in applications like Vivino;
+- 10.0 - as used in Italian schools;
+- 20.0 - as used by Jancis Robinson;
+- 100 - as used by many professionals.")
+
+(defvar vino-rating-precision 1
   "Precision used for rating calculations.
 
 When set to number, all ratings are __rounded__ to N digits after
@@ -191,8 +201,9 @@ When the value is nil, no rounding happens.")
 (defun vino-rating--total (score score-max)
   "Calculate total score of a rating from SCORE and SCORE-MAX."
   (vino-rating--round
-   (* 10.0 (/ (float score)
-              (float score-max)))))
+   (* vino-rating-scale
+      (/ (float score)
+         (float score-max)))))
 
 ;;;###autoload
 (defvar vino-rating-template

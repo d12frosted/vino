@@ -9,4 +9,4 @@
 - version :: 1
 - score :: 14
 - score_max :: 20
-- total :: 7.0
+- total :: 3.5

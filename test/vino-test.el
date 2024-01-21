@@ -653,7 +653,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :consumed 1
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
-             :rating 8.0
+             :rating 4.0
              :ratings (list (vulpea-db-get-by-id "be7777a9-7993-44cf-be9e-0ae65297a35d")
                             (vulpea-db-get-by-id "f1ecb856-c009-4a65-a8d0-8191a9de66dd"))))))
 
@@ -731,7 +731,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              :consumed 1
              :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
              :price '("50.00 EUR")
-             :rating 8.0
+             :rating 4.0
              :ratings (list note)))
     (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
     (expect (vulpea-db-get-file-by-id id)
@@ -758,7 +758,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - consumed :: 1
 - available :: 1
 - resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
-- rating :: 8.0
+- rating :: 4.0
 - ratings :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017 - %s]]
 
 #+begin_quote
@@ -816,7 +816,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - property_5_max :: 6
 - score :: 16.0
 - score_max :: 20.0
-- total :: 8.0
+- total :: 4.0
 "
              (vulpea-note-id note)
              date-str
