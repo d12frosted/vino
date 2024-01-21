@@ -16,6 +16,7 @@
 - Introduce =vino-rating-create-handle-functions= as an extension point for vino rating.
 - New function - =vino-entry-insert=.
 - Inventory management. See relevant section in readme.
+- Default templates now include proper tags.
 
 ** v0.3.1
 

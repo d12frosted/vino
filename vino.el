@@ -196,7 +196,8 @@ When the value is nil, no rounding happens.")
 
 ;;;###autoload
 (defvar vino-rating-template
-  (list :file-name "wine/rating/${id}.org")
+  '(:file-name "wine/rating/${id}.org"
+    :tags ("wine" "rating"))
   "Capture template for rating entry.
 
 Template is a property list accepting following values:
@@ -430,7 +431,8 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
 
 ;;;###autoload
 (defvar vino-entry-template
-  (list :file-name "wine/cellar/${id}.org")
+  '(:file-name "wine/cellar/${id}.org"
+    :tags ("wine" "cellar"))
   "Capture template for wine entry.
 
 Template is a property list accepting following values:
@@ -937,7 +939,8 @@ case, linked `vino-entry' is extracted."
 
 ;;;###autoload
 (defvar vino-region-template
-  (list :file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}.org")
+  '(:file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}.org"
+    :tags ("wine" "region"))
   "Capture template for region entry.
 
 Template is a property list accepting following values:
@@ -961,7 +964,8 @@ See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defvar vino-appellation-template
-  (list :file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}.org")
+  '(:file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}.org"
+    :tags ("wine" "appellation"))
   "Capture template for appellation entry.
 
 Template is a property list accepting following values:
@@ -1068,7 +1072,8 @@ Return `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-grape-template
-  (list :file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}.org")
+  '(:file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}.org"
+    :tags ("wine" "grape"))
   "Capture template for grape entry.
 
 Template is a property list accepting following values:
@@ -1158,7 +1163,8 @@ Return `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-producer-template
-  (list :file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}.org")
+  '(:file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}.org"
+    :tags ("wine" "producer"))
   "Capture template for producer entry.
 
 Template is a property list accepting following values:
