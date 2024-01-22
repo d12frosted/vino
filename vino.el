@@ -230,7 +230,7 @@ Template is a property list accepting following values:
 
 See `vulpea-create' for more information.")
 
-(defvar vino-rating-props nil
+(defvar vino-rating-props `((1 . (("SCORE" . ,vino-rating-scale))))
   "Rating properties per version.
 
 `vino-entry-rate' uses the latest element from list to read the
@@ -257,7 +257,7 @@ And PROPS defines a specific version of rating system:
 Each PROP can be of one of the following types:
 
 - NUMBER - then the property value is a number between 0 (inclusively)
-  and PROP (exclusively), user is prompted for a number using
+  and PROP (inclusively), user is prompted for a number using
   `read-number' during `vino-entry-rate';
 
   Example: (\"prop_number\" . 10)

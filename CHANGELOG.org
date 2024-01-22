@@ -18,6 +18,7 @@
 - New function - =vino-entry-insert=.
 - Inventory management. See relevant section in readme.
 - Default templates now include proper tags.
+- Use sane default for `vino-rating-props`.
 
 ** v0.3.1
 
