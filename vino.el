@@ -654,13 +654,10 @@ ID is generated unless passed."
                        producer
                      (vulpea-db-get-by-id producer)))
          (vintage (vino-entry-vintage vino))
-         (title (concat (vulpea-note-title producer)
-                        " "
+         (title (format "%s %s %s"
+                        (vulpea-note-title producer)
                         (vino-entry-name vino)
-                        " "
-                        (if (numberp vintage)
-                            (number-to-string vintage)
-                          vintage)))
+                        (or vintage "NV")))
          (body
           (with-temp-buffer
             ;; TODO: optimize multiple calls
