@@ -19,6 +19,8 @@
 - Inventory management. See relevant section in readme.
 - Default templates now include proper tags.
 - Use sane default for `vino-rating-props`.
+- Ask for carbonation method for sparkling wines.
+- Include extra information for traditional sparkling wines.
 
 ** v0.3.1
 

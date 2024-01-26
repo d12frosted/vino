@@ -48,6 +48,16 @@
   "List of valid carbonation types.")
 
 ;;;###autoload
+(defvar vino-carbonation-methods
+  '(traditional
+    ;; tank
+    charmat
+    petnat
+    transfer
+    injection)
+  "List of valid carbonation methods.")
+
+;;;###autoload
 (defvar vino-colour-types
   '(red
     white
@@ -468,11 +478,18 @@ See `vulpea-create' for more information.")
 ;;;###autoload
 (cl-defstruct vino-entry
   carbonation
+  carbonation-method
   colour
   sweetness
   producer
   name
   vintage
+  ;; only for traditional sparkling when NV
+  base-vintage
+  ;; only for traditional sparkling
+  sur-lie
+  ;; only for traditional sparkling
+  degorgee
   appellation
   region
   grapes
@@ -530,10 +547,46 @@ See `vulpea-create' for more information.")
                 #'read-string
                 #'string-empty-p
                 "Name: "))
+         (colour (intern
+                  (completing-read
+                   "Colour: "
+                   vino-colour-types
+                   nil
+                   'require-match)))
+         (carbonation (intern
+                       (completing-read
+                        "Carbonation: "
+                        vino-carbonation-types
+                        nil
+                        'require-match)))
+         (carbonation-method (when (eq carbonation 'sparkling)
+                               (intern
+                                (completing-read
+                                 "Carbonation Method: "
+                                 vino-carbonation-methods
+                                 nil
+                                 'require-match))))
+         (sweetness (intern
+                     (completing-read
+                      "Sweetness:"
+                      (plist-get vino-sweetness-levels
+                                 carbonation)
+                      nil
+                      'require-match)))
          (vintage (vino--repeat-while
                    #'read-number
                    (lambda (v) (< v 1900))
                    "Vintage (C-g for NV): "))
+         (base-vintage (when (and (eq carbonation-method 'traditional)
+                                  (not vintage))
+                         (vino--repeat-while
+                          #'read-number
+                          (lambda (v) (< v 1900))
+                          "Base vintage (C-g for NV): ")))
+         (sur-lie (when (eq carbonation-method 'traditional)
+                    (read-string "Sur lie: ")))
+         (degorgee (when (eq carbonation-method 'traditional)
+                    (read-string "Degorgee: ")))
          (rora (vino-region-select))
          (region (when (seq-contains-p (vulpea-note-tags rora)
                                        "region")
@@ -550,25 +603,6 @@ See `vulpea-create' for more information.")
                  #'read-number
                  (lambda (v) (< v 0))
                  "Sugar g/l (C-g for N/A): "))
-         (colour (intern
-                  (completing-read
-                   "Colour: "
-                   vino-colour-types
-                   nil
-                   'require-match)))
-         (carbonation (intern
-                       (completing-read
-                        "Carbonation: "
-                        vino-carbonation-types
-                        nil
-                        'require-match)))
-         (sweetness (intern
-                     (completing-read
-                      "Sweetness:"
-                      (plist-get vino-sweetness-levels
-                                 carbonation)
-                      nil
-                      'require-match)))
          (resources (vino--collect-while
                      #'read-string
                      (lambda (v) (not (string-empty-p v)))
@@ -576,11 +610,15 @@ See `vulpea-create' for more information.")
          (price (read-string "Price: ")))
     (make-vino-entry
      :carbonation carbonation
+     :carbonation-method carbonation-method
      :colour colour
      :sweetness sweetness
      :producer producer
      :name name
      :vintage vintage
+     :base-vintage base-vintage
+     :sur-lie sur-lie
+     :degorgee degorgee
      :appellation appellation
      :region region
      :grapes grapes
@@ -663,6 +701,9 @@ ID is generated unless passed."
             ;; TODO: optimize multiple calls
             (vulpea-buffer-meta-set
              "carbonation" (vino-entry-carbonation vino) 'append)
+            (when (vino-entry-carbonation-method vino)
+              (vulpea-buffer-meta-set
+               "carbonation method" (vino-entry-carbonation-method vino) 'append))
             (vulpea-buffer-meta-set
              "colour" (vino-entry-colour vino) 'append)
             (vulpea-buffer-meta-set
@@ -673,6 +714,12 @@ ID is generated unless passed."
              "name" (vino-entry-name vino) 'append)
             (when-let ((vintage (vino-entry-vintage vino)))
               (vulpea-buffer-meta-set "vintage" vintage 'append))
+            (when-let ((base-vintage (vino-entry-base-vintage vino)))
+              (vulpea-buffer-meta-set "base" base-vintage 'append))
+            (when-let ((sur-lie (vino-entry-sur-lie vino)))
+              (vulpea-buffer-meta-set "sur lie" sur-lie 'append))
+            (when-let ((degorgee (vino-entry-degorgee vino)))
+              (vulpea-buffer-meta-set "degorgee" degorgee 'append))
             (when-let ((appellation (vino-entry-appellation vino)))
               (vulpea-buffer-meta-set
                "appellation" appellation 'append))
