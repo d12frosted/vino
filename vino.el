@@ -50,11 +50,11 @@
 ;;;###autoload
 (defvar vino-carbonation-methods
   '(traditional
-    ;; tank
     charmat
-    petnat
+    ancestral
     transfer
-    injection)
+    injection
+    unknown)
   "List of valid carbonation methods.")
 
 ;;;###autoload
