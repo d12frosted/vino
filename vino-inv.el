@@ -599,7 +599,8 @@ duplicates."
 
 (define-derived-mode vino-inv-ui-mode tabulated-list-mode "vino-inventory"
   "Major mode for listing inventory entries."
-  (setq tabulated-list-printer #'tabulated-list-print-entry))
+  (setq tabulated-list-printer #'tabulated-list-print-entry)
+  (setq tabulated-list-padding 2))
 
 ;; ** rendering
 
