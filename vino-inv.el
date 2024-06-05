@@ -103,7 +103,7 @@ Each function accepts a `vino-inv-bottle', a
          ;; price
          (prices-public (vulpea-note-meta-get-list note "price"))
          (prices-private (vulpea-note-meta-get-list note "price private"))
-         (prices (-uniq (-concat prices-public prices-private)))
+         (prices (-uniq (-concat prices-public prices-private '("0 XXX"))))
          (price (if prices
                     (completing-read "Price: " prices)
                   (read-string "Price: ")))
