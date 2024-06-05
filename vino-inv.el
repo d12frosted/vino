@@ -114,6 +114,7 @@ Each function accepts a `vino-inv-bottle', a
          (price-add-as (cond
                         ((seq-contains-p prices-public price) nil)
                         ((seq-contains-p prices-private price) nil)
+                        ((string-prefix-p "0 " price) nil)
                         (t (completing-read "Add this price as: "
                                             '(private public skip) nil t))))
 
