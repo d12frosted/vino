@@ -21,6 +21,7 @@
 - Use sane default for `vino-rating-props`.
 - Ask for carbonation method for sparkling wines.
 - Include extra information for traditional sparkling wines.
+- Round rating when updating it.
 
 ** v0.3.1
 

@@ -896,8 +896,9 @@ explicitly.
                   ratings))
          (rating (if (null values)
                      "NA"
-                   (/ (apply #'+ values)
-                      (float (length values))))))
+                   (vino-rating--round
+                    (/ (apply #'+ values)
+                       (float (length values)))))))
     (vulpea-meta-set note "rating" rating 'append)
     (vulpea-meta-set
      note
