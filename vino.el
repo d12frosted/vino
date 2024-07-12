@@ -144,6 +144,7 @@ country.")
      "rating"
      "producer"
      "grape"
+     "country"
      "region"
      "appellation")))
 
