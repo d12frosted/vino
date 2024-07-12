@@ -8,6 +8,7 @@
 - Get rid of meta slot in =vino-rating=.
 - Get rid of 'generic' inventory flow in favour of =vino-inv= plugin.
 - Use 5-based scale for ratings by default and introduce means to change that.
+- Add country to vino entry. This also affects all functions related to region/appellation selection and creation. Refer to documentation for more information.
 
 *Features*
 

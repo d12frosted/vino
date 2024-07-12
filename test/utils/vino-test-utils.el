@@ -98,7 +98,7 @@ It handles boilerplate of note creation that is actually
 irrelevant for `vino' library. We just care about few slots.
 
 TYPE (mandatory) is one of: cellar, rating, grape, producer,
-appellation, region.
+appellation, region, country.
 
 ID (mandatory) is id slot of the note.
 
@@ -161,7 +161,7 @@ and returns a note that would be generated for a given TYPE,
 TITLE and TAGS.
 
 TYPE (mandatory) is one of: cellar, rating, grape, producer,
-appellation, region.
+appellation, region, country.
 
 TITLE (mandatory) is title slot of the future note.
 

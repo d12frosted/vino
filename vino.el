@@ -101,6 +101,38 @@ Each function accepts a `vulpea-note' and extra-data passed to
 `vino-entry-rate'.")
 
 
+;;; Selection config
+
+(defvar vino-origin-select-fn #'vino-origin-select-by-country
+  "Interactive function to select wine's origin.
+
+The function doesn't receive any arguments and must return an alist. The
+expectation is that resulting alist contains country and optionally it
+may include region and/or appellation. The function may return other
+keys as well, but they don't bear any meaning for vino library - this is
+used only for custom extensions.
+
+Vino comes with two functions that can be used as the value:
+
+- `vino-origin-select-flat' - it just lists union of all regions and
+  appellations, and when user picks
+
+    region, it returns (country region) where country is country
+    meta value of the selected region
+
+    appellation, it returns (country appellation) where country is
+    country meta value of the selected appellation;
+
+- `vino-origin-select-by-country' - this is a multi-step selection,
+   where user is asked to pick a country first; and then is presented
+   with a union of all regions and appellations that have country meta
+   value link to selected country.
+
+You can implement your own, more sophisticated selection function based
+on your situation. For example, you can pick extra routes based on the
+country.")
+
+
 ;;; Setup
 
 (defun vino-setup ()
@@ -490,6 +522,7 @@ See `vulpea-create' for more information.")
   sur-lie
   ;; only for traditional sparkling
   degorgee
+  country
   appellation
   region
   grapes
@@ -593,13 +626,10 @@ See `vulpea-create' for more information.")
                        (if (string-empty-p x)
                            "N/A"
                          x))))
-         (rora (vino-region-select))
-         (region (when (seq-contains-p (vulpea-note-tags rora)
-                                       "region")
-                   rora))
-         (appellation (when (seq-contains-p (vulpea-note-tags rora)
-                                            "appellation")
-                        rora))
+         (origin (funcall-interactively vino-origin-select-fn))
+         (country (assoc-default "country" origin))
+         (region (assoc-default "region" origin))
+         (appellation (assoc-default "appellation" origin))
          (grapes (vino--collect-while #'vino-grape-select nil))
          (alcohol (vino--repeat-while
                    #'read-number
@@ -625,6 +655,7 @@ See `vulpea-create' for more information.")
      :base-vintage base-vintage
      :sur-lie sur-lie
      :degorgee degorgee
+     :country country
      :appellation appellation
      :region region
      :grapes grapes
@@ -726,11 +757,12 @@ ID is generated unless passed."
               (vulpea-buffer-meta-set "sur lie" sur-lie 'append))
             (when-let ((degorgee (vino-entry-degorgee vino)))
               (vulpea-buffer-meta-set "degorgee" degorgee 'append))
-            (when-let ((appellation (vino-entry-appellation vino)))
-              (vulpea-buffer-meta-set
-               "appellation" appellation 'append))
+            (when-let ((country (vino-entry-country vino)))
+              (vulpea-buffer-meta-set "country" country 'append))
             (when-let ((region (vino-entry-region vino)))
               (vulpea-buffer-meta-set "region" region 'append))
+            (when-let ((appellation (vino-entry-appellation vino)))
+              (vulpea-buffer-meta-set "appellation" appellation 'append))
             (vulpea-buffer-meta-set
              "grapes" (vino-entry-grapes vino) 'append)
             (let ((alcohol (vino-entry-alcohol vino)))
@@ -1000,11 +1032,37 @@ case, linked `vino-entry' is extracted."
     (user-error "Unsupported type of %s" note-or-id))))
 
 
-;;; Regions and appellations
+;;; Country, region and appellation
+
+;;;###autoload
+(defvar vino-country-template
+  '(:file-name "wine/country/%<%Y%m%d%H%M%S>-${slug}.org"
+    :tags ("wine" "country"))
+  "Capture template for region entry.
+
+Template is a property list accepting following values:
+
+  :file-name (mandatory) - file name relative to
+  `org-roam-directory'
+
+  :head (optional) - extra note header
+
+  :body (optional) - note body
+
+  :meta (optional) - metadata (associative list)
+
+  :properties (optional) - extra properties to put in PROPERTIES block
+
+  :context (optional) - extra variables for :file-name, :head,
+  :body
+
+  :tags (optional) - extra tags in addition to wine and country
+
+See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defvar vino-region-template
-  '(:file-name "wine/region/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/region/${country}/%<%Y%m%d%H%M%S>-${slug}.org"
     :tags ("wine" "region"))
   "Capture template for region entry.
 
@@ -1016,6 +1074,8 @@ Template is a property list accepting following values:
   :head (optional) - extra note header
 
   :body (optional) - note body
+
+  :meta (optional) - metadata (associative list)
 
   :properties (optional) - extra properties to put in PROPERTIES
   block
@@ -1029,7 +1089,7 @@ See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defvar vino-appellation-template
-  '(:file-name "wine/appellation/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/appellation/${country}/%<%Y%m%d%H%M%S>-${slug}.org"
     :tags ("wine" "appellation"))
   "Capture template for appellation entry.
 
@@ -1041,6 +1101,8 @@ Template is a property list accepting following values:
   :head (optional) - extra note header
 
   :body (optional) - note body
+
+  :meta (optional) - metadata (associative list)
 
   :properties (optional) - extra properties to put in PROPERTIES
   block
@@ -1054,83 +1116,306 @@ Template is a property list accepting following values:
 See `vulpea-create' for more information.")
 
 ;;;###autoload
-(defun vino-region-create (&optional title)
-  "Create a region note using `vino-region-template'.
+(cl-defun vino-country-create (&key title)
+  "Create a country note using `vino-country-template'.
 
 Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let ((title (or title (read-string "Region: "))))
+  (let ((title (or title (read-string "Country: "))))
+    (vulpea-create
+     title
+     (plist-get vino-country-template :file-name)
+     :tags (seq-union (plist-get vino-country-template :tags)
+                      '("wine" "country"))
+     :head (plist-get vino-country-template :head)
+     :meta (plist-get vino-country-template :meta)
+     :body (plist-get vino-country-template :body)
+     :context (plist-get vino-country-template :context)
+     :properties (plist-get vino-country-template :properties)
+     :unnarrowed t
+     :immediate-finish t)))
+
+;;;###autoload
+(cl-defun vino-region-create (&key title country parent capture-properties)
+  "Create a region note using `vino-region-template'.
+
+Unless TITLE is provided, user is prompted to provide one.
+
+Unless COUNTRY note is provided, user is prompted to provide one.
+
+Unless PARENT is provided, user is prompted to provide one or none
+explicitly.
+
+CAPTURE-PROPERTIES are passed to `vulpea-create'.
+
+Return `vulpea-note'."
+  (interactive)
+  (let* ((title (or title (read-string "Region title: ")))
+         (country (or country (vino-country-select)))
+         (parent (or parent (vino--repeat-while
+                             #'vino-region-select
+                             #'null
+                             :country country
+                             :prompt "Parent region (C-g for none)"))))
     (vulpea-create
      title
      (plist-get vino-region-template :file-name)
      :tags (seq-union (plist-get vino-region-template :tags)
                       '("wine" "region"))
      :head (plist-get vino-region-template :head)
+     :meta (append
+            `(("country" . ,country))
+            (when parent
+              `(("parent" . ,parent)))
+            (plist-get vino-region-template :meta))
      :body (plist-get vino-region-template :body)
-     :context (plist-get vino-region-template :context)
+     :context (append
+               (list :country (vino--slug (vulpea-note-title country)))
+               (plist-get vino-region-template :context))
      :properties (plist-get vino-region-template :properties)
      :unnarrowed t
-     :immediate-finish t)))
+     :immediate-finish t
+     :capture-properties capture-properties)))
 
 ;;;###autoload
-(defun vino-appellation-create (&optional title)
+(cl-defun vino-appellation-create (&key title country parent capture-properties)
   "Create a appellation note using `vino-appellation-template'.
 
-Unless TITLE is specified, user is prompted to provide one.
+Unless TITLE is provided, user is prompted to provide one.
+
+Unless COUNTRY note is provided, user is prompted to provide one.
+
+Unless PARENT is provided, user is prompted to provide one or none
+explicitly.
+
+CAPTURE-PROPERTIES are passed to `vulpea-create'.
 
 Return `vulpea-note'."
   (interactive)
-  (let ((title (or title (read-string "Appellation: "))))
+  (let* ((title (or title (read-string "Appellation: ")))
+         (country (or country (vino-country-select)))
+         (parent (or parent (vino--repeat-while
+                             #'vino-region-select
+                             #'null
+                             :country country
+                             :prompt "Parent region (C-g for none)"))))
     (vulpea-create
      title
      (plist-get vino-appellation-template :file-name)
      :tags (seq-union (plist-get vino-appellation-template :tags)
                       '("wine" "appellation"))
      :head (plist-get vino-appellation-template :head)
+     :meta (append
+            `(("country" . ,country))
+            (when parent
+              `(("parent" . ,parent)))
+            (plist-get vino-appellation-template :meta))
      :body (plist-get vino-appellation-template :body)
-     :context (plist-get vino-appellation-template :context)
+     :context (append
+               (list :country (vino--slug (vulpea-note-title country)))
+               (plist-get vino-appellation-template :context))
      :properties (plist-get vino-appellation-template :properties)
      :unnarrowed t
-     :immediate-finish t)))
+     :immediate-finish t
+     :capture-properties capture-properties)))
 
 ;;;###autoload
-(defun vino-region-find-file ()
+(defun vino-find-country-file ()
+  "Select and find country note."
+  (interactive)
+  (find-file (vulpea-note-path (vino-country-select))))
+
+(defun vino-country-select ()
+  "Select a country note.
+
+When country note does not exist, it is created using
+`vino-country-create'.
+
+Return `vulpea-note'."
+  (let ((note (vulpea-select-from
+               "Country"
+               (vulpea-db-query-by-tags-every '("wine" "country")))))
+    (if (vulpea-note-id note)
+        note
+      (vino-country-create :title (vulpea-note-title note)))))
+
+;;;###autoload
+(defun vino-find-region-file ()
   "Select and find region note."
   (interactive)
-  (find-file (vulpea-note-path (vino-region-select))))
+  (let* ((country (vino-country-select))
+         (region (vino-region-select :country country)))
+    (find-file (vulpea-note-path region))))
+
+(cl-defun vino-region-select (&key country prompt)
+  "Select a region note.
+
+Optionally, list of candidates can be limited by COUNTRY.
+
+Optionally, PROMPT can be provided.
+
+When region note does not exist, it is created using
+`vino-region-create'.
+
+Return `vulpea-note'."
+  (let* ((candidates (vulpea-db-query-by-tags-every '("wine" "region")))
+         (candidates (if country
+                         (--filter (string-equal (vulpea-note-id country)
+                                                 (vulpea-note-meta-get it "country" 'link))
+                                   candidates)
+                       candidates))
+         (note (vulpea-select-from (or prompt "Region") candidates)))
+    (if (vulpea-note-id note)
+        note
+      (vino-region-create
+       :title (vulpea-note-title note)
+       :country country))))
 
 ;;;###autoload
-(defun vino-region-select ()
-  "Select a wine region or appellation note.
+(defun vino-find-appellation-file ()
+  "Select and find appellation note."
+  (interactive)
+  (let* ((country (vino-country-select))
+         (appellation (vino-appellation-select :country country)))
+    (find-file (vulpea-note-path appellation))))
+
+(cl-defun vino-appellation-select (&key country prompt)
+  "Select a appellation note.
+
+Optionally, list of candidates can be limited by COUNTRY.
+
+Optionally, PROMPT can be provided.
+
+When appellation note does not exist, it is created using
+`vino-appellation-create'.
+
+Return `vulpea-note'."
+  (let* ((candidates (vulpea-db-query-by-tags-every '("wine" "appellation")))
+         (candidates (if country
+                         (--filter (string-equal (vulpea-note-id country)
+                                                 (vulpea-note-meta-get it "country" 'link))
+                                   candidates)
+                       candidates))
+         (note (vulpea-select-from (or prompt "Appellation") candidates)))
+    (if (vulpea-note-id note)
+        note
+      (vino-appellation-create
+       :title (vulpea-note-title note)
+       :country country))))
+
+
+
+(defun vino-origin-select-flat ()
+  "Select origin of a wine using flat strategy.
 
 When region or appellation note does not exist, it is created
 using `vino-region-create' or `vino-appellation-create' depending
 on user decision.
 
-Return `vulpea-note'."
+Return list of country, region and appellation depending on the user
+selection.
+
+If region is selected, then country is _country_ meta value of the
+selected region; appellation is nil.
+
+If appellation is selected, the country is _country_ meta value of the
+selected appellation; and region is _parent_ meta value of the selected
+appellation.
+
+When the function tries to access meta value which is not set, it raises
+an error."
   (let ((note
          (vulpea-select-from
-          "Region"
+          "Region or appellation"
           (seq-filter
            (lambda (note)
              (seq-contains-p (vulpea-note-tags note) "wine"))
            (vulpea-db-query-by-tags-some
-            '("appellation" "region"))))))
-    (if (vulpea-note-id note)
-        note
-      (pcase (completing-read
-              (format "Region %s does not exist. What to do?"
-                      (vulpea-note-title note))
-              '("Create region"
-                "Create appellation"
-                "Ignore"))
-        (`"Create region"
-         (vino-region-create (vulpea-note-title note)))
-        (`"Create appellation"
-         (vino-appellation-create (vulpea-note-title note)))
-        (_ note)))))
+            '("appellation" "region")))))
+        country region appellation)
+    (unless (vulpea-note-id note)
+      (setq note (pcase (completing-read
+                         (format "%s does not exist. What to do?"
+                                 (vulpea-note-title note))
+                         '("Create region"
+                           "Create appellation"
+                           "Abort"))
+                   (`"Create region"
+                    (vino-region-create :title (vulpea-note-title note)))
+                   (`"Create appellation"
+                    (vino-appellation-create :title (vulpea-note-title note)))
+                   (_ (error "Abort")))))
+    (setq country (vulpea-note-meta-get note "country" 'note))
+    (unless country
+      (error "No country is set in %s" (vulpea-note-title note)))
+    (if (vulpea-note-tagged-any-p note "region")
+        (setq region note)
+      (setq appellation note))
+
+    (-filter
+     #'cdr
+     `(("country" . ,country)
+       ("region" . ,region)
+       ("appellation" . ,appellation)))))
+
+(defun vino-origin-select-by-country ()
+  "Select origin of a wine using country-based strategy.
+
+Selection is done in two ways. First, the user must pick a country, and
+then select a region or appellation from a list of those that are part
+of the selected country.
+
+When country, region or appellation note does not exist, it is created
+using respective function.
+
+Return list of country, region and appellation depending on the user
+selection.
+
+If region is selected, appellation is nil.
+
+If appellation is selected, region is _parent_ meta value of the
+selected appellation.
+
+When the function tries to access meta value which is not set, it raises
+an error."
+  (let ((country (vulpea-select-from
+                  "Country"
+                  (vulpea-db-query-by-tags-every '("wine" "country"))))
+        rora region appellation)
+    (unless (vulpea-note-id country)
+      (when (y-or-n-p "Country %s doesn not exist. Would you like to create it?")
+        (setq country (vino-country-create :title (vulpea-note-title country)))))
+    (when (vulpea-note-id country)
+      (setq rora (vulpea-select-from
+                  "Region or appellation"
+                  (->> (append (vulpea-db-query-by-tags-every '("wine" "region"))
+                               (vulpea-db-query-by-tags-every '("wine" "appellation")))
+                       (--filter (string-equal (vulpea-note-id country)
+                                               (vulpea-note-meta-get it "country" 'link))))))
+      (unless (vulpea-note-id rora)
+        (setq rora (pcase (completing-read
+                           (format "%s does not exist. What to do?"
+                                   (vulpea-note-title rora))
+                           '("Create region"
+                             "Create appellation"
+                             "Abort"))
+                     (`"Create region"
+                      (vino-region-create :title (vulpea-note-title rora)
+                                          :country country))
+                     (`"Create appellation"
+                      (vino-appellation-create :title (vulpea-note-title rora)
+                                               :country country))
+                     (_ (error "Abort")))))
+      (if (vulpea-note-tagged-any-p rora "region")
+          (setq region rora)
+        (setq appellation rora))
+      (-filter
+       #'cdr
+       `(("country" . ,country)
+         ("region" . ,region)
+         ("appellation" . ,appellation))))))
 
 
 ;;; Grapes
@@ -1379,6 +1664,44 @@ ARGS are passed to FN."
     (setq quit-flag nil)
     (when (null continue)
       value)))
+
+(defun vino--slug (title)
+  "Create slug from TITLE."
+  (let ((slug-trim-chars '(;; Combining Diacritical Marks https://www.unicode.org/charts/PDF/U0300.pdf
+                           768 ; U+0300 COMBINING GRAVE ACCENT
+                           769 ; U+0301 COMBINING ACUTE ACCENT
+                           770 ; U+0302 COMBINING CIRCUMFLEX ACCENT
+                           771 ; U+0303 COMBINING TILDE
+                           772 ; U+0304 COMBINING MACRON
+                           774 ; U+0306 COMBINING BREVE
+                           775 ; U+0307 COMBINING DOT ABOVE
+                           776 ; U+0308 COMBINING DIAERESIS
+                           777 ; U+0309 COMBINING HOOK ABOVE
+                           778 ; U+030A COMBINING RING ABOVE
+                           779 ; U+030B COMBINING DOUBLE ACUTE ACCENT
+                           780 ; U+030C COMBINING CARON
+                           795 ; U+031B COMBINING HORN
+                           803 ; U+0323 COMBINING DOT BELOW
+                           804 ; U+0324 COMBINING DIAERESIS BELOW
+                           805 ; U+0325 COMBINING RING BELOW
+                           807 ; U+0327 COMBINING CEDILLA
+                           813 ; U+032D COMBINING CIRCUMFLEX ACCENT BELOW
+                           814 ; U+032E COMBINING BREVE BELOW
+                           816 ; U+0330 COMBINING TILDE BELOW
+                           817 ; U+0331 COMBINING MACRON BELOW
+                           )))
+    (cl-flet* ((nonspacing-mark-p (char) (memq char slug-trim-chars))
+               (strip-nonspacing-marks (s) (string-glyph-compose
+                                            (apply #'string
+                                                   (seq-remove #'nonspacing-mark-p
+                                                               (string-glyph-decompose s)))))
+               (cl-replace (title pair) (replace-regexp-in-string (car pair) (cdr pair) title)))
+      (let* ((pairs `(("[^[:alnum:][:digit:]]" . "-") ;; convert anything not alphanumeric
+                      ("__*" . "_")                   ;; remove sequential underscores
+                      ("^_" . "")                     ;; remove starting underscore
+                      ("_$" . "")))                   ;; remove ending underscore
+             (slug (-reduce-from #'cl-replace (strip-nonspacing-marks title) pairs)))
+        (downcase slug)))))
 
 
 

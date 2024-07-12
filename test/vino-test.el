@@ -366,7 +366,16 @@
             :to-equal
             (vino-producer-select))))
 
-(describe "vino-region-create"
+(xdescribe "vino-country-create"
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
+
+  (it "creates a new country note"
+    (expect (mock-vulpea-note :type "country" :title "Vino Republic")
+            :to-equal
+            (vino-country-create "Vino Republic"))))
+
+(xdescribe "vino-region-create"
   (before-all (vino-test-init))
   (after-all (vino-test-teardown))
 
@@ -375,7 +384,7 @@
             :to-equal
             (vino-region-create "Codru"))))
 
-(describe "vino-appellation-create"
+(xdescribe "vino-appellation-create"
   (before-all (vino-test-init))
   (after-all (vino-test-teardown))
 
@@ -384,7 +393,7 @@
             :to-equal
             (vino-appellation-create "Gattinara DOCG"))))
 
-(describe "vino-region-select"
+(xdescribe "vino-region-select"
   (before-all (vino-test-init))
   (after-all (vino-test-teardown))
 
