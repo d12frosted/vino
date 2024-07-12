@@ -423,16 +423,10 @@ ID is generated unless passed.
 EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
   (when-let*
       ((wine-note (vino-rating-wine rating))
-       (vino-entry (vino-entry-get-by-id wine-note))
-       (producer (vino-entry-producer vino-entry))
        (date-str (vino-rating-date rating))
        (version (vino-rating-version rating))
        (values (vino-rating-values rating))
-       (title (format "%s %s %s - %s"
-                      (vulpea-note-title producer)
-                      (vino-entry-name vino-entry)
-                      (or (vino-entry-vintage vino-entry) "NV")
-                      date-str))
+       (title (format "%s - %s" (vulpea-note-title wine-note) date-str))
        (body (with-temp-buffer
                ;; TODO: performance of multiple `vulpea-meta-set'
                (vulpea-buffer-meta-set "wine" wine-note 'append)
@@ -508,34 +502,6 @@ Template is a property list accepting following values:
 See `vulpea-create' for more information.")
 
 ;;;###autoload
-(cl-defstruct vino-entry
-  carbonation
-  carbonation-method
-  colour
-  sweetness
-  producer
-  name
-  vintage
-  ;; only for traditional sparkling when NV
-  base-vintage
-  ;; only for traditional sparkling
-  sur-lie
-  ;; only for traditional sparkling
-  degorgee
-  country
-  appellation
-  region
-  grapes
-  alcohol
-  sugar
-  resources
-  price
-  acquired
-  consumed
-  rating
-  ratings)
-
-;;;###autoload
 (defun vino-entry-find-file ()
   "Select and find vino note."
   (interactive)
@@ -573,8 +539,12 @@ See `vulpea-create' for more information.")
     (deactivate-mark)))
 
 ;;;###autoload
-(defun vino-entry-read ()
-  "Read a `vino-entry'."
+(defun vino-entry-create ()
+  "Create a `vino-entry'.
+
+The `vulpea-insert-handle-functions' are called with the created
+note as the only argument."
+  (interactive)
   (let* ((producer (vino-producer-select))
          (name (vino--repeat-while
                 #'read-string
@@ -627,9 +597,6 @@ See `vulpea-create' for more information.")
                            "N/A"
                          x))))
          (origin (funcall-interactively vino-origin-select-fn))
-         (country (assoc-default "country" origin))
-         (region (assoc-default "region" origin))
-         (appellation (assoc-default "appellation" origin))
          (grapes (vino--collect-while #'vino-grape-select nil))
          (alcohol (vino--repeat-while
                    #'read-number
@@ -639,170 +606,46 @@ See `vulpea-create' for more information.")
                  #'read-number
                  (lambda (v) (< v 0))
                  "Sugar g/l (C-g for N/A): "))
-         (resources (vino--collect-while
-                     #'read-string
-                     (lambda (v) (not (string-empty-p v)))
-                     "Resource: "))
-         (price (read-string "Price: ")))
-    (make-vino-entry
-     :carbonation carbonation
-     :carbonation-method carbonation-method
-     :colour colour
-     :sweetness sweetness
-     :producer producer
-     :name name
-     :vintage vintage
-     :base-vintage base-vintage
-     :sur-lie sur-lie
-     :degorgee degorgee
-     :country country
-     :appellation appellation
-     :region region
-     :grapes grapes
-     :alcohol alcohol
-     :sugar sugar
-     :resources resources
-     :price price
-     :acquired 0
-     :consumed 0
-     :rating nil
-     :ratings nil)))
+         (price (read-string "Price: "))
 
-;;;###autoload
-(defun vino-entry-get-by-id (note-or-id)
-  "Get `vino-entry' by NOTE-OR-ID."
-  (let ((note (if (stringp note-or-id)
-                  (vulpea-db-get-by-id note-or-id)
-                note-or-id)))
-    (when (and note (vino-entry-note-p note))
-      (let ((meta (vulpea-meta note)))
-        (make-vino-entry
-         :carbonation (vulpea-buffer-meta-get!
-                       meta "carbonation" 'symbol)
-         :colour (vulpea-buffer-meta-get! meta "colour" 'symbol)
-         :sweetness (vulpea-buffer-meta-get!
-                     meta "sweetness" 'symbol)
-         :producer (if-let ((producer (vulpea-buffer-meta-get!
-                                       meta "producer" 'note)))
-                       producer
-                     (lwarn 'vino :error
-                            "Producer is not an existing note in entry %s"
-                            (vulpea-note-id note)))
-         :name (vulpea-buffer-meta-get! meta "name" 'string)
-         :vintage (vino--parse-opt-number
-                   (vulpea-buffer-meta-get! meta "vintage")
-                   "NV")
-         :appellation (vulpea-buffer-meta-get!
-                       meta "appellation" 'note)
-         :region (vulpea-buffer-meta-get! meta "region" 'note)
-         :grapes (vulpea-buffer-meta-get-list! meta "grapes" 'note)
-         :alcohol (vulpea-buffer-meta-get! meta "alcohol" 'number)
-         :sugar (vulpea-buffer-meta-get! meta "sugar" 'number)
-         :acquired (vulpea-buffer-meta-get! meta "acquired" 'number)
-         :consumed (vulpea-buffer-meta-get! meta "consumed" 'number)
-         :resources (vulpea-buffer-meta-get-list!
-                     meta "resources" 'link)
-         :price (vulpea-buffer-meta-get-list! meta "price" 'string)
-         :rating (vino--parse-opt-number
-                  (vulpea-buffer-meta-get! meta "rating" 'string)
-                  "NA")
-         :ratings (vulpea-buffer-meta-get-list!
-                   meta "ratings" 'note))))))
-
-;;;###autoload
-(defun vino-entry-create ()
-  "Create a `vino-entry'.
-
-The `vulpea-insert-handle-functions' are called with the created
-note as the only argument."
-  (interactive)
-  (let ((note (vino-entry--create (vino-entry-read))))
-    (run-hook-with-args 'vino-entry-create-handle-functions note)
-    note))
-
-(defun vino-entry--create (vino &optional id)
-  "Create an entry for VINO.
-
-ID is generated unless passed."
-  (let* ((producer (vino-entry-producer vino))
-         (producer (if (vulpea-note-p producer)
-                       producer
-                     (vulpea-db-get-by-id producer)))
-         (vintage (vino-entry-vintage vino))
          (title (format "%s %s %s"
                         (vulpea-note-title producer)
-                        (vino-entry-name vino)
+                        name
                         (or vintage "NV")))
-         (body
-          (with-temp-buffer
-            ;; TODO: optimize multiple calls
-            (vulpea-buffer-meta-set
-             "carbonation" (vino-entry-carbonation vino) 'append)
-            (when (vino-entry-carbonation-method vino)
-              (vulpea-buffer-meta-set
-               "carbonation method" (vino-entry-carbonation-method vino) 'append))
-            (vulpea-buffer-meta-set
-             "colour" (vino-entry-colour vino) 'append)
-            (vulpea-buffer-meta-set
-             "sweetness" (vino-entry-sweetness vino) 'append)
-            (vulpea-buffer-meta-set
-             "producer" (vino-entry-producer vino) 'append)
-            (vulpea-buffer-meta-set
-             "name" (vino-entry-name vino) 'append)
-            (when-let ((vintage (vino-entry-vintage vino)))
-              (vulpea-buffer-meta-set "vintage" vintage 'append))
-            (when-let ((base-vintage (vino-entry-base-vintage vino)))
-              (vulpea-buffer-meta-set "base" base-vintage 'append))
-            (when-let ((sur-lie (vino-entry-sur-lie vino)))
-              (vulpea-buffer-meta-set "sur lie" sur-lie 'append))
-            (when-let ((degorgee (vino-entry-degorgee vino)))
-              (vulpea-buffer-meta-set "degorgee" degorgee 'append))
-            (when-let ((country (vino-entry-country vino)))
-              (vulpea-buffer-meta-set "country" country 'append))
-            (when-let ((region (vino-entry-region vino)))
-              (vulpea-buffer-meta-set "region" region 'append))
-            (when-let ((appellation (vino-entry-appellation vino)))
-              (vulpea-buffer-meta-set "appellation" appellation 'append))
-            (vulpea-buffer-meta-set
-             "grapes" (vino-entry-grapes vino) 'append)
-            (let ((alcohol (vino-entry-alcohol vino)))
-              (when (and alcohol
-                         (> alcohol 0))
-                (vulpea-buffer-meta-set "alcohol" alcohol 'append)))
-            (let ((sugar (vino-entry-sugar vino)))
-              (when (and sugar (>= sugar 0))
-                (vulpea-buffer-meta-set "sugar" sugar 'append)))
-            (when (vino-entry-price vino)
-              (vulpea-buffer-meta-set
-               "price" (vino-entry-price vino) 'append))
-            (let ((acquired (or (vino-entry-acquired vino) 0))
-                  (consumed (or (vino-entry-consumed vino) 0)))
-              (vulpea-buffer-meta-set "acquired" acquired 'append)
-              (vulpea-buffer-meta-set "consumed" consumed 'append)
-              (vulpea-buffer-meta-set
-               "available" (- acquired consumed) 'append))
-            (vulpea-buffer-meta-set
-             "resources" (vino-entry-resources vino) 'append)
-            (vulpea-buffer-meta-set
-             "rating" (or (vino-entry-rating vino) "NA") 'append)
-            (vulpea-buffer-meta-set
-             "ratings" (vino-entry-ratings vino) 'append)
-            (buffer-substring (point-min)
-                              (point-max))))
-         (note
-          (vulpea-create
-           title
-           (plist-get vino-entry-template :file-name)
-           :id id
-           :tags (seq-union (plist-get vino-entry-template :tags)
-                            '("wine" "cellar"))
-           :head (plist-get vino-entry-template :head)
-           :body (concat (plist-get vino-entry-template :body)
-                         body)
-           :context (plist-get vino-entry-template :context)
-           :properties (plist-get vino-entry-template :properties)
-           :unnarrowed t
-           :immediate-finish t)))
+         (note (vulpea-create
+                title
+                (plist-get vino-entry-template :file-name)
+                :tags (seq-union (plist-get vino-entry-template :tags)
+                                 '("wine" "cellar"))
+                :head (plist-get vino-entry-template :head)
+                :body (plist-get vino-entry-template :body)
+                :context (plist-get vino-entry-template :context)
+                :properties (plist-get vino-entry-template :properties)
+                :meta (-filter
+                       #'cdr
+                       (append
+                        `(("carbonation" . ,carbonation)
+                         ("carbonation method" . ,carbonation-method)
+                         ("colour" . ,colour)
+                         ("sweetness" . ,sweetness)
+                         ("producer" . ,producer)
+                         ("name" . ,name)
+                         ("vintage" . ,vintage)
+                         ("base" . ,base-vintage)
+                         ("sur lie" . ,sur-lie)
+                         ("degorgee" . ,degorgee))
+                        origin
+                        `(("grapes" . ,grapes)
+                          ("alcohol" . ,alcohol)
+                          ("sugar" . ,sugar)
+                          ("price" . ,price)
+                          ("acquired" . 0)
+                          ("consumed" . 0)
+                          ("available" . 0)
+                          ("rating" . "NA"))))
+                :unnarrowed t
+                :immediate-finish t)))
+    (run-hook-with-args 'vino-entry-create-handle-functions note)
     note))
 
 ;;;###autoload
@@ -817,7 +660,9 @@ explicitly."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
          (grapes (or grapes
                      (vino--collect-while #'vino-grape-select nil))))
-    (vulpea-meta-set note "grapes" grapes 'append)))
+    (vulpea-utils-with-note note
+      (vulpea-buffer-meta-set "grapes" grapes 'append)
+      (save-buffer))))
 
 ;;;###autoload
 (defun vino-entry-set-region (&optional note-or-id region)
@@ -835,14 +680,15 @@ REGION may be either region or appellation."
                   ((stringp region) (vulpea-db-get-by-id region))
                   ((vulpea-note-p region) region)
                   (t (vino-region-select)))))
-    (when (seq-contains-p (vulpea-note-tags region) "region")
-      (vulpea-meta-remove note "appellation")
-      (vulpea-meta-set note "region" region 'append))
-    (when (seq-contains-p (vulpea-note-tags region) "appellation")
-      (vulpea-meta-remove note "region")
-      (vulpea-meta-set note "appellation" region 'append))
-    ;; TODO: sort metadata
-    ))
+    (vulpea-utils-with-note note
+      (when (seq-contains-p (vulpea-note-tags region) "region")
+        (vulpea-buffer-meta-remove "appellation")
+        (vulpea-buffer-meta-set "region" region 'append))
+      (when (seq-contains-p (vulpea-note-tags region) "appellation")
+        (vulpea-buffer-meta-remove "region")
+        (vulpea-buffer-meta-set "appellation" region 'append))
+      ;; TODO: sort metadata
+      (save-buffer))))
 
 ;;;###autoload
 (defun vino-entry-update (&optional note-or-id)
@@ -931,14 +777,15 @@ explicitly.
                    (vino-rating--round
                     (/ (apply #'+ values)
                        (float (length values)))))))
-    (vulpea-meta-set note "rating" rating 'append)
-    (vulpea-meta-set
-     note
-     "ratings"
-     (seq-sort-by #'vulpea-note-title
-                  #'string<
-                  ratings)
-     'append)))
+    (vulpea-utils-with-note note
+      (vulpea-buffer-meta-set "rating" rating 'append)
+      (vulpea-buffer-meta-set
+       "ratings"
+       (seq-sort-by #'vulpea-note-title
+                    #'string<
+                    ratings)
+       'append)
+      (save-buffer))))
 
 ;;;###autoload
 (defun vino-entry-rate (&optional note-or-id date extra-data)
@@ -1595,20 +1442,6 @@ Return `vulpea-note'."
 
 
 ;;; Utilities
-
-;;;###autoload
-(defun vino-resources-template ()
-  "Query for resource URL and return it as a meta string."
-  (seq-reduce
-   (lambda (r a)
-     (concat r "- resources :: " a "\n"))
-   (vino--collect-while
-    (lambda ()
-      (let ((resource (read-string "Resource: ")))
-        (when (not (string-empty-p resource))
-          (vulpea-buffer-meta-format resource))))
-    (lambda (a) (not (null a))))
-   ""))
 
 (defun vino--format-prop (prop)
   "Create a pretty prompt from PROP."

@@ -78,8 +78,7 @@
              :basename "c9937e3e-c83d-4d8d-a612-6110e6706252"
              :links '(("id" . "9462dfad-603c-4094-9aca-a9042cec5dd2")
                       ("id" . "8353e2fc-8034-4540-8254-4b63fb5a421a")
-                      ("id" . "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
-                      ("http" . "http://www.agricolaocchipinti.it/it/vinicontrada"))
+                      ("id" . "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
              :meta '(("carbonation" "still")
                      ("colour" "red")
                      ("sweetness" "dry")
@@ -94,7 +93,6 @@
                      ("acquired" "2")
                      ("consumed" "1")
                      ("available" "1")
-                     ("resources" "[[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]")
                      ("rating" "NA"))))))
 
 (describe "vino-entry-note-get-dwim"
@@ -186,92 +184,6 @@
               (list
                (format "Note %s does not represent a vino entry"
                        (vulpea-db-get-by-id id)))))))
-
-(describe "vino-entry--create"
-  :var (note vino)
-  (before-all (vino-test-init))
-  (after-all (vino-test-teardown))
-
-  (it "creates a new entry with all information"
-    (setq vino (make-vino-entry
-                :carbonation 'still
-                :colour 'red
-                :sweetness 'dry
-                :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
-                :name "Grotte Alte"
-                :vintage 2014
-                :appellation (vulpea-db-get-by-id "6a0819f3-0770-4481-9754-754ca397800b")
-                :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
-                              (vulpea-db-get-by-id "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
-                :alcohol 13
-                :sugar 0
-                :acquired 0
-                :consumed 0
-                :resources '("http://www.agricolaocchipinti.it/it/grotte-alte"
-                             "https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva")
-                :price '("50.00 EUR")))
-    (setq note (vino-entry--create vino))
-    (expect (vino-entry-get-by-id (vulpea-note-id note)) :to-equal vino)
-    (expect (expand-file-name (vulpea-note-path note))
-            :to-contain-exactly
-            (format
-             ":PROPERTIES:
-:ID:       %s
-:END:
-#+title: Arianna Occhipinti Grotte Alte 2014
-#+filetags: :wine:cellar:
-
-- carbonation :: still
-- colour :: red
-- sweetness :: dry
-- producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
-- name :: Grotte Alte
-- vintage :: 2014
-- appellation :: [[id:6a0819f3-0770-4481-9754-754ca397800b][Cerasuolo di Vittoria DOCG]]
-- grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
-- grapes :: [[id:3b38917f-6065-42e8-87ca-33dd39a92fc0][Nero d'Avola]]
-- alcohol :: 13
-- sugar :: 0
-- price :: 50.00 EUR
-- acquired :: 0
-- consumed :: 0
-- available :: 0
-- resources :: [[http://www.agricolaocchipinti.it/it/grotte-alte][agricolaocchipinti.it]]
-- resources :: [[https://www.bowlerwine.com/wine-or-spirit/grotte-alte-cerasuolo-di-vittoria-riserva][bowlerwine.com]]
-- rating :: NA
-"
-             (vulpea-note-id note)))))
-
-(describe "vino-entry-get-by-id"
-  (before-all (vino-test-init))
-  (after-all (vino-test-teardown))
-
-  (it "returns an existing `vino'"
-    (expect (vino-entry-get-by-id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-            :to-equal
-            (make-vino-entry
-             :carbonation 'still
-             :colour 'red
-             :sweetness 'dry
-             :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
-             :name "Bombolieri BB"
-             :vintage 2017
-             :appellation (vulpea-db-get-by-id "8353e2fc-8034-4540-8254-4b63fb5a421a")
-             :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-             :alcohol 13
-             :sugar 1
-             :acquired 2
-             :consumed 1
-             :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
-             :price '("50.00 EUR"))))
-
-  (it "returns nil for non-wine note id"
-    (expect (vino-entry-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
-            :to-equal nil))
-
-  (it "returns nil for non-existing id"
-    (expect (vino-entry-get-by-id (org-id-new))
-            :to-equal nil)))
 
 (describe "vino-grape-create"
   (before-all (vino-test-init))
@@ -443,7 +355,7 @@
   (it "replace grapes metadata with new data"
     (vino-entry-set-grapes id '("1c436b3b-ad14-4818-896d-1b7755f10fa1"
                                 "3b38917f-6065-42e8-87ca-33dd39a92fc0"))
-    (expect (vino-entry-grapes (vino-entry-get-by-id id))
+    (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "grapes" 'note)
             :to-equal
             (list (vulpea-db-get-by-id "1c436b3b-ad14-4818-896d-1b7755f10fa1")
                   (vulpea-db-get-by-id "3b38917f-6065-42e8-87ca-33dd39a92fc0")))
@@ -471,7 +383,6 @@
 - acquired :: 2
 - consumed :: 1
 - available :: 1
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: NA
 
 #+begin_quote
@@ -506,15 +417,17 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 
 (describe "vino-entry-set-region"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252")
-        vino)
+        note)
   (before-all (vino-test-init))
   (after-all (vino-test-teardown))
 
   (it "replace region metadata"
     (vino-entry-set-region id "f9ef759b-f39e-4121-ab19-9ab3daa318be")
-    (setq vino (vino-entry-get-by-id id))
-    (expect (vino-entry-region vino) :to-equal (vulpea-db-get-by-id "f9ef759b-f39e-4121-ab19-9ab3daa318be"))
-    (expect (vino-entry-appellation vino) :to-equal nil)
+    (setq note (vulpea-db-get-by-id id))
+    (expect (vulpea-note-meta-get note "region" 'note)
+            :to-equal
+            (vulpea-db-get-by-id "f9ef759b-f39e-4121-ab19-9ab3daa318be"))
+    (expect (vulpea-note-meta-get note "appellation" 'note) :to-equal nil)
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -537,7 +450,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - acquired :: 2
 - consumed :: 1
 - available :: 1
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: NA
 - region :: [[id:f9ef759b-f39e-4121-ab19-9ab3daa318be][Central Otago]]
 
@@ -573,9 +485,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 
   (it "replace appellation metadata"
     (vino-entry-set-region id "860f5505-d83c-4305-bc20-cb6a92f5d0be")
-    (setq vino (vino-entry-get-by-id id))
-    (expect (vino-entry-region vino) :to-equal nil)
-    (expect (vino-entry-appellation vino) :to-equal (vulpea-db-get-by-id "860f5505-d83c-4305-bc20-cb6a92f5d0be"))
+    (setq note (vulpea-db-get-by-id id))
+    (expect (vulpea-note-meta-get note "region" 'note) :to-equal nil)
+    (expect (vulpea-note-meta-get note "appellation" 'note)
+            :to-equal
+            (vulpea-db-get-by-id "860f5505-d83c-4305-bc20-cb6a92f5d0be"))
     (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
             :to-contain-exactly
             (format
@@ -598,7 +512,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - acquired :: 2
 - consumed :: 1
 - available :: 1
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: NA
 - appellation :: [[id:860f5505-d83c-4305-bc20-cb6a92f5d0be][Etna DOC]]
 
@@ -645,26 +558,11 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (vulpea-meta-set id "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
                                     "be7777a9-7993-44cf-be9e-0ae65297a35d"))
     (vino-entry-update id)
-    (expect (vino-entry-get-by-id id)
+    (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note)
             :to-equal
-            (make-vino-entry
-             :carbonation 'still
-             :colour 'red
-             :sweetness 'dry
-             :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
-             :name "Bombolieri BB"
-             :vintage 2017
-             :appellation (vulpea-db-get-by-id "8353e2fc-8034-4540-8254-4b63fb5a421a")
-             :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-             :alcohol 13
-             :sugar 1
-             :acquired 2
-             :consumed 1
-             :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
-             :price '("50.00 EUR")
-             :rating 4.0
-             :ratings (list (vulpea-db-get-by-id "be7777a9-7993-44cf-be9e-0ae65297a35d")
-                            (vulpea-db-get-by-id "f1ecb856-c009-4a65-a8d0-8191a9de66dd"))))))
+            (list (vulpea-db-get-by-id "be7777a9-7993-44cf-be9e-0ae65297a35d")
+                  (vulpea-db-get-by-id "f1ecb856-c009-4a65-a8d0-8191a9de66dd")))
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id id) "rating" 'number) :to-equal 4.0)))
 
 (describe "vino-rating--read-value"
   (it "should support number"
@@ -722,26 +620,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                             ("property_4" 5 5)
                             ("property_5" 5 6))))
     (setq note (vino-rating--create rating))
+    (setf (vino-rating-wine rating) (vulpea-db-get-by-id id))
     (expect note :not :to-be nil)
-    (expect (vino-entry-get-by-id id)
-            :to-equal
-            (make-vino-entry
-             :carbonation 'still
-             :colour 'red
-             :sweetness 'dry
-             :producer (vulpea-db-get-by-id "9462dfad-603c-4094-9aca-a9042cec5dd2")
-             :name "Bombolieri BB"
-             :vintage 2017
-             :appellation (vulpea-db-get-by-id "8353e2fc-8034-4540-8254-4b63fb5a421a")
-             :grapes (list (vulpea-db-get-by-id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-             :alcohol 13
-             :sugar 1
-             :acquired 2
-             :consumed 1
-             :resources '("http://www.agricolaocchipinti.it/it/vinicontrada")
-             :price '("50.00 EUR")
-             :rating 4.0
-             :ratings (list note)))
+    (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note) :to-equal (list note))
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id id) "rating" 'number) :to-equal 4.0)
     (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
     (expect (vulpea-db-get-file-by-id id)
             :to-contain-exactly
@@ -766,7 +648,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - acquired :: 2
 - consumed :: 1
 - available :: 1
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: 4.0
 - ratings :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017 - %s]]
 

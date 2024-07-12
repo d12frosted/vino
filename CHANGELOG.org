@@ -9,6 +9,8 @@
 - Get rid of 'generic' inventory flow in favour of =vino-inv= plugin.
 - Use 5-based scale for ratings by default and introduce means to change that.
 - Add country to vino entry. This also affects all functions related to region/appellation selection and creation. Refer to documentation for more information.
+- Remove resources from vino entry. The functionality can be replicated (if needed) using =vino-entry-create-handle-functions=.
+- Get rid of =vino-entry= struct. Since =vulpea-note= became powerful enough there is little value in =vino-entry=.
 
 *Features*
 
@@ -19,7 +21,7 @@
 - New function - =vino-entry-insert=.
 - Inventory management. See relevant section in readme.
 - Default templates now include proper tags.
-- Use sane default for `vino-rating-props`.
+- Use sane default for =vino-rating-props=.
 - Ask for carbonation method for sparkling wines.
 - Include extra information for traditional sparkling wines.
 - Round rating when updating it.

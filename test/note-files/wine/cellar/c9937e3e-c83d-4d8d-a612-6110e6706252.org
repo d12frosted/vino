@@ -18,7 +18,6 @@
 - acquired :: 2
 - consumed :: 1
 - available :: 1
-- resources :: [[http://www.agricolaocchipinti.it/it/vinicontrada][agricolaocchipinti.it]]
 - rating :: NA
 
 #+begin_quote
