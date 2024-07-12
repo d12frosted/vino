@@ -525,7 +525,7 @@ See `vulpea-create' for more information.")
                      (org-link-display-format
                       (buffer-substring-no-properties
                        beg end)))))
-               (note (vino-entry-note-select))
+               (note (vino-entry-note-select region-text))
                (description (or region-text (vulpea-note-title note))))
           (unless (vulpea-note-id note)
             (setq note (vino-entry-create)))
@@ -947,12 +947,15 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
          (seq-contains-p tags "cellar"))))
 
 ;;;###autoload
-(defun vino-entry-note-select ()
-  "Select and return a `vulpea-note' representing `vino-entry'."
+(defun vino-entry-note-select (&optional initial-prompt)
+  "Select and return a `vulpea-note' representing `vino-entry'.
+
+Optionally provide INITIAL-PROMPT."
   (vulpea-select-from
    "Wine"
    (vulpea-db-query-by-tags-every '("wine" "cellar"))
-   :require-match t))
+   :require-match t
+   :initial-prompt initial-prompt))
 
 ;;;###autoload
 (defun vino-entry-note-get-dwim (&optional note-or-id)
