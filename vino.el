@@ -374,12 +374,11 @@ Each PROP can be of one of the following types:
                    (vulpea-db-get-by-id note-or-id)
                  note-or-id))
          (rating (vino-rating-get-by-id note)))
-    (vulpea-meta-set note "score"
-                     (vino-rating-score rating) 'append)
-    (vulpea-meta-set note "score_max"
-                     (vino-rating-score-max rating) 'append)
-    (vulpea-meta-set note "total"
-                     (vino-rating-total rating) 'append)))
+    (vulpea-utils-with-note note
+      (vulpea-buffer-meta-set "score" (vino-rating-score rating) 'append)
+      (vulpea-buffer-meta-set "score_max" (vino-rating-score-max rating) 'append)
+      (vulpea-buffer-meta-set "total" (vino-rating-total rating) 'append)
+      (save-buffer))))
 
 (defun vino-rating--read-value (prop)
   "Read a rating value defined by PROP.
@@ -501,6 +500,29 @@ Template is a property list accepting following values:
   :tags (optional) - extra tags in addition to wine and cellar
 
 See `vulpea-create' for more information.")
+
+(defvar vino-entry-rating-average-method 'avg
+  "Method to calculate rating of vino entry.
+
+All ratings are averaged using selected method and then the result is
+rounded to respect `vino-rating-precision'.
+
+Supported methods:
+
+- avg
+- min
+- max
+- oldest - when multiple ratings share the date, result is not defined
+- latest - when multiple ratings share the date, result is not defined
+- custom - you need to set `vino-entry-rating-average-fn'.")
+
+(defvar vino-entry-rating-average-fn nil
+  "Function to average ratings of vino entry.
+
+The function accepts a list of ratings (can be empty) and it must return
+a number.
+
+Result is be rounded to respect `'vino-rating-precision'.")
 
 ;;;###autoload
 (defun vino-entry-find-file ()
@@ -767,24 +789,29 @@ explicitly.
 - total score of each linked ratings;
 - rating of the `vino-entry'."
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (ratings (vulpea-meta-get-list note "ratings" 'note))
-         (values (seq-map
-                  (lambda (rn)
-                    (vino-rating-update rn)
-                    (vulpea-meta-get rn "total" 'number))
-                  ratings))
-         (rating (if (null values)
-                     "NA"
-                   (vino-rating--round
-                    (/ (apply #'+ values)
-                       (float (length values)))))))
+         (_ (--each (vulpea-meta-get-list note "ratings" 'note)
+              (vino-rating-update it)))
+         (ratings (->> (vulpea-meta-get-list note "ratings" 'note)
+                       (seq-sort-by #'vulpea-note-title #'string<)))
+         (values (--map (vulpea-meta-get it "total" 'number) ratings))
+         (rating (if (eq vino-entry-rating-average-method `custom)
+                     (funcall (or vino-entry-rating-average-fn
+                                  (user-error "Function `vino-entry-rating-average-fn' is note set"))
+                              values)
+                   (when values
+                     (pcase vino-entry-rating-average-method
+                       (`avg (/ (apply #'+ values)
+                                (float (length values))))
+                       (`min (-min values))
+                       (`max (-max values))
+                       (`oldest (car values))
+                       (`latest (car (reverse values)))))))
+         (rating (if rating (vino-rating--round rating) "NA")))
     (vulpea-utils-with-note note
       (vulpea-buffer-meta-set "rating" rating 'append)
       (vulpea-buffer-meta-set
        "ratings"
-       (seq-sort-by #'vulpea-note-title
-                    #'string<
-                    ratings)
+       (seq-sort-by #'vulpea-note-title #'string< ratings)
        'append)
       (save-buffer))))
 
