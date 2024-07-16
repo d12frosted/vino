@@ -11,6 +11,7 @@
 - Add country to vino entry. This also affects all functions related to region/appellation selection and creation. Refer to documentation for more information.
 - Remove resources from vino entry. The functionality can be replicated (if needed) using =vino-entry-create-handle-functions=.
 - Get rid of =vino-entry= struct. Since =vulpea-note= became powerful enough there is little value in =vino-entry=.
+- Merge =vino-entry-update= and =vino-entry-update-title=. These days Vulpea provides enough cached information to make the later fast enough to be merged with regular =vino-entry-update=.
 
 *Features*
 

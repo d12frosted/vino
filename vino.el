@@ -358,7 +358,6 @@ Each PROP can be of one of the following types:
          :version version
          :values values)))))
 
-;;;###autoload
 (defun vino-rating-note-p (note)
   "Return non-nil if NOTE represents `vino-rating'."
   (when-let* ((tags (vulpea-note-tags note))
@@ -366,19 +365,6 @@ Each PROP can be of one of the following types:
     (and (equal level 0)
          (seq-contains-p tags "wine")
          (seq-contains-p tags "rating"))))
-
-;;;###autoload
-(defun vino-rating-update (note-or-id)
-  "Refresh rating represented by NOTE-OR-ID."
-  (let* ((note (if (stringp note-or-id)
-                   (vulpea-db-get-by-id note-or-id)
-                 note-or-id))
-         (rating (vino-rating-get-by-id note)))
-    (vulpea-utils-with-note note
-      (vulpea-buffer-meta-set "score" (vino-rating-score rating) 'append)
-      (vulpea-buffer-meta-set "score_max" (vino-rating-score-max rating) 'append)
-      (vulpea-buffer-meta-set "total" (vino-rating-total rating) 'append)
-      (save-buffer))))
 
 (defun vino-rating--read-value (prop)
   "Read a rating value defined by PROP.
@@ -721,73 +707,46 @@ The following things are updated:
 
 - total score of each linked ratings;
 - rating of the `vino-entry';
-- availability of `vino-entry'."
-  (interactive)
-  (let* ((note (vino-entry-note-get-dwim note-or-id)))
-    (vino-entry-update-rating note)
-    (run-hook-with-args 'vino-entry-update-handle-functions note)))
-
-;;;###autoload
-(defun vino-entry-update-title (&optional note-or-id)
-  "Update title of `vino-entry'..
-
-When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
-Otherwise if current buffer is visiting `vino-entry', it used
-instead. Otherwise user is prompted to select a `vino-entry'
-explicitly.
-
-The following things are updated:
-
-- link description of producer;
 - title of the `vino-entry';
-- title of every linked rating."
+- description of the linked producer and ratings;
+- title of all linked ratings."
   (interactive)
-  ;; TODO: vulpea-meta performance
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (meta (vulpea-meta note))
+         (producer (vulpea-note-meta-get note "producer" 'note))
          (title (format
                  "%s %s %s"
-                 (vulpea-note-title
-                  (vulpea-buffer-meta-get! meta "producer" 'note))
-                 (vulpea-buffer-meta-get! meta "name")
-                 (or (vulpea-buffer-meta-get! meta "vintage") "NV"))))
-    (vulpea-utils-with-note note
-      (vulpea-buffer-title-set title)
-      (save-buffer))
-    (vulpea-db-update note)
-    (setq note (vulpea-db-get-by-id (vulpea-note-id note)))
-    (vulpea-meta-set
-     note
-     "ratings"
-     (seq-map
-      (lambda (rn)
-        (vulpea-utils-with-note rn
-          (vulpea-buffer-title-set
-           (format "%s - %s"
-                   title
-                   (vulpea-meta-get rn "date")))
-          (save-buffer))
-        (vulpea-db-update rn)
-        (vulpea-meta-set rn "wine" note)
-        (vulpea-db-get-by-id (vulpea-note-id rn)))
-      (vulpea-meta-get-list note "ratings" 'note)))))
+                 (vulpea-note-title producer)
+                 (vulpea-note-meta-get note "name")
+                 (or (vulpea-note-meta-get note "vintage") "NV")))
 
-;;;###autoload
-(defun vino-entry-update-rating (note-or-id)
-  "Update rating metadata of `vino-entry'.
+         ;; update linked ratings
+         rating-title rating
+         (ratings (->>
+                   (vulpea-note-meta-get-list note "ratings" 'note)
+                   (--map
+                    (vulpea-utils-with-note it
+                      ;; set title
+                      (setq rating-title (format "%s - %s" title (vulpea-note-meta-get it "date")))
+                      (vulpea-buffer-title-set rating-title)
+                      (vulpea-buffer-meta-set "wine" (vulpea-utils-link-make-string note title))
 
-When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
-Otherwise if current buffer is visiting `vino-entry', it used
-instead. Otherwise user is prompted to select a `vino-entry'
-explicitly.
+                      ;; update rating
+                      (setq rating (vino-rating-get-by-id it))
+                      (vulpea-buffer-meta-set "score" (vino-rating-score rating) 'append)
+                      (vulpea-buffer-meta-set "score_max" (vino-rating-score-max rating) 'append)
+                      (vulpea-buffer-meta-set "total" (vino-rating-total rating) 'append)
 
-- total score of each linked ratings;
-- rating of the `vino-entry'."
-  (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (_ (--each (vulpea-meta-get-list note "ratings" 'note)
-              (vino-rating-update it)))
-         (ratings (->> (vulpea-meta-get-list note "ratings" 'note)
-                       (seq-sort-by #'vulpea-note-title #'string<)))
+                      ;; save buffer
+                      (save-buffer)
+
+                      ;; return note id, so we can reload latest state from db;
+                      ;; we could optimize title, but meta is a little bit more messy
+                      (vulpea-note-id it)))
+                   (vulpea-db-query-by-ids)
+                   (-remove #'vulpea-note-primary-title)
+                   (seq-sort-by #'vulpea-note-title #'string<)))
+
+         ;; calculate rating
          (values (--map (vulpea-meta-get it "total" 'number) ratings))
          (rating (if (functionp vino-entry-rating-average-method)
                      (funcall vino-entry-rating-average-method values)
@@ -800,13 +759,17 @@ explicitly.
                        (`oldest (car values))
                        (`latest (car (reverse values)))))))
          (rating (if rating (vino-rating--round rating) "NA")))
+
+    ;; update wine entry note
     (vulpea-utils-with-note note
+      (vulpea-buffer-title-set title)
+      (vulpea-buffer-meta-set "producer" producer)
+      (vulpea-buffer-meta-set "ratings" ratings)
       (vulpea-buffer-meta-set "rating" rating 'append)
-      (vulpea-buffer-meta-set
-       "ratings"
-       (seq-sort-by #'vulpea-note-title #'string< ratings)
-       'append)
-      (save-buffer))))
+      (save-buffer))
+
+    ;; run hook
+    (run-hook-with-args 'vino-entry-update-handle-functions note)))
 
 ;;;###autoload
 (defun vino-entry-rate (&optional note-or-id date extra-data)
