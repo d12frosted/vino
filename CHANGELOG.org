@@ -2,6 +2,14 @@
 
 ** TBD
 
+** v0.4.0
+
+This release focuses on several key areas. First, it introduces powerful extension hooks that allow for building custom and complex flows on top of Vino. Second, it implements a basic solution for cellar tracking. Third, it simplifies the internals by adopting the latest features provided by the Vulpea library.
+
+Unfortunately, this release contains many breaking changes. If you need assistance, please start a discussion.
+
+Future releases will focus on fixing bugs and improving the Inventory solution.
+
 *Breaking changes*
 
 - Completely get rid of =vino-db=. Why? TL;DR =vulpea-db= is powerful enough to cover all the use cases I have ever faced. Over the last 2 years I have never used =vino-db=.
