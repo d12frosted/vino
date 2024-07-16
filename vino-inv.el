@@ -41,13 +41,13 @@
 (defvar vino-inv-acquire-handle-functions nil
   "Abnormal hooks to run after a bottle is acquired.
 
-Each function accepts a `vino-inv-bottle' and a `vulpea-note' (wine).")
+The hook is called with single argument - `vino-inv-bottle'.")
 
 (defvar vino-inv-consume-handle-functions nil
   "Abnormal hooks to run after a bottle is consumed.
 
-Each function accepts a `vino-inv-bottle', a
-`vulpea-note' (wine), an action (string) and date.")
+The hook is called with three arguments - `vino-inv-bottle',
+action (string) and date (internal time).")
 
 ;; * inv setup
 
@@ -137,7 +137,7 @@ Each function accepts a `vino-inv-bottle', a
                      :price-usd price-usd
                      :location-id location-id
                      :source-id source-id)))
-        (run-hook-with-args 'vino-inv-acquire-handle-functions bottle note)))
+        (run-hook-with-args 'vino-inv-acquire-handle-functions bottle)))
 
     (vino-inv-update-availability note)))
 
@@ -173,7 +173,7 @@ Each function accepts a `vino-inv-bottle', a
          (date (org-read-date nil t)))
     (vino-inv-consume-bottle :bottle-id bottle-id :date (format-time-string "%Y-%m-%d" date))
     (vino-inv-update-availability note)
-    (run-hook-with-args 'vino-inv-consume-handle-functions bottle note action date)
+    (run-hook-with-args 'vino-inv-consume-handle-functions bottle action date)
     (when (and (string-equal action "consume")
                (y-or-n-p "Rate? "))
       (vino-entry-rate note date `((bottle-id . ,bottle-id))))))
