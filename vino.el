@@ -501,7 +501,7 @@ Template is a property list accepting following values:
 
 See `vulpea-create' for more information.")
 
-(defvar vino-entry-rating-average-method 'avg
+(defvar vino-entry-rating-average-method 'amean
   "Method to calculate rating of vino entry.
 
 All ratings are averaged using selected method and then the result is
@@ -509,7 +509,7 @@ rounded to respect `vino-rating-precision'.
 
 Supported methods:
 
-- avg
+- amean (arithmetic mean)
 - min
 - max
 - oldest - when multiple ratings share the date, result is not defined
