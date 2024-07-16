@@ -1097,7 +1097,7 @@ Return `vulpea-note'."
      :capture-properties capture-properties)))
 
 ;;;###autoload
-(defun vino-find-country-file ()
+(defun vino-country-find-file ()
   "Select and find country note."
   (interactive)
   (find-file (vulpea-note-path (vino-country-select))))
@@ -1117,7 +1117,7 @@ Return `vulpea-note'."
       (vino-country-create :title (vulpea-note-title note)))))
 
 ;;;###autoload
-(defun vino-find-region-file ()
+(defun vino-region-find-file ()
   "Select and find region note."
   (interactive)
   (let* ((country (vino-country-select))
@@ -1149,7 +1149,7 @@ Return `vulpea-note'."
        :country country))))
 
 ;;;###autoload
-(defun vino-find-appellation-file ()
+(defun vino-appellation-find-file ()
   "Select and find appellation note."
   (interactive)
   (let* ((country (vino-country-select))
