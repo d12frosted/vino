@@ -669,7 +669,7 @@ explicitly."
       (save-buffer))))
 
 ;;;###autoload
-(defun vino-entry-set-region (&optional note-or-id region)
+(defun vino-entry-set-region (&optional note-or-id)
   "Set REGION to `vino-entry'.
 
 When NOTE-OR-ID is non-nil, it is used to get `vino-entry'.
@@ -680,18 +680,10 @@ explicitly.
 REGION may be either region or appellation."
   (interactive)
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (region (cond
-                  ((stringp region) (vulpea-db-get-by-id region))
-                  ((vulpea-note-p region) region)
-                  (t (vino-region-select)))))
+         (origin (funcall-interactively vino-origin-select-fn)))
     (vulpea-utils-with-note note
-      (when (seq-contains-p (vulpea-note-tags region) "region")
-        (vulpea-buffer-meta-remove "appellation")
-        (vulpea-buffer-meta-set "region" region 'append))
-      (when (seq-contains-p (vulpea-note-tags region) "appellation")
-        (vulpea-buffer-meta-remove "region")
-        (vulpea-buffer-meta-set "appellation" region 'append))
-      ;; TODO: sort metadata
+      (--each origin
+        (vulpea-buffer-meta-set (car it) (cdr it)))
       (save-buffer))))
 
 ;;;###autoload
