@@ -487,6 +487,7 @@ Template is a property list accepting following values:
 
 See `vulpea-create' for more information.")
 
+;;;###autoload
 (defvar vino-entry-rating-average-method 'amean
   "Method to calculate rating of vino entry.
 
@@ -504,6 +505,30 @@ Supported methods:
 The value can be function that takes a list of ratings (numbers) and
 returns a single number. Even if a custom function is used, the
 resulting rating is still rounded to respect `vino-rating-precision'.")
+
+(defconst vino-entry-meta-props-order
+  '("carbonation"
+    "carbonation method"
+    "colour"
+    "sweetness"
+    "producer"
+    "name"
+    "vintage"
+    "base"
+    "sur lie"
+    "degorgee"
+    "country"
+    "region"
+    "appellation"
+    "grapes"
+    "alcohol"
+    "sugar"
+    "price"
+    "acquired"
+    "consumed"
+    "available"
+    "rating"
+    "ratings"))
 
 ;;;###autoload
 (defun vino-entry-find-file ()
@@ -684,6 +709,7 @@ REGION may be either region or appellation."
     (vulpea-utils-with-note note
       (--each origin
         (vulpea-buffer-meta-set (car it) (cdr it)))
+      (vulpea-buffer-meta-sort vino-entry-meta-props-order)
       (save-buffer))))
 
 ;;;###autoload
@@ -758,6 +784,7 @@ The following things are updated:
       (vulpea-buffer-meta-set "producer" producer)
       (vulpea-buffer-meta-set "ratings" ratings)
       (vulpea-buffer-meta-set "rating" rating 'append)
+      (vulpea-buffer-meta-sort vino-entry-meta-props-order)
       (save-buffer))
 
     ;; run hook
