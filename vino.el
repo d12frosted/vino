@@ -5,7 +5,7 @@
 ;; Author: Boris Buliga <boris@d12frosted.io>
 ;; Maintainer: Boris Buliga <boris@d12frosted.io>
 ;; Version: 0.4.0
-;; Package-Requires: ((emacs "29.1") (vulpea "0.3") (org-roam "2.0.0") (dash) (s))
+;; Package-Requires: ((emacs "29.1") (vulpea "0.3") (org-roam "2.0.0") (dash "2.19.1") (s "1.13.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
