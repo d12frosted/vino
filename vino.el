@@ -514,15 +514,10 @@ Supported methods:
 - max
 - oldest - when multiple ratings share the date, result is not defined
 - latest - when multiple ratings share the date, result is not defined
-- custom - you need to set `vino-entry-rating-average-fn'.")
 
-(defvar vino-entry-rating-average-fn nil
-  "Function to average ratings of vino entry.
-
-The function accepts a list of ratings (can be empty) and it must return
-a number.
-
-Result is be rounded to respect `'vino-rating-precision'.")
+The value can be function that takes a list of ratings (numbers) and
+returns a single number. Even if a custom function is used, the
+resulting rating is still rounded to respect `vino-rating-precision'.")
 
 ;;;###autoload
 (defun vino-entry-find-file ()
@@ -794,10 +789,8 @@ explicitly.
          (ratings (->> (vulpea-meta-get-list note "ratings" 'note)
                        (seq-sort-by #'vulpea-note-title #'string<)))
          (values (--map (vulpea-meta-get it "total" 'number) ratings))
-         (rating (if (eq vino-entry-rating-average-method `custom)
-                     (funcall (or vino-entry-rating-average-fn
-                                  (user-error "Function `vino-entry-rating-average-fn' is note set"))
-                              values)
+         (rating (if (functionp vino-entry-rating-average-method)
+                     (funcall vino-entry-rating-average-method values)
                    (when values
                      (pcase vino-entry-rating-average-method
                        (`avg (/ (apply #'+ values)
