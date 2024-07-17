@@ -506,7 +506,7 @@ The value can be function that takes a list of ratings (numbers) and
 returns a single number. Even if a custom function is used, the
 resulting rating is still rounded to respect `vino-rating-precision'.")
 
-(defconst vino-entry-meta-props-order
+(defvar vino-entry-meta-props-order
   '("carbonation"
     "carbonation method"
     "colour"
