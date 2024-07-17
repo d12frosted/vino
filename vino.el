@@ -449,14 +449,13 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
               :properties (plist-get vino-rating-template :properties)
               :unnarrowed t
               :immediate-finish t)))
+    (vulpea-utils-with-note wine-note
+      (vulpea-buffer-meta-set
+       "ratings"
+       (cons note (vulpea-note-meta-get-list wine-note "ratings" 'note)))
+      (save-buffer))
+    (vino-entry-update (vulpea-db-get-by-id (vulpea-note-id wine-note)))
     (run-hook-with-args 'vino-rating-create-handle-functions note extra-data)
-    (vulpea-meta-set
-     wine-note
-     "ratings"
-     (cons note
-           (vulpea-meta-get-list wine-note "ratings" 'note))
-     'append)
-    (vino-entry-update wine-note)
     note))
 
 
