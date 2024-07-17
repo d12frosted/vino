@@ -2,6 +2,11 @@
 
 ** TBD
 
+*Fixes*
+
+- Use updated note when reordering meta.
+- Define =vino-entry-meta-props-order= as =var= and not a =const=.
+
 ** v0.4.0
 
 This release focuses on several key areas. First, it introduces powerful extension hooks that allow for building custom and complex flows on top of Vino. Second, it implements a basic solution for cellar tracking. Third, it simplifies the internals by adopting the latest features provided by the Vulpea library.
