@@ -769,12 +769,14 @@ The following things are updated:
                      (funcall vino-entry-rating-average-method values)
                    (when values
                      (pcase vino-entry-rating-average-method
-                       (`avg (/ (apply #'+ values)
-                                (float (length values))))
+                       (`amean (/ (apply #'+ values)
+                                  (float (length values))))
                        (`min (-min values))
                        (`max (-max values))
                        (`oldest (car values))
-                       (`latest (car (reverse values)))))))
+                       (`latest (car (reverse values)))
+                       (_ (user-error "Unexpected value of `vino-entry-rating-average-method': %S"
+                                      vino-entry-rating-average-method))))))
          (rating (if rating (vino-rating--round rating) "NA")))
 
     ;; update wine entry note

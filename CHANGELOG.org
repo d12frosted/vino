@@ -6,6 +6,7 @@
 
 - Use updated note when reordering meta.
 - Define =vino-entry-meta-props-order= as =var= and not a =const=.
+- Fix average score calculation using =amean= strategy.
 
 ** v0.4.0
 
