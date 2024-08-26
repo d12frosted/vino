@@ -577,6 +577,7 @@ duplicates."
    ("Wine" 44 t . (:pad-right 2))
    ("Vintage" 8 t . (:right-align t))
    ("Price" 10 t . (:right-align t))
+   ("Price USD" 10 t . (:right-align t))
    ("Date" 10 t)
    ("Location" 16 t)
    ("Comment" 20 t)])
