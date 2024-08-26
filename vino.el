@@ -625,7 +625,7 @@ note as the only argument."
                            "N/A"
                          x))))
          (origin (funcall-interactively vino-origin-select-fn))
-         (grapes (vino--collect-while #'vino-grape-select nil))
+         (grapes (vino-grapes-select))
          (alcohol (vino--repeat-while
                    #'read-number
                    (lambda (v) (< v 0))
@@ -686,8 +686,7 @@ instead. Otherwise user is prompted to select a `vino-entry'
 explicitly."
   (interactive)
   (let* ((note (vino-entry-note-get-dwim note-or-id))
-         (grapes (or grapes
-                     (vino--collect-while #'vino-grape-select nil))))
+         (grapes (or grapes (vino-grapes-select))))
     (vulpea-utils-with-note note
       (vulpea-buffer-meta-set "grapes" grapes 'append)
       (save-buffer))))
@@ -1324,18 +1323,18 @@ Return `vulpea-note'."
   (find-file (vulpea-note-path (vino-grape-select))))
 
 ;;;###autoload
-(defun vino-grape-select ()
-  "Select a grape note.
+(defun vino-grape-select (&optional notes)
+  "Select a grape note from NOTES.
+
+When NOTES are nil, database is queried to get a list of notes.
 
 When grape note does not exist, it may be created using
 `vino-grape-create' or added as synonym to other grape if user
 decides to do so.
 
 Return `vulpea-note'."
-  (let ((note
-         (vulpea-select-from
-          "Grape"
-          (vulpea-db-query-by-tags-every '("wine" "grape")))))
+  (let* ((notes (or notes (vulpea-db-query-by-tags-every '("wine" "grape"))))
+         (note (vulpea-select-from "Grape" notes)))
     (if (vulpea-note-id note)
         note
       (pcase (completing-read
@@ -1358,6 +1357,21 @@ Return `vulpea-note'."
            (setf (vulpea-note-title base) (vulpea-note-title note))
            base))
         (_ note)))))
+
+;;;###autoload
+(defun vino-grapes-select ()
+  "Select multiple grape notes.
+
+When grape note does not exist, it may be created using
+`vino-grape-create' or added as synonym to other grape if user
+decides to do so.
+
+Return a list, where each entry is a `vulpea-note'."
+  (vulpea-select-multiple-from
+   "Grape" (vulpea-db-query-by-tags-every '("wine" "grape"))
+   :select-fn
+   (lambda (_ notes &rest _)
+     (vino-grape-select notes))))
 
 
 ;;; Producers
