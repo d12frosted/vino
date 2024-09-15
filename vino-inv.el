@@ -120,7 +120,6 @@ action (string) and date (internal time).")
 
          ;; etc
          (amount (read-number "Amount: " 1))
-         (volume (read-number "Volume (ml): " 750))
          (date (format-time-string "%Y-%m-%d" (org-read-date nil t))))
 
     ;; add price if needed
@@ -131,7 +130,6 @@ action (string) and date (internal time).")
     (--each (-iota amount)
       (let ((bottle (vino-inv-add-bottle
                      :wine note
-                     :volume volume
                      :date date
                      :price price
                      :price-usd price-usd
@@ -217,7 +215,6 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
   (emacsql db [:create-table bottle :if :not :exists
                ([(bottle-id integer :primary-key :autoincrement)
                  (wine-id :not-null)
-                 (volume integer :not-null)
                  (purchase-date :not-null)
                  (price :not-null)
                  (price-usd :not-null)
@@ -242,7 +239,7 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
 (cl-defstruct vino-inv-location id name)
 
 ;; materialized
-(cl-defstruct vino-inv-bottle id wine volume purchase-date price price-usd location source comment)
+(cl-defstruct vino-inv-bottle id wine purchase-date price price-usd location source comment)
 
 ;; materialized
 (cl-defstruct vino-inv-txn id bottle type date dest-location)
@@ -278,30 +275,28 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
                      [:select
                       [bottle-id     ; 0
                        wine-id       ; 1
-                       volume        ; 2
-                       purchase-date ; 3
-                       price         ; 4
-                       price-usd     ; 5
-                       location-id   ; 6
-                       source-id     ; 7
-                       comment]      ; 8
+                       purchase-date ; 2
+                       price         ; 3
+                       price-usd     ; 4
+                       location-id   ; 5
+                       source-id     ; 6
+                       comment]      ; 7
                       :from [bottle]
                       :where (= bottle:bottle-id $s1)]
                      id)))
          (row (car rows))
          (wine (vulpea-db-get-by-id (nth 1 row)))
-         (location (vino-inv-get-location (nth 6 row)))
-         (source (vino-inv-get-source (nth 7 row))))
+         (location (vino-inv-get-location (nth 5 row)))
+         (source (vino-inv-get-source (nth 6 row))))
     (make-vino-inv-bottle
      :id (nth 0 row)
      :wine wine
-     :volume (nth 2 row)
-     :purchase-date (nth 3 row)
-     :price (nth 4 row)
-     :price-usd (nth 5 row)
+     :purchase-date (nth 2 row)
+     :price (nth 3 row)
+     :price-usd (nth 4 row)
      :location location
      :source source
-     :comment (nth 8 row))))
+     :comment (nth 7 row))))
 
 (defun vino-inv-query-sources ()
   "Return list of sources."
@@ -352,13 +347,12 @@ duplicates."
                      [:select
                       [bottle:bottle-id ; 0
                        bottle:wine-id   ; 1
-                       bottle:volume    ; 2
-                       bottle:purchase-date ; 3
-                       bottle:price         ; 4
-                       bottle:price-usd     ; 5
-                       bottle:location-id   ; 6
-                       bottle:source-id     ; 7
-                       comment]             ; 8
+                       bottle:purchase-date ; 2
+                       bottle:price         ; 3
+                       bottle:price-usd     ; 4
+                       bottle:location-id   ; 5
+                       bottle:source-id     ; 6
+                       comment]             ; 7
                       :from [bottle]
                       :left-join (as [:select
                                       [bottle-id
@@ -393,13 +387,12 @@ duplicates."
      (make-vino-inv-bottle
       :id (nth 0 it)
       :wine (gethash (nth 1 it) wines-tbl)
-      :volume (nth 2 it)
-      :purchase-date (nth 3 it)
-      :price (nth 4 it)
-      :price-usd (nth 5 it)
-      :location (gethash (nth 6 it) locations-tbl)
-      :source (gethash (nth 7 it) sources-tbl)
-      :comment (nth 8 it))
+      :purchase-date (nth 2 it)
+      :price (nth 3 it)
+      :price-usd (nth 4 it)
+      :location (gethash (nth 5 it) locations-tbl)
+      :source (gethash (nth 6 it) sources-tbl)
+      :comment (nth 7 it))
      rows)))
 
 (defun vino-inv-query-available-bottles-for (wine-id)
@@ -408,13 +401,12 @@ duplicates."
                      (vino-inv-db)
                      [:select
                       [bottle:bottle-id     ; 0
-                       bottle:volume        ; 1
-                       bottle:purchase-date ; 2
-                       bottle:price         ; 3
-                       bottle:price-usd     ; 4
-                       bottle:location-id   ; 5
-                       bottle:source-id     ; 6
-                       comment]             ; 7
+                       bottle:purchase-date ; 1
+                       bottle:price         ; 2
+                       bottle:price-usd     ; 3
+                       bottle:location-id   ; 4
+                       bottle:source-id     ; 5
+                       comment]             ; 6
                       :from [bottle]
                       :left-join (as [:select
                                       [bottle-id
@@ -445,13 +437,12 @@ duplicates."
      (make-vino-inv-bottle
       :id (nth 0 it)
       :wine wine
-      :volume (nth 1 it)
-      :purchase-date (nth 2 it)
-      :price (nth 3 it)
-      :price-usd (nth 4 it)
-      :location (gethash (nth 5 it) locations-tbl)
-      :source (gethash (nth 6 it) sources-tbl)
-      :comment (nth 7 it))
+      :purchase-date (nth 1 it)
+      :price (nth 2 it)
+      :price-usd (nth 3 it)
+      :location (gethash (nth 4 it) locations-tbl)
+      :source (gethash (nth 5 it) sources-tbl)
+      :comment (nth 6 it))
      rows)))
 
 (defun vino-inv-count-purchased-bottles-for (wine-id)
@@ -501,7 +492,6 @@ duplicates."
 ;; * bottle operations
 
 (cl-defun vino-inv-add-bottle (&key wine
-                                    volume
                                     date
                                     price
                                     price-usd
@@ -511,21 +501,18 @@ duplicates."
   "Purchase a bottle.
 
 - WINE is a `vulpea-note'.
-- VOLUME is measured in milliliters (750 default).
 - DATE is purchase date.
 - PRICE is price of the purchase in any currency.
 - PRICE-USD is price of the purchase in USD.
 - LOCATION-ID is id of the initial location.
 - SOURCE-ID is id of the source.
 - COMMENT is optional."
-  (let ((volume (or volume 750))
-        (db (vino-inv-db))
+  (let ((db (vino-inv-db))
         (bottle-id))
     (emacsql-with-transaction db
       (emacsql db
                [:insert
                 :into bottle [wine-id
-                              volume
                               purchase-date
                               price
                               price-usd
@@ -534,7 +521,6 @@ duplicates."
                               comment]
                 :values $v1]
                `([,(vulpea-note-id wine)
-                  ,volume
                   ,date
                   ,price
                   ,price-usd
@@ -551,7 +537,6 @@ duplicates."
     (make-vino-inv-bottle
      :id bottle-id
      :wine wine
-     :volume volume
      :purchase-date date
      :price price
      :price-usd price-usd
@@ -572,7 +557,6 @@ duplicates."
 
 (defvar vino-inv-ui-columns
   [("ID" 5 t)
-   ("Volume" 6 t . (:right-align t))
    ("Producer" 26 t . (:pad-right 2))
    ("Wine" 44 t . (:pad-right 2))
    ("Vintage" 8 t . (:right-align t))
@@ -593,7 +577,6 @@ duplicates."
       (define-key map (kbd "el") #'vino-inv-ui-edit-location)
       (define-key map (kbd "ep") #'vino-inv-ui-edit-price)
       (define-key map (kbd "ed") #'vino-inv-ui-edit-date)
-      (define-key map (kbd "ev") #'vino-inv-ui-edit-volume)
       (define-key map (kbd "ec") #'vino-inv-ui-edit-comment)
       (define-key map (kbd "<RET>") #'vino-inv-ui-visit)))
   "Keymap for `vino-inv-ui-mode'.")
@@ -611,8 +594,6 @@ duplicates."
     (pcase (s-downcase key)
       (`"id" (propertize (number-to-string (vino-inv-bottle-id bottle))
                          'face 'font-lock-comment-face))
-      (`"volume" (propertize (number-to-string (vino-inv-bottle-volume bottle))
-                             'face 'font-lock-comment-face))
       (`"producer" (let ((str (vulpea-note-meta-get wine "producer")))
                      (string-match org-link-bracket-re str)
                      (match-string 2 str)))
@@ -819,18 +800,6 @@ If OTHER-WINDOW, visit the NOTE in another window."
                    :set [(= transaction-date $s2)]
                    :where (= transaction-id $s1)]
                txn-id date))
-    (vino-inv-ui-update)))
-
-(defun vino-inv-ui-edit-volume ()
-  "Edit volume of the bottle at point."
-  (interactive)
-  (let* ((bottle-id (vino-inv-ui-get-bottle-id))
-         (volume (read-number "Volume (ml): " 750)))
-    (emacsql (vino-inv-db)
-             [:update bottle
-              :set [(= volume $s2)]
-              :where (= bottle-id $s1)]
-             bottle-id volume)
     (vino-inv-ui-update)))
 
 (defun vino-inv-ui-edit-comment ()
