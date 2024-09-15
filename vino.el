@@ -516,6 +516,7 @@ resulting rating is still rounded to respect `vino-rating-precision'.")
     "base"
     "sur lie"
     "degorgee"
+    "volume"
     "country"
     "region"
     "appellation"
@@ -624,6 +625,10 @@ note as the only argument."
                        (if (string-empty-p x)
                            "N/A"
                          x))))
+         (volume (vino--repeat-while
+                   #'read-number
+                   (lambda (v) (< v 1))
+                   "Volume (ml): "))
          (origin (funcall-interactively vino-origin-select-fn))
          (grapes (vino-grapes-select))
          (alcohol (vino--repeat-while
@@ -661,7 +666,8 @@ note as the only argument."
                          ("vintage" . ,vintage)
                          ("base" . ,base-vintage)
                          ("sur lie" . ,sur-lie)
-                         ("degorgee" . ,degorgee))
+                         ("degorgee" . ,degorgee)
+                         ("volume" . ,volume))
                         origin
                         `(("grapes" . ,grapes)
                           ("alcohol" . ,alcohol)
