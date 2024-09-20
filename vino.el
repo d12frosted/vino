@@ -628,7 +628,7 @@ note as the only argument."
          (volume (vino--repeat-while
                    #'read-number
                    (lambda (v) (< v 1))
-                   "Volume (ml): "))
+                   "Volume mL: " 750))
          (origin (funcall-interactively vino-origin-select-fn))
          (grapes (vino-grapes-select))
          (alcohol (vino--repeat-while
