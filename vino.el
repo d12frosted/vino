@@ -639,7 +639,7 @@ note as the only argument."
                  #'read-number
                  (lambda (v) (< v 0))
                  "Sugar g/l (C-g for N/A): "))
-         (price (read-string "Price: "))
+         (price (s-presence (read-string "Price: ")))
 
          (title (format "%s %s %s"
                         (vulpea-note-title producer)
