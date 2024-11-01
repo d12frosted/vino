@@ -574,6 +574,8 @@ duplicates."
       (suppress-keymap map)
       (define-key map "q" #'vino-inv-ui-quit)
       (define-key map "g" #'vino-inv-ui-update)
+      (define-key map "m" #'vino-inv-ui-mark)
+      (define-key map "u" #'vino-inv-ui-unmark)
       (define-key map (kbd "el") #'vino-inv-ui-edit-location)
       (define-key map (kbd "ep") #'vino-inv-ui-edit-price)
       (define-key map (kbd "ed") #'vino-inv-ui-edit-date)
@@ -714,22 +716,24 @@ If OTHER-WINDOW, visit the NOTE in another window."
 (defun vino-inv-ui-edit-location ()
   "Edit location of the bottle at point."
   (interactive)
-  (let ((bottle-id (vino-inv-ui-get-bottle-id))
-        (location-id (vino-inv-location-id (vino-inv-ui-read-location)))
+  (let ((location-id (vino-inv-location-id (vino-inv-ui-read-location)))
         (db (vino-inv-db))
         (date (format-time-string "%Y-%m-%d")))
-    (emacsql-with-transaction db
-      (emacsql db [:update bottle
-                   :set (= location-id $s2)
-                   :where (= bottle-id $s1)]
-               bottle-id location-id)
-      (emacsql db
-               [:insert :into transaction [bottle-id
-                                           transaction-type
-                                           transaction-date
-                                           destination-location-id]
-                :values $v1]
-               `([,bottle-id move ,date ,location-id])))
+    (vino-inv-ui-dispatch-action
+     (lambda (bottle)
+       (let ((bottle-id (vino-inv-bottle-id bottle)))
+         (emacsql-with-transaction db
+           (emacsql db [:update bottle
+                                :set (= location-id $s2)
+                                :where (= bottle-id $s1)]
+                    bottle-id location-id)
+           (emacsql db
+                    [:insert :into transaction [bottle-id
+                                                transaction-type
+                                                transaction-date
+                                                destination-location-id]
+                             :values $v1]
+                    `([,bottle-id move ,date ,location-id]))))))
     (vino-inv-ui-update)))
 
 (defun vino-inv-ui-edit-price ()
@@ -813,6 +817,38 @@ If OTHER-WINDOW, visit the NOTE in another window."
               :where (= bottle-id $s1)]
              bottle-id comment)
     (vino-inv-ui-update)))
+
+(defun vino-inv-ui-mark ()
+  "Mark entry at point."
+  (interactive)
+  (tabulated-list-put-tag "*" t))
+
+(defun vino-inv-ui-unmark ()
+  "Mark entry at point."
+  (interactive)
+  (tabulated-list-put-tag " " t))
+
+(defun vino-inv-ui-dispatch-action (fn)
+  "Execute action FN over bottle under point or marked bottles.
+
+If there are marked bottles, FN is executed sequentially on each marked
+bottle. Otherwise FN is executed on bottled under point.
+
+FN is called with `vino-inv-bottle' as its only argument."
+  (let (print-list bottle cmd)
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (setq cmd (char-after))
+        (when (eq cmd ?\*)
+          ;; This is the key PKG-DESC.
+          (setq bottle (tabulated-list-get-id))
+          (push bottle print-list))
+        (forward-line)))
+    (-each (->> (or (--map (string-to-number (nth 1 (s-split ":" it))) print-list)
+                    (list (vino-inv-ui-get-bottle-id)))
+                (-map #'vino-inv-get-bottle))
+      fn)))
 
 (provide 'vino-inv)
 ;;; vino-inv.el ends here

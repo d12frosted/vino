@@ -9,6 +9,7 @@
 - Fix average score calculation using =amean= strategy.
 - Use =vulpea-select-multiple-from= when selecting grapes to avoid repetition.
 - Move =volume= property from bottle to wine entry.
+- Mark and batch actions in UI.
 
 ** v0.4.0
 
