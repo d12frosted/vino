@@ -556,15 +556,42 @@ duplicates."
 ;; * inventory ui
 
 (defvar vino-inv-ui-columns
-  [("ID" 5 t)
-   ("Producer" 26 t . (:pad-right 2))
-   ("Wine" 44 t . (:pad-right 2))
-   ("Vintage" 8 t . (:right-align t))
-   ("Price" 10 t . (:right-align t))
-   ("Price USD" 10 t . (:right-align t))
-   ("Date" 10 t)
-   ("Location" 16 t)
-   ("Comment" 20 t)])
+  `[("ID" 5 t)
+    ("Producer" 26 t . (:pad-right 2))
+    ("Wine" 44 t . (:pad-right 2))
+    ("Vintage" 8 t . (:right-align t))
+    ("Price" 12
+     ,(vino-inv-ui--column-sort-fn
+       "Price"
+       (lambda (a b)
+         (let ((c1 (nth 1 (s-split " " a)))
+               (c2 (nth 1 (s-split " " b))))
+          (if (string-equal c1 c2)
+              (< (string-to-number a) (string-to-number b))
+            (string-lessp c1 c2)))))
+     . (:right-align t))
+    ("Price USD" 12
+     ,(vino-inv-ui--column-sort-fn
+       "Price USD"
+       (lambda (a b) (< (string-to-number a) (string-to-number b))))
+     . (:right-align t))
+    ("Date" 10 t)
+    ("Location" 16 t)
+    ("Comment" 20 t)])
+
+;; ** column sorting
+
+(defvar-local vino-inv-ui--columns-idx nil)
+
+(defun vino-inv-ui--column-sort-fn (name comp)
+  "Return a sort function for column with NAME using COMP.
+
+COMP is called with two arguments, which are the values of the column
+itself."
+  (lambda (a b)
+    (let ((idx (alist-get name vino-inv-ui--columns-idx nil nil #'string-equal)))
+      (funcall comp (elt (elt a 1) idx) (elt (elt b 1) idx)))))
+
 
 ;; ** mode definition
 
@@ -664,7 +691,9 @@ duplicates."
                         vino-inv-ui-columns)))))
           tabulated-list-sort-key nil
           tabulated-list-use-header-line nil
-          header-line-format (vino-inv-ui-render-header bottles)))
+          header-line-format (vino-inv-ui-render-header bottles)
+          vino-inv-ui--columns-idx (seq-map-indexed (lambda (c idx) (cons (car c) idx))
+                                                    vino-inv-ui-columns)))
   (tabulated-list-init-header)
   (tabulated-list-print 'rembember-pos))
 
