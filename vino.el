@@ -771,7 +771,7 @@ The following things are updated:
          ;; calculate rating
          (values (--map (vulpea-meta-get it "total" 'number) ratings))
          (rating (if (functionp vino-entry-rating-average-method)
-                     (funcall vino-entry-rating-average-method values)
+                     (funcall vino-entry-rating-average-method values note)
                    (when values
                      (pcase vino-entry-rating-average-method
                        (`amean (/ (apply #'+ values)
