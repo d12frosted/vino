@@ -555,6 +555,17 @@ duplicates."
 
 ;; * inventory ui
 
+(defvar-local vino-inv-ui--columns-idx nil)
+
+(defun vino-inv-ui--column-sort-fn (name comp)
+  "Return a sort function for column with NAME using COMP.
+
+COMP is called with two arguments, which are the values of the column
+itself."
+  (lambda (a b)
+    (let ((idx (alist-get name vino-inv-ui--columns-idx nil nil #'string-equal)))
+      (funcall comp (elt (elt a 1) idx) (elt (elt b 1) idx)))))
+
 (defvar vino-inv-ui-columns
   `[("ID" 5 t)
     ("Producer" 26 t . (:pad-right 2))
@@ -578,20 +589,6 @@ duplicates."
     ("Date" 10 t)
     ("Location" 16 t)
     ("Comment" 20 t)])
-
-;; ** column sorting
-
-(defvar-local vino-inv-ui--columns-idx nil)
-
-(defun vino-inv-ui--column-sort-fn (name comp)
-  "Return a sort function for column with NAME using COMP.
-
-COMP is called with two arguments, which are the values of the column
-itself."
-  (lambda (a b)
-    (let ((idx (alist-get name vino-inv-ui--columns-idx nil nil #'string-equal)))
-      (funcall comp (elt (elt a 1) idx) (elt (elt b 1) idx)))))
-
 
 ;; ** mode definition
 
