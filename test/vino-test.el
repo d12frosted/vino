@@ -433,6 +433,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
       (vulpea-buffer-meta-remove "region")
       (save-buffer))
 
+    ;; set region/appellation
     (vino-entry-set-region id)
     (setq note (vulpea-db-get-by-id id))
     (expect (vulpea-note-meta-get note "region" 'note)
@@ -507,6 +508,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
       (vulpea-buffer-meta-remove "region")
       (save-buffer))
 
+    ;; set region/appellation
     (vino-entry-set-region id)
     (setq note (vulpea-db-get-by-id id))
     (expect (vulpea-note-meta-get note "region" 'note) :to-equal nil)
