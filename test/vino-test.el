@@ -422,7 +422,18 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
   (after-all (vino-test-teardown))
 
   (it "replace region metadata"
-    (vino-entry-set-region id "f9ef759b-f39e-4121-ab19-9ab3daa318be")
+    (setq vino-origin-select-fn
+          (lambda ()
+            `(("country" . ,(vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9"))
+              ("region" . ,(vulpea-db-get-by-id "f9ef759b-f39e-4121-ab19-9ab3daa318be")))))
+
+    ;; clean old values
+    (vulpea-utils-with-note (vulpea-db-get-by-id id)
+      (vulpea-buffer-meta-remove "appellation")
+      (vulpea-buffer-meta-remove "region")
+      (save-buffer))
+
+    (vino-entry-set-region id)
     (setq note (vulpea-db-get-by-id id))
     (expect (vulpea-note-meta-get note "region" 'note)
             :to-equal
@@ -443,6 +454,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
 - name :: Bombolieri BB
 - vintage :: 2017
+- country :: [[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]
+- region :: [[id:f9ef759b-f39e-4121-ab19-9ab3daa318be][Central Otago]]
 - grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
 - alcohol :: 13
 - sugar :: 1
@@ -451,7 +464,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - consumed :: 1
 - available :: 1
 - rating :: NA
-- region :: [[id:f9ef759b-f39e-4121-ab19-9ab3daa318be][Central Otago]]
 
 #+begin_quote
 Il Frappato stems from a dream which I had when I was a girl to make a wine that
@@ -484,7 +496,18 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              id)))
 
   (it "replace appellation metadata"
-    (vino-entry-set-region id "860f5505-d83c-4305-bc20-cb6a92f5d0be")
+    (setq vino-origin-select-fn
+          (lambda ()
+            `(("country" . ,(vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9"))
+              ("appellation" . ,(vulpea-db-get-by-id "860f5505-d83c-4305-bc20-cb6a92f5d0be")))))
+
+    ;; clean old values
+    (vulpea-utils-with-note (vulpea-db-get-by-id id)
+      (vulpea-buffer-meta-remove "appellation")
+      (vulpea-buffer-meta-remove "region")
+      (save-buffer))
+
+    (vino-entry-set-region id)
     (setq note (vulpea-db-get-by-id id))
     (expect (vulpea-note-meta-get note "region" 'note) :to-equal nil)
     (expect (vulpea-note-meta-get note "appellation" 'note)
@@ -505,6 +528,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - producer :: [[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]
 - name :: Bombolieri BB
 - vintage :: 2017
+- country :: [[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]
+- appellation :: [[id:860f5505-d83c-4305-bc20-cb6a92f5d0be][Etna DOC]]
 - grapes :: [[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]
 - alcohol :: 13
 - sugar :: 1
@@ -513,7 +538,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - consumed :: 1
 - available :: 1
 - rating :: NA
-- appellation :: [[id:860f5505-d83c-4305-bc20-cb6a92f5d0be][Etna DOC]]
 
 #+begin_quote
 Il Frappato stems from a dream which I had when I was a girl to make a wine that
