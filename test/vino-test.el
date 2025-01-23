@@ -555,8 +555,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (vino-test-teardown))
 
   (it "should update rating to average of ratings"
-    (vulpea-meta-set id "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
-                                    "be7777a9-7993-44cf-be9e-0ae65297a35d"))
+    (vulpea-utils-with-note (vulpea-db-get-by-id id)
+      (vulpea-buffer-meta-set "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
+                                          "be7777a9-7993-44cf-be9e-0ae65297a35d"))
+      (save-buffer))
     (vino-entry-update id)
     (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note)
             :to-equal
