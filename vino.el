@@ -790,11 +790,12 @@ The following things are updated:
       (vulpea-buffer-meta-set "producer" producer)
       (vulpea-buffer-meta-set "ratings" ratings)
       (vulpea-buffer-meta-set "rating" rating 'append)
-      (vulpea-buffer-meta-sort vino-entry-meta-props-order)
-      (save-buffer))
 
-    ;; run hook
-    (run-hook-with-args 'vino-entry-update-handle-functions note)))
+      ;; run hook
+      (run-hook-with-args 'vino-entry-update-handle-functions note)
+
+      (vulpea-buffer-meta-sort vino-entry-meta-props-order)
+      (save-buffer))))
 
 ;;;###autoload
 (defun vino-entry-rate (&optional note-or-id date extra-data)
