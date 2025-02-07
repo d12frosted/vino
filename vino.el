@@ -790,6 +790,8 @@ The following things are updated:
       (vulpea-buffer-meta-set "producer" producer)
       (vulpea-buffer-meta-set "ratings" ratings)
       (vulpea-buffer-meta-set "rating" rating 'append)
+      ;; we need to save buffer to make sure that db is synced, so hooks can use this data
+      (save-buffer)
 
       ;; run hook
       (run-hook-with-args 'vino-entry-update-handle-functions note)
