@@ -794,7 +794,9 @@ The following things are updated:
       (save-buffer)
 
       ;; run hook
-      (run-hook-with-args 'vino-entry-update-handle-functions note)
+      (run-hook-with-args
+       'vino-entry-update-handle-functions
+       (vulpea-db-get-by-id (vulpea-note-id note)))
 
       (vulpea-buffer-meta-sort vino-entry-meta-props-order)
       (save-buffer))))
