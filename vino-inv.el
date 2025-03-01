@@ -193,7 +193,7 @@ In case database doesn't exist yet, bootstrap it.
 The connection is cached. Use `vino-inv-db--close' to reset it."
   (let* ((file vino-inv-db-file)
          (exists (file-exists-p file))
-         (db (or vino-inv-db--connection (emacsql-sqlite file))))
+         (db (or vino-inv-db--connection (emacsql-sqlite-open file))))
     (setq vino-inv-db--connection db)
     (unless exists
       (vino-inv-db--setup db))
