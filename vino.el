@@ -626,9 +626,9 @@ note as the only argument."
                            "N/A"
                          x))))
          (volume (vino--repeat-while
-                   #'read-number
-                   (lambda (v) (< v 1))
-                   "Volume mL: " 750))
+                  #'read-number
+                  (lambda (v) (< v 1))
+                  "Volume mL: " 750))
          (origin (funcall-interactively vino-origin-select-fn))
          (grapes (vino-grapes-select))
          (alcohol (vino--repeat-while
@@ -658,16 +658,16 @@ note as the only argument."
                        #'cdr
                        (append
                         `(("carbonation" . ,carbonation)
-                         ("carbonation method" . ,carbonation-method)
-                         ("colour" . ,colour)
-                         ("sweetness" . ,sweetness)
-                         ("producer" . ,producer)
-                         ("name" . ,name)
-                         ("vintage" . ,vintage)
-                         ("base" . ,base-vintage)
-                         ("sur lie" . ,sur-lie)
-                         ("degorgee" . ,degorgee)
-                         ("volume" . ,volume))
+                          ("carbonation method" . ,carbonation-method)
+                          ("colour" . ,colour)
+                          ("sweetness" . ,sweetness)
+                          ("producer" . ,producer)
+                          ("name" . ,name)
+                          ("vintage" . ,vintage)
+                          ("base" . ,base-vintage)
+                          ("sur lie" . ,sur-lie)
+                          ("degorgee" . ,degorgee)
+                          ("volume" . ,volume))
                         origin
                         `(("grapes" . ,grapes)
                           ("alcohol" . ,alcohol)
@@ -1461,13 +1461,21 @@ Return `vulpea-note'."
 
 ;;; Price
 
-;;;###autoload
-(defun vino-price-read (vino)
-  "Read the price for VINO entry."
-  (if-let ((price (car (vino-entry-price vino))))
-      (read-string (format "Price (default %s): " price)
-                   nil nil price)
-    (read-string "Price: ")))
+;;;###autoload;
+(defun vino-set-price (&optional note price)
+  "Interactively set a new PRICE for a wine NOTE."
+  (interactive)
+  (let* ((note (or note (vino-entry-note-get-dwim)))
+         (price-new (or price (read-string "Price: ")))
+         (price-old (vulpea-note-meta-get note "price")))
+    (unless (string-equal price-new price-old)
+      (when price-old
+        (vulpea-buffer-meta-set
+         "price private"
+         (-uniq (cons price-old (vulpea-note-meta-get-list note "price private")))))
+      (vulpea-buffer-meta-set "price" price-new)
+      (vulpea-buffer-meta-set "price date" (format-time-string "%F"))
+      (vulpea-buffer-meta-sort vino-entry-meta-props-order))))
 
 
 ;;; Utilities
