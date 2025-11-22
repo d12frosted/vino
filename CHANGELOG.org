@@ -1,6 +1,24 @@
 * Changelog
 
-** TBD
+** v0.5.0
+
+This release migrates Vino to Vulpea v2, which removes the org-roam dependency and introduces breaking changes to the setup process. All documentation has been updated to reflect these changes, including comprehensive troubleshooting guides and improved examples.
+
+*Breaking changes*
+
+- *Vulpea v2 Migration*: Vino now requires Vulpea v2, which no longer depends on org-roam.
+- *Setup Changes*: The =vulpea-setup= function no longer exists. Users must configure =vulpea-db-location=, =vulpea-db-sync-directories=, and enable =vulpea-db-autosync-mode= manually.
+- *Database Sync*: Replace =org-roam-db-sync= with =vulpea-db-sync-full-scan=.
+- *Template Syntax*: Template file-name patterns now use =${timestamp}= instead of =%<%Y%m%d%H%M%S>=.
+- *Directory References*: Templates and configuration now reference =vulpea-default-notes-directory= instead of =org-roam-directory=.
+- *Function Renames*: =org-roam-alias-add= replaced with =vulpea-buffer-alias-add=.
+- *Internal Function*: =vino--slug= removed in favor of =vulpea-title-to-slug=.
+
+*Features*
+
+- New function: =vino-entry-set-price= to update wine entry prices.
+- Add "Price Public" column to inventory UI.
+- Inventory: Add hook for location change.
 
 *Fixes*
 
@@ -10,6 +28,24 @@
 - Use =vulpea-select-multiple-from= when selecting grapes to avoid repetition.
 - Move =volume= property from bottle to wine entry.
 - Mark and batch actions in UI.
+- Fix emacsql invocation in inventory module.
+- Add explicit =vulpea-db-update-file= calls after buffer modifications to ensure database consistency.
+- Reload notes before running update hooks.
+- Save buffer before running update hooks.
+
+*Documentation*
+
+- *Complete rewrite* of setup instructions for Vulpea v2.
+- Add prominent migration warning for existing users.
+- Add Quick Start Checklist.
+- Add comprehensive Troubleshooting section to FAQ.
+- Add visual note relationship diagram.
+- Add progressive learning path for rating configuration (Beginner → Intermediate → Advanced → Expert).
+- Document best practices for extension handlers with proper database synchronization.
+- Add missing function documentation (=vino-entry-set-price=, inventory functions).
+- Fix all code examples to work with Vulpea v2.
+- Add intermediate rating configuration example.
+- Improve clarity around template variables and their usage.
 
 ** v0.4.0
 
