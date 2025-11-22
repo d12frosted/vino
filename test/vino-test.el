@@ -601,8 +601,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                                           "be7777a9-7993-44cf-be9e-0ae65297a35d"))
       (save-buffer)
       (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))
-    ;; Force database sync since vulpea-db-update-file is async
-    (vulpea-db-sync-full-scan 'force)
     (vino-entry-update id)
     (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note)
             :to-equal
@@ -666,8 +664,6 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                             ("property_4" 5 5)
                             ("property_5" 5 6))))
     (setq note (vino-rating--create rating))
-    ;; Force database sync since vulpea-db-update-file is async
-    (vulpea-db-sync-full-scan 'force)
     (setf (vino-rating-wine rating) (vulpea-db-get-by-id id))
     (expect note :not :to-be nil)
     (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note) :to-equal (list note))

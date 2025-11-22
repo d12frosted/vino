@@ -1042,7 +1042,7 @@ Return `vulpea-note'."
             (plist-get vino-region-template :meta))
      :body (plist-get vino-region-template :body)
      :context (append
-               (list :country (vulpea--title-to-slug (vulpea-note-title country)))
+               (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-region-template :context))
      :properties (plist-get vino-region-template :properties)
      :unnarrowed t
@@ -1084,7 +1084,7 @@ Return `vulpea-note'."
             (plist-get vino-appellation-template :meta))
      :body (plist-get vino-appellation-template :body)
      :context (append
-               (list :country (vulpea--title-to-slug (vulpea-note-title country)))
+               (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-appellation-template :context))
      :properties (plist-get vino-appellation-template :properties)
      :unnarrowed t
