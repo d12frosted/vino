@@ -54,8 +54,8 @@ a call to `save-match-data', as `format-spec' modifies that."
   "Directory containing test notes.")
 
 (defun vino-test-abs-path (file-path)
-  "Get absolute FILE-PATH from `org-roam-directory'."
-  (expand-file-name file-path org-roam-directory))
+  "Get absolute FILE-PATH from `vulpea-default-notes-directory'."
+  (expand-file-name file-path vulpea-default-notes-directory))
 
 (defun vino-test-map-file (fn file)
   "Execute FN with buffer visiting FILE."
@@ -75,19 +75,19 @@ a call to `save-match-data', as `format-spec' modifies that."
 
 (defun vino-test-init-in (dir)
   "Initialize testing environment in DIR."
-  (setq org-roam-directory dir
-        org-roam-db-location (expand-file-name "org-roam.db" dir)
-        vino-rating-props '((1 . (("score" 20)))))
-  (vulpea-db-reset-tables)
+  (let ((temp-file (make-temp-file "vulpea-test-" nil ".db")))
+    (setq vulpea-db-location temp-file
+          vulpea-db-sync-directories (list dir)
+          vulpea-default-notes-directory dir
+          vulpea-db--connection nil
+          vino-rating-props '((1 . (("score" 20))))))
   (vino-setup)
-  (vulpea-db-autosync-enable)
-  (org-roam-db-autosync-enable))
+  (vulpea-db-autosync-mode +1)
+  (vulpea-db-sync-full-scan 'force))
 
 (defun vino-test-teardown ()
   "Teardown testing environment."
-  (vulpea-db-autosync-disable)
-  (org-roam-db-autosync-disable)
-  (delete-file org-roam-db-location))
+  (vulpea-db-autosync-mode -1))
 
 
 
@@ -104,50 +104,43 @@ ID (mandatory) is id slot of the note.
 
 TITLE (mandatory) is title slot of the note.
 
-BASENAME (optional) is basename of note file. E.g. without
-directory and extension. When omitted, BASENAME is calculated as
-`org-roam-node-slug` of TITLE.
+BASENAME (optional) is basename of note file. E.g. without directory and
+extension. When omitted, BASENAME is calculated as slug of TITLE.
 
-CATEGORY (optional) is category property inside properties slot
-of the note. When omitted, equals to BASENAME.
+CATEGORY (optional) is category property inside properties slot of the
+note. When omitted, equals to BASENAME.
 
-TAGS (optional) is tags slot of the future note. When omitted,
-equals to (TYPE wine) list. Unfortunately, since tags list order
-is fixed, but unpredictable, there is no generic solution for
-now.
+TAGS (optional) is tags slot of the future note. When omitted, equals
+to (TYPE wine) list. Unfortunately, since tags list order is fixed, but
+unpredictable, there is no generic solution for now.
 
 META (optional) is meta slot of the future note.
 
 LINKS (optional) is list of (type . link) pairs."
   (let* ((basename (or basename
-                       (org-roam-node-slug
-                        (org-roam-node-create :title title))))
+                       (vulpea--title-to-slug title)))
          (category (or category basename))
          (path (expand-file-name
                 (format "wine/%s/%s.org" type basename)
-                org-roam-directory))
-         (tags (or tags (list "wine" type))))
+                vulpea-default-notes-directory))
+         (tags (or tags (list "wine" type)))
+         (attach-dir-val (expand-file-name
+                          (format "wine/%s/data/%s/%s"
+                                  type
+                                  (s-left 2 id)
+                                  (s-chop-prefix (s-left 2 id) id))
+                          vulpea-default-notes-directory)))
     (make-vulpea-note
      :path path
      :title title
      :tags tags
      :level 0
+     :pos 0
      :id id
      :links links
-     :properties (list
-                  (cons "CATEGORY" category)
-                  (cons "ID" id)
-                  (cons "BLOCKED" "")
-                  (cons "ALLTAGS" ":wine:")
-                  (cons "FILE" path)
-                  (cons "PRIORITY" "B"))
+     :properties `((ID . ,id))
      :meta meta
-     :attach-dir (expand-file-name
-                  (format "wine/%s/data/%s/%s"
-                          type
-                          (s-left 2 id)
-                          (s-chop-prefix (s-left 2 id) id))
-                  org-roam-directory))))
+     :attach-dir attach-dir-val)))
 
 (cl-defun mock-vulpea-note (&key type title tags)
   "Prepare system for note creation.
@@ -171,7 +164,7 @@ is fixed, but unpredictable, there is no generic solution for
 now."
   (let* ((id (org-id-new))
          (ts (current-time))
-         (slug (org-roam-node-slug (org-roam-node-create :title title)))
+         (slug (vulpea--title-to-slug title))
          (basename (format "%s-%s"
                            (format-time-string "%Y%m%d%H%M%S" ts)
                            slug)))
@@ -222,11 +215,11 @@ and replaces VALUES value with `cdr' of VALUES."
         (tempvalues (make-symbol "values")))
     `(let ((,tempres ,res)
            (,tempvalues ,values))
-       (lambda (&rest _)
-         ,orig-initform
-         (setq ,tempres (car ,tempvalues)
-               ,tempvalues (cdr ,tempvalues))
-         ,tempres))))
+      (lambda (&rest _)
+        ,orig-initform
+        (setq ,tempres (car ,tempvalues)
+         ,tempvalues (cdr ,tempvalues))
+        ,tempres))))
 
 (defun vino-spy-on (original symbol &optional keyword arg)
   "Create a spy (mock) for the function SYMBOL.

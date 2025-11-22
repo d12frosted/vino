@@ -576,6 +576,16 @@ itself."
     ("Producer" 26 t . (:pad-right 2))
     ("Wine" 44 t . (:pad-right 2))
     ("Vintage" 8 t . (:right-align t))
+    ("Price Public" 12
+     ,(vino-inv-ui--column-sort-fn
+       "Price"
+       (lambda (a b)
+         (let ((c1 (nth 1 (s-split " " a)))
+               (c2 (nth 1 (s-split " " b))))
+          (if (string-equal c1 c2)
+              (< (string-to-number a) (string-to-number b))
+            (string-lessp c1 c2)))))
+     . (:right-align t))
     ("Price" 12
      ,(vino-inv-ui--column-sort-fn
        "Price"
@@ -631,6 +641,7 @@ itself."
       (`"wine" (propertize (vulpea-note-meta-get wine "name")
                            'face 'link))
       (`"vintage" (or (vulpea-note-meta-get wine "vintage") "NV"))
+      (`"price public" (or (vulpea-note-meta-get wine "price") ""))
       (`"price" (vino-inv-bottle-price bottle))
       (`"price usd" (vino-inv-bottle-price-usd bottle))
       (`"date" (propertize (vino-inv-bottle-purchase-date bottle)
