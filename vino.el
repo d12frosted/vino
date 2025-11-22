@@ -4,8 +4,8 @@
 ;;
 ;; Author: Boris Buliga <boris@d12frosted.io>
 ;; Maintainer: Boris Buliga <boris@d12frosted.io>
-;; Version: 0.4.0
-;; Package-Requires: ((emacs "29.1") (vulpea "0.3") (org-roam "2.0.0") (dash "2.19.1") (s "1.13.0"))
+;; Version: 0.4.1
+;; Package-Requires: ((emacs "29.1") (vulpea "2.0.0") (dash "2.19.1") (s "1.13.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -36,10 +36,9 @@
 ;;; Code:
 
 (require 'vulpea)
-(require 'org-roam)
 
-
 ;;; Configurations variables
+;;
 
 ;;;###autoload
 (defvar vino-carbonation-types
@@ -81,8 +80,8 @@ Orange wine is marked as white.")
                      doux))
   "List of valid sweetness levels per carbonation type.")
 
-
 ;;; Hooks
+;;
 
 (defvar vino-entry-create-handle-functions nil
   "Abnormal hooks to run after vino entry is created.
@@ -100,8 +99,8 @@ Each function accepts a `vulpea-note'.")
 Each function accepts a `vulpea-note' and extra-data passed to
 `vino-entry-rate'.")
 
-
 ;;; Selection config
+;;
 
 (defvar vino-origin-select-fn #'vino-origin-select-by-country
   "Interactive function to select wine's origin.
@@ -132,8 +131,8 @@ You can implement your own, more sophisticated selection function based
 on your situation. For example, you can pick extra routes based on the
 country.")
 
-
 ;;; Setup
+;;
 
 (defun vino-setup ()
   "Setup `vino' library."
@@ -148,8 +147,8 @@ country.")
      "region"
      "appellation")))
 
-
 ;;; Rating
+;;
 
 ;;;###autoload
 (cl-defstruct (vino-rating
@@ -257,7 +256,7 @@ When the value is nil, no rounding happens.")
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -453,8 +452,10 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
       (vulpea-buffer-meta-set
        "ratings"
        (cons note (vulpea-note-meta-get-list wine-note "ratings" 'note)))
-      (save-buffer))
-    (vino-entry-update (vulpea-db-get-by-id (vulpea-note-id wine-note)))
+      (save-buffer)
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))
+    ;; pass ID so vino-entry-update can get the note from file/buffer
+    (vino-entry-update (vulpea-note-id wine-note))
     (run-hook-with-args 'vino-rating-create-handle-functions note extra-data)
     note))
 
@@ -470,7 +471,7 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -695,7 +696,8 @@ explicitly."
          (grapes (or grapes (vino-grapes-select))))
     (vulpea-utils-with-note note
       (vulpea-buffer-meta-set "grapes" grapes 'append)
-      (save-buffer))))
+      (save-buffer)
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))))
 
 ;;;###autoload
 (defun vino-entry-set-region (&optional note-or-id)
@@ -714,7 +716,8 @@ REGION may be either region or appellation."
       (--each origin
         (vulpea-buffer-meta-set (car it) (cdr it)))
       (vulpea-buffer-meta-sort vino-entry-meta-props-order)
-      (save-buffer))))
+      (save-buffer)
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))))
 
 ;;;###autoload
 (defun vino-entry-update (&optional note-or-id)
@@ -747,6 +750,9 @@ The following things are updated:
                    (vulpea-note-meta-get-list note "ratings" 'note)
                    (--map
                     (vulpea-utils-with-note it
+                      ;; ensure rating file is synced to database before reading
+                      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer)))
+
                       ;; set title
                       (setq rating-title (format "%s - %s" title (vulpea-note-meta-get it "date")))
                       (vulpea-buffer-title-set rating-title)
@@ -760,6 +766,7 @@ The following things are updated:
 
                       ;; save buffer
                       (save-buffer)
+                      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer)))
 
                       ;; return note id, so we can reload latest state from db;
                       ;; we could optimize title, but meta is a little bit more messy
@@ -792,6 +799,7 @@ The following things are updated:
       (vulpea-buffer-meta-set "rating" rating 'append)
       ;; we need to save buffer to make sure that db is synced, so hooks can use this data
       (save-buffer)
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer)))
 
       ;; run hook
       (run-hook-with-args
@@ -799,7 +807,8 @@ The following things are updated:
        (vulpea-db-get-by-id (vulpea-note-id note)))
 
       (vulpea-buffer-meta-sort vino-entry-meta-props-order)
-      (save-buffer))))
+      (save-buffer)
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))))
 
 ;;;###autoload
 (defun vino-entry-rate (&optional note-or-id date extra-data)
@@ -897,14 +906,14 @@ case, linked `vino-entry' is extracted."
 
 ;;;###autoload
 (defvar vino-country-template
-  '(:file-name "wine/country/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/country/${timestamp}-${slug}.org"
     :tags ("wine" "country"))
   "Capture template for region entry.
 
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -923,14 +932,14 @@ See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defvar vino-region-template
-  '(:file-name "wine/region/${country}/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/region/${country}/${timestamp}-${slug}.org"
     :tags ("wine" "region"))
   "Capture template for region entry.
 
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -950,14 +959,14 @@ See `vulpea-create' for more information.")
 
 ;;;###autoload
 (defvar vino-appellation-template
-  '(:file-name "wine/appellation/${country}/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/appellation/${country}/${timestamp}-${slug}.org"
     :tags ("wine" "appellation"))
   "Capture template for appellation entry.
 
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -1033,7 +1042,7 @@ Return `vulpea-note'."
             (plist-get vino-region-template :meta))
      :body (plist-get vino-region-template :body)
      :context (append
-               (list :country (vino--slug (vulpea-note-title country)))
+               (list :country (vulpea--title-to-slug (vulpea-note-title country)))
                (plist-get vino-region-template :context))
      :properties (plist-get vino-region-template :properties)
      :unnarrowed t
@@ -1075,7 +1084,7 @@ Return `vulpea-note'."
             (plist-get vino-appellation-template :meta))
      :body (plist-get vino-appellation-template :body)
      :context (append
-               (list :country (vino--slug (vulpea-note-title country)))
+               (list :country (vulpea--title-to-slug (vulpea-note-title country)))
                (plist-get vino-appellation-template :context))
      :properties (plist-get vino-appellation-template :properties)
      :unnarrowed t
@@ -1283,14 +1292,14 @@ an error."
 
 ;;;###autoload
 (defvar vino-grape-template
-  '(:file-name "wine/grape/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/grape/${timestamp}-${slug}.org"
     :tags ("wine" "grape"))
   "Capture template for grape entry.
 
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -1314,18 +1323,21 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let ((title (or title (read-string "Grape: "))))
-    (vulpea-create
-     title
-     (plist-get vino-grape-template :file-name)
-     :tags (seq-union (plist-get vino-grape-template :tags)
-                      '("wine" "grape"))
-     :head (plist-get vino-grape-template :head)
-     :body (plist-get vino-grape-template :body)
-     :context (plist-get vino-grape-template :context)
-     :properties (plist-get vino-grape-template :properties)
-     :unnarrowed t
-     :immediate-finish t)))
+  (let* ((title (or title (read-string "Grape: ")))
+         (note (vulpea-create
+                title
+                (plist-get vino-grape-template :file-name)
+                :tags (seq-union (plist-get vino-grape-template :tags)
+                                 '("wine" "grape"))
+                :head (plist-get vino-grape-template :head)
+                :body (plist-get vino-grape-template :body)
+                :context (plist-get vino-grape-template :context)
+                :properties (plist-get vino-grape-template :properties)
+                :unnarrowed t
+                :immediate-finish t)))
+    ;; sync to database for future queries
+    (vulpea-db-update-file (vulpea-note-path note))
+    note))
 
 ;;;###autoload
 (defun vino-grape-find-file ()
@@ -1362,9 +1374,9 @@ Return `vulpea-note'."
                       (vulpea-db-query-by-tags-every
                        '("wine" "grape")))))
            (vulpea-utils-with-note base
-             (org-roam-alias-add (vulpea-note-title note))
-             (org-roam-db-update-file
-              (buffer-file-name (buffer-base-buffer))))
+             (vulpea-buffer-alias-add (vulpea-note-title note))
+             (save-buffer)
+             (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))
            (setf (vulpea-note-title base) (vulpea-note-title note))
            base))
         (_ note)))))
@@ -1389,14 +1401,14 @@ Return a list, where each entry is a `vulpea-note'."
 
 ;;;###autoload
 (defvar vino-producer-template
-  '(:file-name "wine/producer/%<%Y%m%d%H%M%S>-${slug}.org"
+  '(:file-name "wine/producer/${timestamp}-${slug}.org"
     :tags ("wine" "producer"))
   "Capture template for producer entry.
 
 Template is a property list accepting following values:
 
   :file-name (mandatory) - file name relative to
-  `org-roam-directory'
+  `vulpea-default-notes-directory'
 
   :head (optional) - extra note header
 
@@ -1420,18 +1432,21 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let ((title (or title (read-string "Producer: "))))
-    (vulpea-create
-     title
-     (plist-get vino-producer-template :file-name)
-     :tags (seq-union (plist-get vino-producer-template :tags)
-                      '("wine" "producer"))
-     :head (plist-get vino-producer-template :head)
-     :body (plist-get vino-producer-template :body)
-     :context (plist-get vino-producer-template :context)
-     :properties (plist-get vino-producer-template :properties)
-     :unnarrowed t
-     :immediate-finish t)))
+  (let* ((title (or title (read-string "Producer: ")))
+         (note (vulpea-create
+                title
+                (plist-get vino-producer-template :file-name)
+                :tags (seq-union (plist-get vino-producer-template :tags)
+                                 '("wine" "producer"))
+                :head (plist-get vino-producer-template :head)
+                :body (plist-get vino-producer-template :body)
+                :context (plist-get vino-producer-template :context)
+                :properties (plist-get vino-producer-template :properties)
+                :unnarrowed t
+                :immediate-finish t)))
+    ;; sync to database for future queries
+    (vulpea-db-update-file (vulpea-note-path note))
+    note))
 
 ;;;###autoload
 (defun vino-producer-find-file ()
@@ -1534,44 +1549,6 @@ ARGS are passed to FN."
     (setq quit-flag nil)
     (when (null continue)
       value)))
-
-(defun vino--slug (title)
-  "Create slug from TITLE."
-  (let ((slug-trim-chars '(;; Combining Diacritical Marks https://www.unicode.org/charts/PDF/U0300.pdf
-                           768 ; U+0300 COMBINING GRAVE ACCENT
-                           769 ; U+0301 COMBINING ACUTE ACCENT
-                           770 ; U+0302 COMBINING CIRCUMFLEX ACCENT
-                           771 ; U+0303 COMBINING TILDE
-                           772 ; U+0304 COMBINING MACRON
-                           774 ; U+0306 COMBINING BREVE
-                           775 ; U+0307 COMBINING DOT ABOVE
-                           776 ; U+0308 COMBINING DIAERESIS
-                           777 ; U+0309 COMBINING HOOK ABOVE
-                           778 ; U+030A COMBINING RING ABOVE
-                           779 ; U+030B COMBINING DOUBLE ACUTE ACCENT
-                           780 ; U+030C COMBINING CARON
-                           795 ; U+031B COMBINING HORN
-                           803 ; U+0323 COMBINING DOT BELOW
-                           804 ; U+0324 COMBINING DIAERESIS BELOW
-                           805 ; U+0325 COMBINING RING BELOW
-                           807 ; U+0327 COMBINING CEDILLA
-                           813 ; U+032D COMBINING CIRCUMFLEX ACCENT BELOW
-                           814 ; U+032E COMBINING BREVE BELOW
-                           816 ; U+0330 COMBINING TILDE BELOW
-                           817 ; U+0331 COMBINING MACRON BELOW
-                           )))
-    (cl-flet* ((nonspacing-mark-p (char) (memq char slug-trim-chars))
-               (strip-nonspacing-marks (s) (string-glyph-compose
-                                            (apply #'string
-                                                   (seq-remove #'nonspacing-mark-p
-                                                               (string-glyph-decompose s)))))
-               (cl-replace (title pair) (replace-regexp-in-string (car pair) (cdr pair) title)))
-      (let* ((pairs `(("[^[:alnum:][:digit:]]" . "-") ;; convert anything not alphanumeric
-                      ("__*" . "_")                   ;; remove sequential underscores
-                      ("^_" . "")                     ;; remove starting underscore
-                      ("_$" . "")))                   ;; remove ending underscore
-             (slug (-reduce-from #'cl-replace (strip-nonspacing-marks title) pairs)))
-        (downcase slug)))))
 
 
 

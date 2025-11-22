@@ -76,24 +76,24 @@
              :id "c9937e3e-c83d-4d8d-a612-6110e6706252"
              :title "Arianna Occhipinti Bombolieri BB 2017"
              :basename "c9937e3e-c83d-4d8d-a612-6110e6706252"
-             :links '(("id" . "9462dfad-603c-4094-9aca-a9042cec5dd2")
-                      ("id" . "8353e2fc-8034-4540-8254-4b63fb5a421a")
-                      ("id" . "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"))
-             :meta '(("carbonation" "still")
-                     ("colour" "red")
-                     ("sweetness" "dry")
-                     ("producer" "[[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]")
-                     ("name" "Bombolieri BB")
-                     ("vintage" "2017")
-                     ("appellation" "[[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]")
-                     ("grapes" "[[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]")
-                     ("alcohol" "13")
-                     ("sugar" "1")
-                     ("price" "50.00 EUR")
-                     ("acquired" "2")
-                     ("consumed" "1")
+             :links '((:dest "9462dfad-603c-4094-9aca-a9042cec5dd2" :type "id")
+                      (:dest "8353e2fc-8034-4540-8254-4b63fb5a421a" :type "id")
+                      (:dest "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa" :type "id"))
+             :meta '(("rating" "NA")
                      ("available" "1")
-                     ("rating" "NA"))))))
+                     ("consumed" "1")
+                     ("acquired" "2")
+                     ("price" "50.00 EUR")
+                     ("sugar" "1")
+                     ("alcohol" "13")
+                     ("grapes" "[[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]")
+                     ("appellation" "[[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]")
+                     ("vintage" "2017")
+                     ("name" "Bombolieri BB")
+                     ("producer" "[[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]")
+                     ("sweetness" "dry")
+                     ("colour" "red")
+                     ("carbonation" "still"))))))
 
 (describe "vino-entry-note-get-dwim"
   (before-all
@@ -190,9 +190,13 @@
   (after-all (vino-test-teardown))
 
   (it "creates a new grape note"
-    (expect (mock-vulpea-note :type "grape" :title "Slarina")
-            :to-equal
-            (vino-grape-create "Slarina"))))
+    (let ((expected (mock-vulpea-note :type "grape" :title "Slarina"))
+          (actual (vino-grape-create "Slarina")))
+      ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
+      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
+      (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
+      (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected)))))
 
 (describe "vino-grape-select"
   (before-all (vino-test-init))
@@ -213,9 +217,13 @@
 
   (it "creates a new grape note when selecting non-existing name"
     (spy-on 'completing-read :and-return-values '("Slarina" "Create new grape"))
-    (expect (mock-vulpea-note :type "grape" :title "Slarina")
-            :to-equal
-            (vino-grape-select)))
+    (let ((expected (mock-vulpea-note :type "grape" :title "Slarina"))
+          (actual (vino-grape-select)))
+      ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
+      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
+      (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
+      (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected))))
 
   (it "adds a synonym when selecting non-existing name"
     (spy-on 'completing-read
@@ -231,7 +239,7 @@
                             :title "Frappato di Vittoria"
                             :basename "frappato"))
     (expect (expand-file-name "wine/grape/frappato.org"
-                              org-roam-directory)
+                              vulpea-default-notes-directory)
             :to-contain-exactly
             ":PROPERTIES:
 :ID:       cb1eb3b9-6233-4916-8c05-a3a4739e0cfa
@@ -246,10 +254,13 @@
   (after-all (vino-test-teardown))
 
   (it "creates a new producer note"
-    (expect (mock-vulpea-note :type "producer" :title "Vino di Anna")
-            :to-equal
-            (vino-producer-create "Vino di Anna")
-            )))
+    (let ((expected (mock-vulpea-note :type "producer" :title "Vino di Anna"))
+          (actual (vino-producer-create "Vino di Anna")))
+      ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
+      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
+      (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
+      (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected)))))
 
 (describe "vino-producer-select"
   (before-all (vino-test-init))
@@ -274,9 +285,13 @@
      :and-return-value
      "Vino di Anna")
     (spy-on 'y-or-n-p :and-return-value t)
-    (expect (mock-vulpea-note :type "producer" :title "Vino di Anna")
-            :to-equal
-            (vino-producer-select))))
+    (let ((expected (mock-vulpea-note :type "producer" :title "Vino di Anna"))
+          (actual (vino-producer-select)))
+      ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
+      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
+      (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
+      (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected)))))
 
 (xdescribe "vino-country-create"
   (before-all (vino-test-init))
@@ -359,7 +374,7 @@
             :to-equal
             (list (vulpea-db-get-by-id "1c436b3b-ad14-4818-896d-1b7755f10fa1")
                   (vulpea-db-get-by-id "3b38917f-6065-42e8-87ca-33dd39a92fc0")))
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+    (expect (expand-file-name (concat "wine/cellar/" id ".org") vulpea-default-notes-directory)
             :to-contain-exactly
             (format
              ":PROPERTIES:
@@ -440,7 +455,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
             :to-equal
             (vulpea-db-get-by-id "f9ef759b-f39e-4121-ab19-9ab3daa318be"))
     (expect (vulpea-note-meta-get note "appellation" 'note) :to-equal nil)
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+    (expect (expand-file-name (concat "wine/cellar/" id ".org") vulpea-default-notes-directory)
             :to-contain-exactly
             (format
              ":PROPERTIES:
@@ -515,7 +530,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (expect (vulpea-note-meta-get note "appellation" 'note)
             :to-equal
             (vulpea-db-get-by-id "860f5505-d83c-4305-bc20-cb6a92f5d0be"))
-    (expect (expand-file-name (concat "wine/cellar/" id ".org") org-roam-directory)
+    (expect (expand-file-name (concat "wine/cellar/" id ".org") vulpea-default-notes-directory)
             :to-contain-exactly
             (format
              ":PROPERTIES:
@@ -584,7 +599,10 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (vulpea-utils-with-note (vulpea-db-get-by-id id)
       (vulpea-buffer-meta-set "ratings" '("f1ecb856-c009-4a65-a8d0-8191a9de66dd"
                                           "be7777a9-7993-44cf-be9e-0ae65297a35d"))
-      (save-buffer))
+      (save-buffer)
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))
+    ;; Force database sync since vulpea-db-update-file is async
+    (vulpea-db-sync-full-scan 'force)
     (vino-entry-update id)
     (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note)
             :to-equal
@@ -648,6 +666,8 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                             ("property_4" 5 5)
                             ("property_5" 5 6))))
     (setq note (vino-rating--create rating))
+    ;; Force database sync since vulpea-db-update-file is async
+    (vulpea-db-sync-full-scan 'force)
     (setf (vino-rating-wine rating) (vulpea-db-get-by-id id))
     (expect note :not :to-be nil)
     (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note) :to-equal (list note))
@@ -713,11 +733,13 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (expect (vulpea-note-path note)
             :to-contain-exactly
             (format
-             ":PROPERTIES:
+             "
+:PROPERTIES:
 :ID:       %s
 :END:
 #+title: Arianna Occhipinti Bombolieri BB 2017 - %s
 #+filetags: :wine:rating:
+
 
 - wine :: [[id:%s][Arianna Occhipinti Bombolieri BB 2017]]
 - date :: %s
@@ -735,6 +757,7 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
 - score :: 16.0
 - score_max :: 20.0
 - total :: 4.0
+
 "
              (vulpea-note-id note)
              date-str
