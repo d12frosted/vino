@@ -118,7 +118,7 @@ META (optional) is meta slot of the future note.
 
 LINKS (optional) is list of (type . link) pairs."
   (let* ((basename (or basename
-                       (vulpea--title-to-slug title)))
+                       (vulpea-title-to-slug title)))
          (category (or category basename))
          (path (expand-file-name
                 (format "wine/%s/%s.org" type basename)
@@ -164,7 +164,7 @@ is fixed, but unpredictable, there is no generic solution for
 now."
   (let* ((id (org-id-new))
          (ts (current-time))
-         (slug (vulpea--title-to-slug title))
+         (slug (vulpea-title-to-slug title))
          (basename (format "%s-%s"
                            (format-time-string "%Y%m%d%H%M%S" ts)
                            slug)))
