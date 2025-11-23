@@ -1,13 +1,13 @@
 ;;; vino-inv.el --- Inventory solution for Vino -*- lexical-binding: t; -*-
 ;;
-;; Copyright (c) 2023, Boris Buliga <boris@d12frosted.io>
+;; Copyright (c) 2015-2025, Boris Buliga <boris@d12frosted.io>
 ;;
 ;; Author: Boris Buliga <boris@d12frosted.io>
 ;; Maintainer: Boris Buliga <boris@d12frosted.io>
 ;;
 ;; Created: 06 Nov 2023
 ;;
-;; URL: https://github.com/d12frosted/
+;; URL: https://github.com/d12frosted/vino
 ;;
 ;; License: GPLv3
 ;;
@@ -212,31 +212,31 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
 (defun vino-inv-db--setup (db)
   "Setup inventory database DB."
   (emacsql db [:create-table location :if :not :exists
-                             ([(location-id integer :primary-key :autoincrement)
-                               (name :not-null :unique)])])
+               ([(location-id integer :primary-key :autoincrement)
+                 (name :not-null :unique)])])
   (emacsql db [:create-table source :if :not :exists
-                             ([(source-id integer :primary-key :autoincrement)
-                               (name :not-null :unique)])])
+               ([(source-id integer :primary-key :autoincrement)
+                 (name :not-null :unique)])])
   (emacsql db [:create-table bottle :if :not :exists
-                             ([(bottle-id integer :primary-key :autoincrement)
-                               (wine-id :not-null)
-                               (purchase-date :not-null)
-                               (price :not-null)
-                               (price-usd :not-null)
-                               (location-id :not-null)
-                               (source-id integer :not-null)
-                               (comment)]
-                              (:foreign-key [location-id] :references location [location-id])
-                              (:foreign-key [source-id] :references source [source-id]))])
+               ([(bottle-id integer :primary-key :autoincrement)
+                 (wine-id :not-null)
+                 (purchase-date :not-null)
+                 (price :not-null)
+                 (price-usd :not-null)
+                 (location-id :not-null)
+                 (source-id integer :not-null)
+                 (comment)]
+                (:foreign-key [location-id] :references location [location-id])
+                (:foreign-key [source-id] :references source [source-id]))])
   (emacsql db [:create-table transaction :if :not :exists
-                             ([(transaction-id integer :primary-key :autoincrement)
-                               (bottle-id integer :not-null)
-                               ;; purchase, consume, move
-                               (transaction-type :not-null)
-                               (transaction-date :not-null)
-                               (destination-location-id integer)]
-                              (:foreign-key [bottle-id] :references bottle [bottle-id])
-                              (:foreign-key [destination-location-id] :references location [location-id]))]))
+               ([(transaction-id integer :primary-key :autoincrement)
+                 (bottle-id integer :not-null)
+                 ;; purchase, consume, move
+                 (transaction-type :not-null)
+                 (transaction-date :not-null)
+                 (destination-location-id integer)]
+                (:foreign-key [bottle-id] :references bottle [bottle-id])
+                (:foreign-key [destination-location-id] :references location [location-id]))]))
 
 ;; * types
 
@@ -255,8 +255,8 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
   "Get source by ID."
   (let ((row (car (emacsql (vino-inv-db)
                            [:select [source-id name]
-                                    :from source
-                                    :where (= source-id $s1)]
+                            :from source
+                            :where (= source-id $s1)]
                            id))))
     (make-vino-inv-source
      :id (nth 0 row)
@@ -266,8 +266,8 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
   "Get location by ID."
   (let ((row (car (emacsql (vino-inv-db)
                            [:select [location-id name]
-                                    :from location
-                                    :where (= location-id $s1)]
+                            :from location
+                            :where (= location-id $s1)]
                            id))))
     (make-vino-inv-location
      :id (nth 0 row)
@@ -332,9 +332,9 @@ duplicates."
                           (as
                            (funcall sum
                                     [:case :when (= transaction-type 'purchase) :then 1
-                                           :when (= transaction-type 'consume) :then -1
-                                           :else 0
-                                           :end])
+                                     :when (= transaction-type 'consume) :then -1
+                                     :else 0
+                                     :end])
                            total-amount)]
                          :from [transaction]
                          :group-by bottle-id]
@@ -364,9 +364,9 @@ duplicates."
                                        (as
                                         (funcall sum
                                                  [:case :when (= transaction-type 'purchase) :then 1
-                                                        :when (= transaction-type 'consume) :then -1
-                                                        :else 0
-                                                        :end])
+                                                  :when (= transaction-type 'consume) :then -1
+                                                  :else 0
+                                                  :end])
                                         total-amount)]
                                       :from [transaction]
                                       :group-by bottle-id]
@@ -418,9 +418,9 @@ duplicates."
                                        (as
                                         (funcall sum
                                                  [:case :when (= transaction-type 'purchase) :then 1
-                                                        :when (= transaction-type 'consume) :then -1
-                                                        :else 0
-                                                        :end])
+                                                  :when (= transaction-type 'consume) :then -1
+                                                  :else 0
+                                                  :end])
                                         total-amount)]
                                       :from [transaction]
                                       :group-by bottle-id]
@@ -455,10 +455,10 @@ duplicates."
   (caar
    (emacsql (vino-inv-db)
             [:select (funcall count *)
-                     :from [transaction]
-                     :join bottle :on (= bottle:bottle-id transaction:bottle-id)
-                     :where (= bottle:wine-id $s1)
-                     :and (= transaction-type 'purchase)]
+             :from [transaction]
+             :join bottle :on (= bottle:bottle-id transaction:bottle-id)
+             :where (= bottle:wine-id $s1)
+             :and (= transaction-type 'purchase)]
             wine-id)))
 
 (defun vino-inv-count-consumed-bottles-for (wine-id)
@@ -466,10 +466,10 @@ duplicates."
   (caar
    (emacsql (vino-inv-db)
             [:select (funcall count *)
-                     :from [transaction]
-                     :join bottle :on (= bottle:bottle-id transaction:bottle-id)
-                     :where (= bottle:wine-id $s1)
-                     :and (= transaction-type 'consume)]
+             :from [transaction]
+             :join bottle :on (= bottle:bottle-id transaction:bottle-id)
+             :where (= bottle:wine-id $s1)
+             :and (= transaction-type 'consume)]
             wine-id)))
 
 ;; * location operations
@@ -537,7 +537,7 @@ duplicates."
                [:insert :into transaction [bottle-id
                                            transaction-type
                                            transaction-date]
-                        :values $v1]
+                :values $v1]
                `([,bottle-id purchase ,date])))
     (make-vino-inv-bottle
      :id bottle-id
@@ -555,7 +555,7 @@ duplicates."
            [:insert :into transaction [bottle-id
                                        transaction-type
                                        transaction-date]
-                    :values $v1]
+            :values $v1]
            `([,bottle-id consume ,date])))
 
 ;; * inventory ui
@@ -750,10 +750,8 @@ location, it will be created automatically."
 
 If OTHER-WINDOW, visit the NOTE in another window."
   (interactive)
-  (let ((id (vino-inv-ui-get-wine-id)))
-    (org-roam-node-visit
-     (org-roam-node-from-id id)
-     (or current-prefix-arg other-window))))
+  (vulpea-visit (vino-inv-ui-get-wine-id)
+                (or current-prefix-arg other-window)))
 
 (defun vino-inv-ui-edit-location ()
   "Edit location of the bottle at point."
@@ -766,15 +764,15 @@ If OTHER-WINDOW, visit the NOTE in another window."
        (let ((bottle-id (vino-inv-bottle-id bottle)))
          (emacsql-with-transaction db
            (emacsql db [:update bottle
-                                :set (= location-id $s2)
-                                :where (= bottle-id $s1)]
+                        :set (= location-id $s2)
+                        :where (= bottle-id $s1)]
                     bottle-id location-id)
            (emacsql db
                     [:insert :into transaction [bottle-id
                                                 transaction-type
                                                 transaction-date
                                                 destination-location-id]
-                             :values $v1]
+                     :values $v1]
                     `([,bottle-id move ,date ,location-id])))
          (run-hook-with-args 'vino-inv-edit-location-handle-functions bottle))))
     (vino-inv-ui-update)))
@@ -803,8 +801,8 @@ If OTHER-WINDOW, visit the NOTE in another window."
                                             '(private public skip) nil t)))))
 
     (emacsql (vino-inv-db) [:update bottle
-                                    :set [(= price $s2) (= price-usd $s3)]
-                                    :where (= bottle-id $s1)]
+                            :set [(= price $s2) (= price-usd $s3)]
+                            :where (= bottle-id $s1)]
              bottle-id price price-usd)
 
     (when (and price-add-as (not (string-equal "skip" price-add-as)))
@@ -831,21 +829,21 @@ If OTHER-WINDOW, visit the NOTE in another window."
                                (date-to-time (vino-inv-bottle-purchase-date bottle)))))
          (db (vino-inv-db))
          (txn-ids (emacsql db [:select [transaction-id]
-                                       :from transaction
-                                       :where (and (= bottle-id $s1)
-                                                   (= transaction-type 'purchase))]
+                               :from transaction
+                               :where (and (= bottle-id $s1)
+                                           (= transaction-type 'purchase))]
                            bottle-id))
          (txn-id (car txn-ids)))
     (unless (= 1 (seq-length txn-ids))
       (user-error "The bottle has multiple purchase transactions"))
     (emacsql-with-transaction db
       (emacsql db [:update bottle
-                           :set [(= purchase-date $s2)]
-                           :where (= bottle-id $s1)]
+                   :set [(= purchase-date $s2)]
+                   :where (= bottle-id $s1)]
                bottle-id date)
       (emacsql db [:update transaction
-                           :set [(= transaction-date $s2)]
-                           :where (= transaction-id $s1)]
+                   :set [(= transaction-date $s2)]
+                   :where (= transaction-id $s1)]
                txn-id date))
     (vino-inv-ui-update)))
 
@@ -856,8 +854,8 @@ If OTHER-WINDOW, visit the NOTE in another window."
          (comment (read-string "Comment: ")))
     (emacsql (vino-inv-db)
              [:update bottle
-                      :set [(= comment $s2)]
-                      :where (= bottle-id $s1)]
+              :set [(= comment $s2)]
+              :where (= bottle-id $s1)]
              bottle-id comment)
     (vino-inv-ui-update)))
 
