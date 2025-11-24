@@ -117,19 +117,20 @@ unpredictable, there is no generic solution for now.
 META (optional) is meta slot of the future note.
 
 LINKS (optional) is list of (type . link) pairs."
-  (let* ((basename (or basename
-                       (vulpea-title-to-slug title)))
-         (category (or category basename))
-         (path (expand-file-name
-                (format "wine/%s/%s.org" type basename)
+  (let* ((path (expand-file-name
+                (format "wine/%s/%s.org"
+                        type
+                        (or basename
+                            (vulpea-title-to-slug title)))
                 vulpea-default-notes-directory))
          (tags (or tags (list "wine" type)))
-         (attach-dir-val (expand-file-name
-                          (format "wine/%s/data/%s/%s"
-                                  type
-                                  (s-left 2 id)
-                                  (s-chop-prefix (s-left 2 id) id))
-                          vulpea-default-notes-directory)))
+         (extra-dir (when basename (file-name-directory basename)))
+         (attach-dir (expand-file-name
+                      (format "wine/%s/data/%s/%s"
+                              (if extra-dir (concat type "/" extra-dir) type)
+                              (s-left 2 id)
+                              (s-chop-prefix (s-left 2 id) id))
+                      vulpea-default-notes-directory)))
     (make-vulpea-note
      :path path
      :title title
@@ -140,9 +141,9 @@ LINKS (optional) is list of (type . link) pairs."
      :links links
      :properties `((ID . ,id))
      :meta meta
-     :attach-dir attach-dir-val)))
+     :attach-dir attach-dir)))
 
-(cl-defun mock-vulpea-note (&key type title tags)
+(cl-defun mock-vulpea-note (&key type title tags basename-prefix meta links)
   "Prepare system for note creation.
 
 This function is needed when you want to create a note, but want
@@ -157,6 +158,12 @@ TYPE (mandatory) is one of: cellar, rating, grape, producer,
 appellation, region, country.
 
 TITLE (mandatory) is title slot of the future note.
+
+BASENAME-PREFIX (optional) is prefix for calculated basename.
+
+META (optional) is passed as is to `mk-vulpea-note'.
+
+LINKS (optional) is passed as is to `mk-vulpea-note'.
 
 TAGS (optional) is tags slot of the future note. When omitted,
 equals to (wine TYPE) list. Unfortunately, since tags list order
@@ -174,8 +181,10 @@ now."
      :type type
      :id id
      :title title
-     :basename basename
-     :tags tags)))
+     :basename (concat (or basename-prefix "") basename)
+     :tags tags
+     :meta meta
+     :links links)))
 
 
 
