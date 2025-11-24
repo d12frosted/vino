@@ -412,29 +412,6 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
        (version (vino-rating-version rating))
        (values (vino-rating-values rating))
        (title (format "%s - %s" (vulpea-note-title wine-note) date-str))
-       (body (with-temp-buffer
-               ;; TODO: performance of multiple `vulpea-meta-set'
-               (vulpea-buffer-meta-set "wine" wine-note 'append)
-               (vulpea-buffer-meta-set "date" date-str 'append)
-               (vulpea-buffer-meta-set "version" version 'append)
-               (seq-do (lambda (data)
-                         (vulpea-buffer-meta-set
-                          (downcase (nth 0 data))
-                          (nth 1 data)
-                          'append)
-                         (vulpea-buffer-meta-set
-                          (downcase (concat (nth 0 data) "_MAX"))
-                          (nth 2 data)
-                          'append))
-                       values)
-               (vulpea-buffer-meta-set
-                "score" (vino-rating-score rating) 'append)
-               (vulpea-buffer-meta-set
-                "score_max" (vino-rating-score-max rating) 'append)
-               (vulpea-buffer-meta-set
-                "total" (vino-rating-total rating) 'append)
-               (buffer-substring (point-min)
-                                 (point-max))))
        (note (vulpea-create
               title
               (plist-get vino-rating-template :file-name)
@@ -442,12 +419,20 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
               :tags (seq-union (plist-get vino-rating-template :tags)
                                '("wine" "rating"))
               :head (plist-get vino-rating-template :head)
-              :body (concat (plist-get vino-rating-template :body)
-                            body)
+              :meta `(("wine" . ,wine-note)
+                      ("date" . ,date-str)
+                      ("version" . ,version)
+                      ,@(seq-mapcat
+                         (lambda (data)
+                           (list (cons (downcase (nth 0 data)) (nth 1 data))
+                            (cons (downcase (concat (nth 0 data) "_MAX")) (nth 2 data))))
+                         values)
+                      ("score" . ,(vino-rating-score rating))
+                      ("score_max" . ,(vino-rating-score-max rating))
+                      ("total" . ,(vino-rating-total rating)))
+              :body (plist-get vino-rating-template :body)
               :context (plist-get vino-rating-template :context)
-              :properties (plist-get vino-rating-template :properties)
-              :unnarrowed t
-              :immediate-finish t)))
+              :properties (plist-get vino-rating-template :properties))))
     (vulpea-utils-with-note wine-note
       (vulpea-buffer-meta-set
        "ratings"
@@ -677,9 +662,7 @@ note as the only argument."
                           ("acquired" . 0)
                           ("consumed" . 0)
                           ("available" . 0)
-                          ("rating" . "NA"))))
-                :unnarrowed t
-                :immediate-finish t)))
+                          ("rating" . "NA")))))))
     (run-hook-with-args 'vino-entry-create-handle-functions note)
     note))
 
@@ -1003,9 +986,7 @@ Return `vulpea-note'."
      :meta (plist-get vino-country-template :meta)
      :body (plist-get vino-country-template :body)
      :context (plist-get vino-country-template :context)
-     :properties (plist-get vino-country-template :properties)
-     :unnarrowed t
-     :immediate-finish t)))
+     :properties (plist-get vino-country-template :properties))))
 
 ;;;###autoload
 (cl-defun vino-region-create (&key title country parent capture-properties)
@@ -1045,8 +1026,6 @@ Return `vulpea-note'."
                (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-region-template :context))
      :properties (plist-get vino-region-template :properties)
-     :unnarrowed t
-     :immediate-finish t
      :capture-properties capture-properties)))
 
 ;;;###autoload
@@ -1087,8 +1066,6 @@ Return `vulpea-note'."
                (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-appellation-template :context))
      :properties (plist-get vino-appellation-template :properties)
-     :unnarrowed t
-     :immediate-finish t
      :capture-properties capture-properties)))
 
 ;;;###autoload
@@ -1332,9 +1309,7 @@ Return `vulpea-note'."
                 :head (plist-get vino-grape-template :head)
                 :body (plist-get vino-grape-template :body)
                 :context (plist-get vino-grape-template :context)
-                :properties (plist-get vino-grape-template :properties)
-                :unnarrowed t
-                :immediate-finish t)))
+                :properties (plist-get vino-grape-template :properties))))
     ;; sync to database for future queries
     (vulpea-db-update-file (vulpea-note-path note))
     note))
@@ -1441,9 +1416,7 @@ Return `vulpea-note'."
                 :head (plist-get vino-producer-template :head)
                 :body (plist-get vino-producer-template :body)
                 :context (plist-get vino-producer-template :context)
-                :properties (plist-get vino-producer-template :properties)
-                :unnarrowed t
-                :immediate-finish t)))
+                :properties (plist-get vino-producer-template :properties))))
     ;; sync to database for future queries
     (vulpea-db-update-file (vulpea-note-path note))
     note))
