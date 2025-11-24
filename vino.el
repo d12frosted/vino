@@ -989,7 +989,7 @@ Return `vulpea-note'."
      :properties (plist-get vino-country-template :properties))))
 
 ;;;###autoload
-(cl-defun vino-region-create (&key title country parent capture-properties)
+(cl-defun vino-region-create (&key title country parent)
   "Create a region note using `vino-region-template'.
 
 Unless TITLE is provided, user is prompted to provide one.
@@ -998,8 +998,6 @@ Unless COUNTRY note is provided, user is prompted to provide one.
 
 Unless PARENT is provided, user is prompted to provide one or none
 explicitly.
-
-CAPTURE-PROPERTIES are passed to `vulpea-create'.
 
 Return `vulpea-note'."
   (interactive)
@@ -1025,11 +1023,10 @@ Return `vulpea-note'."
      :context (append
                (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-region-template :context))
-     :properties (plist-get vino-region-template :properties)
-     :capture-properties capture-properties)))
+     :properties (plist-get vino-region-template :properties))))
 
 ;;;###autoload
-(cl-defun vino-appellation-create (&key title country parent capture-properties)
+(cl-defun vino-appellation-create (&key title country parent)
   "Create a appellation note using `vino-appellation-template'.
 
 Unless TITLE is provided, user is prompted to provide one.
@@ -1038,8 +1035,6 @@ Unless COUNTRY note is provided, user is prompted to provide one.
 
 Unless PARENT is provided, user is prompted to provide one or none
 explicitly.
-
-CAPTURE-PROPERTIES are passed to `vulpea-create'.
 
 Return `vulpea-note'."
   (interactive)
@@ -1065,8 +1060,7 @@ Return `vulpea-note'."
      :context (append
                (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-appellation-template :context))
-     :properties (plist-get vino-appellation-template :properties)
-     :capture-properties capture-properties)))
+     :properties (plist-get vino-appellation-template :properties))))
 
 ;;;###autoload
 (defun vino-country-find-file ()
