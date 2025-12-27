@@ -69,7 +69,7 @@
      :and-return-value
      (completion-for :title "Arianna Occhipinti Bombolieri BB 2017"
                      :tags '("cellar")))
-    (expect (vino-entry-note-select)
+    (expect (vino-test-normalize-note (vino-entry-note-select))
             :to-equal
             (mk-vulpea-note
              :type "cellar"
@@ -208,7 +208,7 @@
      :and-return-value
      (completion-for :title "Frappato"
                      :tags '("grape")))
-    (expect (vino-grape-select)
+    (expect (vino-test-normalize-note (vino-grape-select))
             :to-equal
             (mk-vulpea-note
              :type "grape"
@@ -237,7 +237,8 @@
             (mk-vulpea-note :type "grape"
                             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
                             :title "Frappato di Vittoria"
-                            :basename "frappato"))
+                            :basename "frappato"
+                            :file-title "Frappato"))
     (expect (expand-file-name "wine/grape/frappato.org"
                               vulpea-default-notes-directory)
             :to-contain-exactly
@@ -272,7 +273,7 @@
      :and-return-value
      (completion-for :title "Arianna Occhipinti"
                      :tags '("producer")))
-    (expect (vino-producer-select)
+    (expect (vino-test-normalize-note (vino-producer-select))
             :to-equal
             (mk-vulpea-note
              :type "producer"
@@ -316,10 +317,11 @@
              :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
                      ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
-            (vino-region-create
-             :title "Codru"
-             :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")
-             :parent (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")))))
+            (vino-test-normalize-note
+             (vino-region-create
+              :title "Codru"
+              :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")
+              :parent (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9"))))))
 
 (describe "vino-appellation-create"
   (before-all (vino-test-init))
@@ -335,10 +337,11 @@
              :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
                      ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
-            (vino-appellation-create
-             :title "Gattinara DOCG"
-             :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")
-             :parent (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")))))
+            (vino-test-normalize-note
+             (vino-appellation-create
+              :title "Gattinara DOCG"
+              :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")
+              :parent (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9"))))))
 
 (describe "vino-region-select"
   (before-all (vino-test-init))
@@ -348,7 +351,7 @@
     (spy-on 'completing-read
             :and-return-value
             (completion-for :title "Central Otago" :tags '("region")))
-    (expect (vino-region-select)
+    (expect (vino-test-normalize-note (vino-region-select))
             :to-equal
             (mk-vulpea-note
              :type "region"
@@ -359,7 +362,7 @@
     (spy-on 'completing-read
             :and-return-value
             (completion-for :title "Cerasuolo di Vittoria DOCG" :tags '("appellation")))
-    (expect (vino-appellation-select)
+    (expect (vino-test-normalize-note (vino-appellation-select))
             :to-equal
             (mk-vulpea-note
              :type "appellation"
@@ -381,8 +384,9 @@
              :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
                      ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
-            (vino-region-select
-             :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9"))))
+            (vino-test-normalize-note
+             (vino-region-select
+              :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")))))
 
   (it "creates a new appellation note when selecting non-existing name"
     (spy-on 'completing-read :and-return-values '("Gattinara DOCG" "Create appellation"))
@@ -397,8 +401,9 @@
              :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
                      ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
-            (vino-appellation-select
-             :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9")))))
+            (vino-test-normalize-note
+             (vino-appellation-select
+              :country (vulpea-db-get-by-id "437298dc-39d9-42e6-8d0f-1838e9a007f9"))))))
 
 (describe "vino-entry-set-grapes"
   :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))

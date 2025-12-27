@@ -91,7 +91,7 @@ a call to `save-match-data', as `format-spec' modifies that."
 
 
 
-(cl-defun mk-vulpea-note (&key type id title basename category tags meta links)
+(cl-defun mk-vulpea-note (&key type id title basename category tags meta links file-title)
   "Constructor of `vulpea-note' for `vino' testing.
 
 It handles boilerplate of note creation that is actually
@@ -116,7 +116,10 @@ unpredictable, there is no generic solution for now.
 
 META (optional) is meta slot of the future note.
 
-LINKS (optional) is list of (type . link) pairs."
+LINKS (optional) is list of (type . link) pairs.
+
+FILE-TITLE (optional) is file-title slot of the note. When omitted,
+equals to TITLE."
   (let* ((path (expand-file-name
                 (format "wine/%s/%s.org"
                         type
@@ -141,7 +144,26 @@ LINKS (optional) is list of (type . link) pairs."
      :links links
      :properties `((ID . ,id))
      :meta meta
-     :attach-dir attach-dir)))
+     :attach-dir attach-dir
+     :file-title (or file-title title))))
+
+(defun vino-test-normalize-link (link)
+  "Normalize LINK by removing :pos property."
+  (let ((result (copy-sequence link)))
+    (cl-remf result :pos)
+    result))
+
+(defun vino-test-normalize-links (links)
+  "Normalize LINKS by removing :pos property from each link."
+  (mapcar #'vino-test-normalize-link links))
+
+(defun vino-test-normalize-note (note)
+  "Return a copy of NOTE with links normalized (no :pos property)."
+  (when note
+    (let ((copy (copy-vulpea-note note)))
+      (setf (vulpea-note-links copy)
+            (vino-test-normalize-links (vulpea-note-links copy)))
+      copy)))
 
 (cl-defun mock-vulpea-note (&key type title tags basename-prefix meta links)
   "Prepare system for note creation.
