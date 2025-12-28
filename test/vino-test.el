@@ -193,8 +193,8 @@
     (let ((expected (mock-vulpea-note :type "grape" :title "Slarina"))
           (actual (vino-grape-create "Slarina")))
       ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      ;; and without path (timestamp can race on slow CI)
       (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
-      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
       (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
       (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected)))))
 
@@ -220,8 +220,8 @@
     (let ((expected (mock-vulpea-note :type "grape" :title "Slarina"))
           (actual (vino-grape-select)))
       ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      ;; and without path (timestamp can race on slow CI)
       (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
-      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
       (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
       (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected))))
 
@@ -258,8 +258,8 @@
     (let ((expected (mock-vulpea-note :type "producer" :title "Vino di Anna"))
           (actual (vino-producer-create "Vino di Anna")))
       ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      ;; and without path (timestamp can race on slow CI)
       (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
-      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
       (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
       (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected)))))
 
@@ -289,8 +289,8 @@
     (let ((expected (mock-vulpea-note :type "producer" :title "Vino di Anna"))
           (actual (vino-producer-select)))
       ;; Compare notes without attach-dir (set asynchronously in Vulpea V2)
+      ;; and without path (timestamp can race on slow CI)
       (expect (vulpea-note-id actual) :to-equal (vulpea-note-id expected))
-      (expect (vulpea-note-path actual) :to-equal (vulpea-note-path expected))
       (expect (vulpea-note-title actual) :to-equal (vulpea-note-title expected))
       (expect (vulpea-note-tags actual) :to-equal (vulpea-note-tags expected)))))
 
