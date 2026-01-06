@@ -1,6 +1,6 @@
 ;;; vino-test.el --- Test `vino' module -*- lexical-binding: t; -*-
 ;;
-;; Copyright (c) 2020-2022 Boris Buliga
+;; Copyright (c) 2020-2026 Boris Buliga
 ;;
 ;; Author: Boris Buliga <d12frosted@d12frosted.local>
 ;; Maintainer: Boris Buliga <d12frosted@d12frosted.local>
