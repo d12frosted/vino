@@ -14,6 +14,8 @@
   <a href="https://github.com/d12frosted/vino/actions?query=workflow%3ACI">
     <img src="https://github.com/d12frosted/vino/workflows/CI/badge.svg" alt="CI Status Badge">
   </a>
+
+  <a href="https://github.com/sponsors/d12frosted"><img alt="Sponsor" src="https://img.shields.io/badge/Sponsor-d12frosted-pink?logo=githubsponsors&logoColor=white"/></a>
 </p>
 #+end_html
 
@@ -32,3 +34,7 @@ Additionally, the [[https://github.com/d12frosted/vino/wiki][wiki]] includes gui
 ** Acknowledgements
 
 [[file:images/logo.png][Logo]] was created by [[https://www.behance.net/irynarutylo][Iryna Rutylo]].
+
+* Support
+
+If you enjoy this project, you can support its development via [[https://github.com/sponsors/d12frosted][GitHub Sponsors]] or [[https://www.patreon.com/d12frosted][Patreon]].
