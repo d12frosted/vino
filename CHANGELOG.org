@@ -10,6 +10,10 @@
 
 - Remove unused =capture-properties= from templates.
 
+*Fixes*
+
+- Merge template properties with =vulpea-create-default-template= properties instead of overriding them.
+
 ** v0.5.0
 
 This release migrates Vino to Vulpea v2, which removes the org-roam dependency and introduces breaking changes to the setup process. All documentation has been updated to reflect these changes, including comprehensive troubleshooting guides and improved examples.

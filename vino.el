@@ -147,6 +147,19 @@ country.")
      "region"
      "appellation")))
 
+(defun vino--merge-properties (template-props)
+  "Merge TEMPLATE-PROPS with properties from vulpea defaults.
+TEMPLATE-PROPS takes precedence over defaults."
+  (let ((default-props (plist-get vulpea-create-default-template :properties)))
+    (if (and default-props template-props)
+        ;; Merge: template props override defaults
+        (append template-props
+                (seq-remove (lambda (prop)
+                              (assoc (car prop) template-props))
+                            default-props))
+      ;; Return whichever is non-nil, or nil
+      (or template-props default-props))))
+
 ;;; Rating
 ;;
 
@@ -432,7 +445,7 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
                       ("total" . ,(vino-rating-total rating)))
               :body (plist-get vino-rating-template :body)
               :context (plist-get vino-rating-template :context)
-              :properties (plist-get vino-rating-template :properties))))
+              :properties (vino--merge-properties (plist-get vino-rating-template :properties)))))
     (vulpea-utils-with-note wine-note
       (vulpea-buffer-meta-set
        "ratings"
@@ -639,7 +652,7 @@ note as the only argument."
                 :head (plist-get vino-entry-template :head)
                 :body (plist-get vino-entry-template :body)
                 :context (plist-get vino-entry-template :context)
-                :properties (plist-get vino-entry-template :properties)
+                :properties (vino--merge-properties (plist-get vino-entry-template :properties))
                 :meta (-filter
                        #'cdr
                        (append
@@ -986,7 +999,7 @@ Return `vulpea-note'."
      :meta (plist-get vino-country-template :meta)
      :body (plist-get vino-country-template :body)
      :context (plist-get vino-country-template :context)
-     :properties (plist-get vino-country-template :properties))))
+     :properties (vino--merge-properties (plist-get vino-country-template :properties)))))
 
 ;;;###autoload
 (cl-defun vino-region-create (&key title country parent)
@@ -1023,7 +1036,7 @@ Return `vulpea-note'."
      :context (append
                (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-region-template :context))
-     :properties (plist-get vino-region-template :properties))))
+     :properties (vino--merge-properties (plist-get vino-region-template :properties)))))
 
 ;;;###autoload
 (cl-defun vino-appellation-create (&key title country parent)
@@ -1060,7 +1073,7 @@ Return `vulpea-note'."
      :context (append
                (list :country (vulpea-title-to-slug (vulpea-note-title country)))
                (plist-get vino-appellation-template :context))
-     :properties (plist-get vino-appellation-template :properties))))
+     :properties (vino--merge-properties (plist-get vino-appellation-template :properties)))))
 
 ;;;###autoload
 (defun vino-country-find-file ()
@@ -1303,7 +1316,7 @@ Return `vulpea-note'."
                 :head (plist-get vino-grape-template :head)
                 :body (plist-get vino-grape-template :body)
                 :context (plist-get vino-grape-template :context)
-                :properties (plist-get vino-grape-template :properties))))
+                :properties (vino--merge-properties (plist-get vino-grape-template :properties)))))
     ;; sync to database for future queries
     (vulpea-db-update-file (vulpea-note-path note))
     note))
@@ -1410,7 +1423,7 @@ Return `vulpea-note'."
                 :head (plist-get vino-producer-template :head)
                 :body (plist-get vino-producer-template :body)
                 :context (plist-get vino-producer-template :context)
-                :properties (plist-get vino-producer-template :properties))))
+                :properties (vino--merge-properties (plist-get vino-producer-template :properties)))))
     ;; sync to database for future queries
     (vulpea-db-update-file (vulpea-note-path note))
     note))
