@@ -160,6 +160,11 @@ TEMPLATE-PROPS takes precedence over defaults."
       ;; Return whichever is non-nil, or nil
       (or template-props default-props))))
 
+(defun vino--read-string (prompt &optional initial-input)
+  "Read a string from minibuffer with PROMPT, trimming the result.
+INITIAL-INPUT is passed to `read-string'."
+  (string-trim (read-string prompt initial-input)))
+
 ;;; Rating
 ;;
 
@@ -575,7 +580,7 @@ note as the only argument."
   (interactive)
   (let* ((producer (vino-producer-select))
          (name (vino--repeat-while
-                #'read-string
+                (lambda (p) (vino--read-string p))
                 #'string-empty-p
                 "Name: "))
          (colour (intern
@@ -615,12 +620,12 @@ note as the only argument."
                           (lambda (v) (< v 1900))
                           "Base vintage (C-g for NV): ")))
          (sur-lie (when (eq carbonation-method 'traditional)
-                    (let ((x (read-string "Sur lie: ")))
+                    (let ((x (vino--read-string "Sur lie: ")))
                       (if (string-empty-p x)
                           "N/A"
                         x))))
          (degorgee (when (eq carbonation-method 'traditional)
-                     (let ((x (read-string "Degorgee: ")))
+                     (let ((x (vino--read-string "Degorgee: ")))
                        (if (string-empty-p x)
                            "N/A"
                          x))))
@@ -638,7 +643,7 @@ note as the only argument."
                  #'read-number
                  (lambda (v) (< v 0))
                  "Sugar g/l (C-g for N/A): "))
-         (price (s-presence (read-string "Price: ")))
+         (price (s-presence (vino--read-string "Price: ")))
 
          (title (format "%s %s %s"
                         (vulpea-note-title producer)
@@ -989,7 +994,7 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let ((title (or title (read-string "Country: "))))
+  (let ((title (or title (vino--read-string "Country: "))))
     (vulpea-create
      title
      (plist-get vino-country-template :file-name)
@@ -1014,7 +1019,7 @@ explicitly.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Region title: ")))
+  (let* ((title (or title (vino--read-string "Region title: ")))
          (country (or country (vino-country-select)))
          (parent (or parent (vino--repeat-while
                              #'vino-region-select
@@ -1051,7 +1056,7 @@ explicitly.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Appellation: ")))
+  (let* ((title (or title (vino--read-string "Appellation: ")))
          (country (or country (vino-country-select)))
          (parent (or parent (vino--repeat-while
                              #'vino-region-select
@@ -1307,7 +1312,7 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Grape: ")))
+  (let* ((title (or title (vino--read-string "Grape: ")))
          (note (vulpea-create
                 title
                 (plist-get vino-grape-template :file-name)
@@ -1414,7 +1419,7 @@ Unless TITLE is specified, user is prompted to provide one.
 
 Return `vulpea-note'."
   (interactive)
-  (let* ((title (or title (read-string "Producer: ")))
+  (let* ((title (or title (vino--read-string "Producer: ")))
          (note (vulpea-create
                 title
                 (plist-get vino-producer-template :file-name)
@@ -1461,7 +1466,7 @@ Return `vulpea-note'."
   "Interactively set a new PRICE for a wine NOTE."
   (interactive)
   (let* ((note (or note (vino-entry-note-get-dwim)))
-         (price-new (or price (read-string "Price: ")))
+         (price-new (or price (vino--read-string "Price: ")))
          (price-old (vulpea-note-meta-get note "price")))
     (unless (string-equal price-new price-old)
       (when price-old
