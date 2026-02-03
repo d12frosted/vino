@@ -816,5 +816,27 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
                (lambda (v) (< v 5)))
               :to-equal 5))))
 
+(describe "vino--merge-properties"
+  (it "returns nil when both are nil"
+    (let ((vulpea-create-default-template nil))
+      (expect (vino--merge-properties nil) :to-be nil)))
+
+  (it "returns template props when defaults are nil"
+    (let ((vulpea-create-default-template nil))
+      (expect (vino--merge-properties '(("FOO" . "bar")))
+              :to-equal '(("FOO" . "bar")))))
+
+  (it "returns defaults when template props are nil"
+    (let ((vulpea-create-default-template '(:properties (("CREATED" . "%<[%Y-%m-%d]>")))))
+      (expect (vino--merge-properties nil)
+              :to-equal '(("CREATED" . "%<[%Y-%m-%d]>")))))
+
+  (it "merges props with template taking precedence"
+    (let ((vulpea-create-default-template '(:properties (("CREATED" . "%<[%Y-%m-%d]>")
+                                                         ("AUTHOR" . "default")))))
+      (expect (vino--merge-properties '(("AUTHOR" . "vino")))
+              :to-equal '(("AUTHOR" . "vino")
+                          ("CREATED" . "%<[%Y-%m-%d]>"))))))
+
 (provide 'vino-test)
 ;;; vino-test.el ends here
