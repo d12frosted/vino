@@ -13,6 +13,7 @@
 *Fixes*
 
 - Merge template properties with =vulpea-create-default-template= properties instead of overriding them.
+- Trim whitespace from all user input (names, prices, etc.) to prevent formatting issues ([[https://github.com/d12frosted/vino/issues/101][#101]]).
 
 ** v0.5.0
 

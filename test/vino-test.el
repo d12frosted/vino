@@ -838,5 +838,27 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
               :to-equal '(("AUTHOR" . "vino")
                           ("CREATED" . "%<[%Y-%m-%d]>"))))))
 
+(describe "vino--read-string"
+  (it "trims leading whitespace"
+    (spy-on 'read-string :and-return-value "  hello")
+    (expect (vino--read-string "Prompt: ") :to-equal "hello"))
+
+  (it "trims trailing whitespace"
+    (spy-on 'read-string :and-return-value "hello  ")
+    (expect (vino--read-string "Prompt: ") :to-equal "hello"))
+
+  (it "trims both leading and trailing whitespace"
+    (spy-on 'read-string :and-return-value "  hello world  ")
+    (expect (vino--read-string "Prompt: ") :to-equal "hello world"))
+
+  (it "preserves internal whitespace"
+    (spy-on 'read-string :and-return-value "  hello   world  ")
+    (expect (vino--read-string "Prompt: ") :to-equal "hello   world"))
+
+  (it "passes initial-input to read-string"
+    (spy-on 'read-string :and-return-value "test")
+    (vino--read-string "Prompt: " "initial")
+    (expect 'read-string :to-have-been-called-with "Prompt: " "initial")))
+
 (provide 'vino-test)
 ;;; vino-test.el ends here

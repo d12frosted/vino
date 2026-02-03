@@ -111,7 +111,7 @@ The hook is called with single arguments - `vino-inv-bottle'.")
          (prices (-uniq (-concat prices-public prices-private '("0 XXX"))))
          (price (if prices
                     (completing-read "Price: " prices)
-                  (read-string "Price: ")))
+                  (vino--read-string "Price: ")))
          (price-usd (cond
                      ((s-suffix-p "USD" price) price)
                      ((= 0 (string-to-number price)) "0 USD")
@@ -172,7 +172,7 @@ The hook is called with single arguments - `vino-inv-bottle'.")
          ;; we use invisible part as a hack
          (bottle-id (string-to-number bottle))
          (bottle (vino-inv-get-bottle bottle-id))
-         (action (read-string "Action: " "consume"))
+         (action (vino--read-string "Action: " "consume"))
          (date (org-read-date nil t)))
     (vino-inv-consume-bottle :bottle-id bottle-id :date (format-time-string "%Y-%m-%d" date))
     (vino-inv-update-availability note)
@@ -789,7 +789,7 @@ If OTHER-WINDOW, visit the NOTE in another window."
          (prices (-uniq (-concat prices-public prices-private)))
          (price (if prices
                     (completing-read "Price: " prices)
-                  (read-string "Price: ")))
+                  (vino--read-string "Price: ")))
          (price-usd (cond
                      ((s-suffix-p "USD" price) price)
                      ((= (string-to-number price) 0) "0 USD")
@@ -851,7 +851,7 @@ If OTHER-WINDOW, visit the NOTE in another window."
   "Edit comment of the bottle at point."
   (interactive)
   (let* ((bottle-id (vino-inv-ui-get-bottle-id))
-         (comment (read-string "Comment: ")))
+         (comment (vino--read-string "Comment: ")))
     (emacsql (vino-inv-db)
              [:update bottle
               :set [(= comment $s2)]
