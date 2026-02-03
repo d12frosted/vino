@@ -858,7 +858,8 @@ Optionally provide INITIAL-PROMPT."
    "Wine"
    (vulpea-db-query-by-tags-every '("wine" "cellar"))
    :require-match t
-   :initial-prompt initial-prompt))
+   :initial-prompt initial-prompt
+   :expand-aliases t))
 
 ;;;###autoload
 (defun vino-entry-note-get-dwim (&optional note-or-id)
@@ -1095,7 +1096,8 @@ When country note does not exist, it is created using
 Return `vulpea-note'."
   (let ((note (vulpea-select-from
                "Country"
-               (vulpea-db-query-by-tags-every '("wine" "country")))))
+               (vulpea-db-query-by-tags-every '("wine" "country"))
+               :expand-aliases t)))
     (if (vulpea-note-id note)
         note
       (vino-country-create :title (vulpea-note-title note)))))
@@ -1125,7 +1127,8 @@ Return `vulpea-note'."
                                                  (vulpea-note-meta-get it "country" 'link))
                                    candidates)
                        candidates))
-         (note (vulpea-select-from (or prompt "Region") candidates)))
+         (note (vulpea-select-from (or prompt "Region") candidates
+                                   :expand-aliases t)))
     (if (vulpea-note-id note)
         note
       (vino-region-create
@@ -1157,7 +1160,8 @@ Return `vulpea-note'."
                                                  (vulpea-note-meta-get it "country" 'link))
                                    candidates)
                        candidates))
-         (note (vulpea-select-from (or prompt "Appellation") candidates)))
+         (note (vulpea-select-from (or prompt "Appellation") candidates
+                                   :expand-aliases t)))
     (if (vulpea-note-id note)
         note
       (vino-appellation-create
@@ -1192,7 +1196,8 @@ an error."
            (lambda (note)
              (seq-contains-p (vulpea-note-tags note) "wine"))
            (vulpea-db-query-by-tags-some
-            '("appellation" "region")))))
+            '("appellation" "region")))
+          :expand-aliases t))
         country region appellation)
     (unless (vulpea-note-id note)
       (setq note (pcase (completing-read
@@ -1241,7 +1246,8 @@ When the function tries to access meta value which is not set, it raises
 an error."
   (let ((country (vulpea-select-from
                   "Country"
-                  (vulpea-db-query-by-tags-every '("wine" "country"))))
+                  (vulpea-db-query-by-tags-every '("wine" "country"))
+                  :expand-aliases t))
         rora region appellation)
     (unless (vulpea-note-id country)
       (when (y-or-n-p "Country %s doesn not exist. Would you like to create it?")
@@ -1252,7 +1258,8 @@ an error."
                   (->> (append (vulpea-db-query-by-tags-every '("wine" "region"))
                                (vulpea-db-query-by-tags-every '("wine" "appellation")))
                        (--filter (string-equal (vulpea-note-id country)
-                                               (vulpea-note-meta-get it "country" 'link))))))
+                                               (vulpea-note-meta-get it "country" 'link))))
+                  :expand-aliases t))
       (unless (vulpea-note-id rora)
         (setq rora (pcase (completing-read
                            (format "%s does not exist. What to do?"
@@ -1344,7 +1351,7 @@ decides to do so.
 
 Return `vulpea-note'."
   (let* ((notes (or notes (vulpea-db-query-by-tags-every '("wine" "grape"))))
-         (note (vulpea-select-from "Grape" notes)))
+         (note (vulpea-select-from "Grape" notes :expand-aliases t)))
     (if (vulpea-note-id note)
         note
       (pcase (completing-read
@@ -1359,7 +1366,8 @@ Return `vulpea-note'."
          (let ((base (vulpea-select-from
                       "Original grape"
                       (vulpea-db-query-by-tags-every
-                       '("wine" "grape")))))
+                       '("wine" "grape"))
+                      :expand-aliases t)))
            (vulpea-utils-with-note base
              (vulpea-buffer-alias-add (vulpea-note-title note))
              (save-buffer)
@@ -1381,7 +1389,8 @@ Return a list, where each entry is a `vulpea-note'."
    "Grape" (vulpea-db-query-by-tags-every '("wine" "grape"))
    :select-fn
    (lambda (_ notes &rest _)
-     (vino-grape-select notes))))
+     (vino-grape-select notes))
+   :expand-aliases t))
 
 
 ;;; Producers
@@ -1449,7 +1458,8 @@ When producer note does not exist, it is created using
 Return `vulpea-note'."
   (let ((note (vulpea-select-from
                "Producer"
-               (vulpea-db-query-by-tags-every '("wine" "producer")))))
+               (vulpea-db-query-by-tags-every '("wine" "producer"))
+               :expand-aliases t)))
     (if (vulpea-note-id note)
         note
       (if (y-or-n-p

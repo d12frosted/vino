@@ -5,6 +5,7 @@
 *Features*
 
 - Upgrade =vino-inv= module to Vulpea v2.
+- Enable alias expansion in all selection functions, allowing search by note aliases.
 
 *Breaking changes*
 

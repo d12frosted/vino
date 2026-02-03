@@ -77,7 +77,7 @@ The hook is called with single arguments - `vino-inv-bottle'.")
   "Select and visit available wine."
   (interactive)
   (let* ((available (vino-inv-query-available-wines))
-         (res (vulpea-select-from "Wine" available)))
+         (res (vulpea-select-from "Wine" available :expand-aliases t)))
     (if (vulpea-note-id res)
         (find-file (vulpea-note-path res))
       (user-error
