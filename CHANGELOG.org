@@ -16,6 +16,10 @@
 - Merge template properties with =vulpea-create-default-template= properties instead of overriding them.
 - Trim whitespace from all user input (names, prices, etc.) to prevent formatting issues ([[https://github.com/d12frosted/vino/issues/101][#101]]).
 
+*Documentation*
+
+- Document international character handling and char-fold matching ([[https://github.com/d12frosted/vino/issues/71][#71]]).
+
 ** v0.5.0
 
 This release migrates Vino to Vulpea v2, which removes the org-roam dependency and introduces breaking changes to the setup process. All documentation has been updated to reflect these changes, including comprehensive troubleshooting guides and improved examples.
