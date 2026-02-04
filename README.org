@@ -25,6 +25,24 @@ Vino is an advanced Emacs program tailored for managing wine cellars. It boasts 
 
 Explore [[https://barberry.io][Barberry Garden]] to see the potential of what can be developed using Vino and its companion, [[https://github.com/d12frosted/vulpea][Vulpea]].
 
+** International Characters
+
+Vino preserves international characters (accents, diacritics) in note titles. A wine or region named "Côtes du Rhône" keeps its proper spelling.
+
+To search using ASCII characters (e.g., typing "Cotes" to find "Côtes"), you have two options:
+
+1. *Completion framework support*: If you use [[https://github.com/oantolin/orderless][orderless]], prefix your search with =%= to enable char-fold matching. For example, =%cotes= matches "Côtes".
+
+2. *Aliases*: Add an ASCII alias to your note. Vino expands aliases during selection, so both spellings become searchable:
+
+   #+begin_example
+   :PROPERTIES:
+   :ID:       ...
+   :ALIASES:  "Cotes du Rhone"
+   :END:
+   #+title: Côtes du Rhône
+   #+end_example
+
 ** Installation and Configuration
 
 For installation, our [[https://github.com/d12frosted/vino/wiki][wiki]] provides both concise and comprehensive guides suitable for various methods. It also offers detailed instructions on configuring Vino and organising your notes effectively.
