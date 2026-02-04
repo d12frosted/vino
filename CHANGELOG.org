@@ -6,6 +6,7 @@
 
 - Upgrade =vino-inv= module to Vulpea v2.
 - Enable alias expansion in all selection functions, allowing search by note aliases.
+- Add =vino-entry-copy= to create a new wine entry by copying an existing one ([[https://github.com/d12frosted/vino/issues/40][#40]]).
 
 *Breaking changes*
 

@@ -685,6 +685,115 @@ note as the only argument."
     note))
 
 ;;;###autoload
+(defun vino-entry-copy (&optional note-or-id)
+  "Create a new wine entry by copying NOTE-OR-ID.
+
+Copies structural metadata and prompts for vintage-specific fields
+with source values as initial input.
+
+When NOTE-OR-ID is nil, uses `vino-entry-note-get-dwim'."
+  (interactive)
+  (let* ((source (vino-entry-note-get-dwim note-or-id))
+         ;; Copy structural fields silently
+         (producer (vulpea-note-meta-get source "producer" 'note))
+         (colour (vulpea-note-meta-get source "colour" 'symbol))
+         (carbonation (vulpea-note-meta-get source "carbonation" 'symbol))
+         (carbonation-method (vulpea-note-meta-get source "carbonation method" 'symbol))
+         (sweetness (vulpea-note-meta-get source "sweetness" 'symbol))
+         (country (vulpea-note-meta-get source "country" 'note))
+         (region (vulpea-note-meta-get source "region" 'note))
+         (appellation (vulpea-note-meta-get source "appellation" 'note))
+         (grapes (vulpea-note-meta-get-list source "grapes" 'note))
+         ;; Get source values for prompts
+         (source-name (vulpea-note-meta-get source "name"))
+         (source-base (vulpea-note-meta-get source "base" 'number))
+         (source-sur-lie (vulpea-note-meta-get source "sur lie"))
+         (source-degorgee (vulpea-note-meta-get source "degorgee"))
+         (source-volume (or (vulpea-note-meta-get source "volume" 'number) 750))
+         (source-alcohol (vulpea-note-meta-get source "alcohol" 'number))
+         (source-sugar (vulpea-note-meta-get source "sugar" 'number))
+         ;; Prompt with initial values
+         (name (vino--read-string "Name: " source-name))
+         (vintage (vino--repeat-while
+                   #'read-number
+                   (lambda (v) (< v 1900))
+                   "Vintage (C-g for NV): "))
+         (base (when (eq carbonation-method 'traditional)
+                 (vino--repeat-while
+                  #'read-number
+                  (lambda (v) (< v 1900))
+                  (format "Base vintage (C-g for NV) [%s]: "
+                          (or source-base "none")))))
+         (sur-lie (when (eq carbonation-method 'traditional)
+                    (let ((input (vino--read-string
+                                  (format "Sur lie [%s]: "
+                                          (or source-sur-lie "N/A"))
+                                  source-sur-lie)))
+                      (if (string-empty-p input) "N/A" input))))
+         (degorgee (when (eq carbonation-method 'traditional)
+                     (let ((input (vino--read-string
+                                   (format "Degorgee [%s]: "
+                                           (or source-degorgee "N/A"))
+                                   source-degorgee)))
+                       (if (string-empty-p input) "N/A" input))))
+         (volume (read-number (format "Volume mL [%d]: " source-volume)
+                              source-volume))
+         (alcohol (read-number (format "Alcohol [%s]: "
+                                       (or source-alcohol ""))
+                               (or source-alcohol 0)))
+         (sugar (vino--repeat-while
+                 #'read-number
+                 (lambda (v) (< v 0))
+                 (format "Sugar g/l (C-g for N/A) [%s]: "
+                         (or source-sugar "N/A"))))
+         (price (s-presence (vino--read-string "Price: ")))
+         ;; Build origin alist
+         (origin (-filter #'cdr
+                          `(("country" . ,country)
+                            ("region" . ,region)
+                            ("appellation" . ,appellation))))
+         ;; Create title
+         (title (format "%s %s %s"
+                        (vulpea-note-title producer)
+                        name
+                        (or vintage "NV")))
+         ;; Create the new entry
+         (note (vulpea-create
+                title
+                (plist-get vino-entry-template :file-name)
+                :tags (seq-union (plist-get vino-entry-template :tags)
+                                 '("wine" "cellar"))
+                :head (plist-get vino-entry-template :head)
+                :body (plist-get vino-entry-template :body)
+                :context (plist-get vino-entry-template :context)
+                :properties (vino--merge-properties (plist-get vino-entry-template :properties))
+                :meta (-filter
+                       #'cdr
+                       (append
+                        `(("carbonation" . ,carbonation)
+                          ("carbonation method" . ,carbonation-method)
+                          ("colour" . ,colour)
+                          ("sweetness" . ,sweetness)
+                          ("producer" . ,producer)
+                          ("name" . ,name)
+                          ("vintage" . ,vintage)
+                          ("base" . ,base)
+                          ("sur lie" . ,sur-lie)
+                          ("degorgee" . ,degorgee)
+                          ("volume" . ,volume))
+                        origin
+                        `(("grapes" . ,grapes)
+                          ("alcohol" . ,alcohol)
+                          ("sugar" . ,sugar)
+                          ("price" . ,price)
+                          ("acquired" . 0)
+                          ("consumed" . 0)
+                          ("available" . 0)
+                          ("rating" . "NA")))))))
+    (run-hook-with-args 'vino-entry-create-handle-functions note)
+    note))
+
+;;;###autoload
 (defun vino-entry-set-grapes (&optional note-or-id grapes)
   "Set GRAPES to `vino-entry'.
 
