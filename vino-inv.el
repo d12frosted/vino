@@ -402,34 +402,50 @@ duplicates."
 
 (defun vino-inv-query-available-bottles-for (wine-id)
   "Return list of all available bottles for WINE-ID."
-  (let* ((rows (->> (emacsql
-                     (vino-inv-db)
-                     [:select
-                      [bottle:bottle-id     ; 0
-                       bottle:purchase-date ; 1
-                       bottle:price         ; 2
-                       bottle:price-usd     ; 3
-                       bottle:location-id   ; 4
-                       bottle:source-id     ; 5
-                       comment]             ; 6
-                      :from [bottle]
-                      :left-join (as [:select
-                                      [bottle-id
-                                       (as
-                                        (funcall sum
-                                                 [:case :when (= transaction-type 'purchase) :then 1
-                                                  :when (= transaction-type 'consume) :then -1
-                                                  :else 0
-                                                  :end])
-                                        total-amount)]
-                                      :from [transaction]
-                                      :group-by bottle-id]
-                                     t)
-                      :on (= bottle:bottle-id t:bottle-id)
-                      :where (and (> (funcall coalesce t:total-amount 0) 0)
-                                  (= bottle:wine-id $s1))]
-                     wine-id)))
-         (wine (vulpea-db-get-by-id wine-id))
+  (gethash wine-id
+           (vino-inv-query-available-bottles-for-many (list wine-id))))
+
+(defun vino-inv-query-available-bottles-for-many (wine-ids)
+  "Return available bottles for all WINE-IDS.
+
+WINE-IDS is a list of wine ID strings.
+
+Return a hash table mapping each wine ID to its list of
+`vino-inv-bottle' structs.  Wine IDs with no available bottles
+are absent from the table."
+  (let* ((rows (when wine-ids
+                 (emacsql
+                  (vino-inv-db)
+                  [:select
+                   [bottle:wine-id        ; 0
+                    bottle:bottle-id      ; 1
+                    bottle:purchase-date  ; 2
+                    bottle:price          ; 3
+                    bottle:price-usd      ; 4
+                    bottle:location-id    ; 5
+                    bottle:source-id      ; 6
+                    comment]              ; 7
+                   :from [bottle]
+                   :left-join (as [:select
+                                   [bottle-id
+                                    (as
+                                     (funcall sum
+                                              [:case :when (= transaction-type 'purchase) :then 1
+                                               :when (= transaction-type 'consume) :then -1
+                                               :else 0
+                                               :end])
+                                     total-amount)]
+                                   :from [transaction]
+                                   :group-by bottle-id]
+                                  t)
+                   :on (= bottle:bottle-id t:bottle-id)
+                   :where (and (> (funcall coalesce t:total-amount 0) 0)
+                               (in bottle:wine-id $v1))]
+                  (vconcat wine-ids))))
+         (wines-tbl (let ((tbl (make-hash-table :test 'equal)))
+                      (--each (vulpea-db-query-by-ids wine-ids)
+                        (puthash (vulpea-note-id it) it tbl))
+                      tbl))
          (locations-tbl (let ((tbl (make-hash-table :test 'equal)))
                           (--each (vino-inv-query-locations)
                             (puthash (vino-inv-location-id it) it tbl))
@@ -437,18 +453,21 @@ duplicates."
          (sources-tbl (let ((tbl (make-hash-table :test 'equal)))
                         (--each (vino-inv-query-sources)
                           (puthash (vino-inv-source-id it) it tbl))
-                        tbl)))
-    (--map
-     (make-vino-inv-bottle
-      :id (nth 0 it)
-      :wine wine
-      :purchase-date (nth 1 it)
-      :price (nth 2 it)
-      :price-usd (nth 3 it)
-      :location (gethash (nth 4 it) locations-tbl)
-      :source (gethash (nth 5 it) sources-tbl)
-      :comment (nth 6 it))
-     rows)))
+                        tbl))
+         (result (make-hash-table :test 'equal)))
+    (dolist (row rows)
+      (let* ((wine-id (nth 0 row))
+             (bottle (make-vino-inv-bottle
+                      :id (nth 1 row)
+                      :wine (gethash wine-id wines-tbl)
+                      :purchase-date (nth 2 row)
+                      :price (nth 3 row)
+                      :price-usd (nth 4 row)
+                      :location (gethash (nth 5 row) locations-tbl)
+                      :source (gethash (nth 6 row) sources-tbl)
+                      :comment (nth 7 row))))
+        (push bottle (gethash wine-id result))))
+    result))
 
 (defun vino-inv-count-purchased-bottles-for (wine-id)
   "Total amount of purchased bottles of wine with WINE-ID."
