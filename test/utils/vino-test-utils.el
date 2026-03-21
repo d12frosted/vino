@@ -142,15 +142,16 @@ equals to TITLE."
      :pos 0
      :id id
      :links links
-     :properties `((ID . ,id))
+     :properties `(("ID" . ,id))
      :meta meta
      :attach-dir attach-dir
      :file-title (or file-title title))))
 
 (defun vino-test-normalize-link (link)
-  "Normalize LINK by removing :pos property."
+  "Normalize LINK by removing :pos and :description properties."
   (let ((result (copy-sequence link)))
     (cl-remf result :pos)
+    (cl-remf result :description)
     result))
 
 (defun vino-test-normalize-links (links)
