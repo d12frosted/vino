@@ -159,11 +159,16 @@ equals to TITLE."
   (mapcar #'vino-test-normalize-link links))
 
 (defun vino-test-normalize-note (note)
-  "Return a copy of NOTE with links normalized (no :pos property)."
+  "Return a copy of NOTE with non-deterministic slots normalized.
+
+Links lose their :pos property and the `modified-at' slot (set at
+sync time in newer vulpea) is cleared so notes can be compared."
   (when note
     (let ((copy (copy-vulpea-note note)))
       (setf (vulpea-note-links copy)
             (vino-test-normalize-links (vulpea-note-links copy)))
+      (when (fboundp 'vulpea-note-modified-at)
+        (setf (vulpea-note-modified-at copy) nil))
       copy)))
 
 (cl-defun mock-vulpea-note (&key type title tags basename-prefix meta links)
