@@ -232,7 +232,7 @@
              "Frappato di Vittoria"
              "Add a synonym to existing grape"
              (completion-for :title "Frappato" :tags '("grape"))))
-    (expect (vino-grape-select)
+    (expect (vino-test-normalize-note (vino-grape-select))
             :to-equal
             (mk-vulpea-note :type "grape"
                             :id "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa"
@@ -299,9 +299,11 @@
   (after-all (vino-test-teardown))
 
   (it "creates a new country note"
-    (expect (mock-vulpea-note :type "country" :title "Vino Republic")
+    (expect (vino-test-normalize-note
+             (mock-vulpea-note :type "country" :title "Vino Republic"))
             :to-equal
-            (vino-country-create :title "Vino Republic"))))
+            (vino-test-normalize-note
+             (vino-country-create :title "Vino Republic")))))
 
 (describe "vino-region-create"
   (before-all (vino-test-init))
