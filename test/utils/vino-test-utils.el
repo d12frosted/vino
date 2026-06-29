@@ -286,10 +286,16 @@ as ORIGINAL."
   (pcase keyword
     (:and-return-values
      (let* ((orig (and (fboundp symbol) (symbol-function symbol)))
-            (replacement (vino-spy--return-values nil arg (interactive-form orig))))
-       (unless (buttercup--spy-on-and-call-replacement symbol replacement)
-         (error "Spies can only be created in `before-each'"))
-       ))
+            (replacement (vino-spy--return-values nil arg (interactive-form orig)))
+            ;; Newer buttercup (>= 20260512) expects the original function
+            ;; as a third argument to restore on cleanup; older versions
+            ;; take only two.
+            (installed
+             (if (>= (cdr (func-arity #'buttercup--spy-on-and-call-replacement)) 3)
+                 (buttercup--spy-on-and-call-replacement symbol replacement orig)
+               (buttercup--spy-on-and-call-replacement symbol replacement))))
+       (unless installed
+         (error "Spies can only be created in `before-each'"))))
     (_ (funcall original symbol keyword arg))))
 
 (advice-add #'spy-on :around #'vino-spy-on)
