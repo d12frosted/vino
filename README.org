@@ -75,6 +75,16 @@ Each schema takes its fields from a variable, so you can describe your own metad
 (vino-schema-setup)
 #+end_src
 
+** Renaming a Producer
+
+A wine entry is titled after its producer, and a rating after its wine. Renaming a producer note on its own therefore leaves every wine it made, and every rating of those wines, carrying the old name.
+
+=vino-producer-rename= does the whole cascade: it sets the new title and then updates each wine by that producer, which recomputes the wine and rating titles and rewrites the link descriptions.
+
+The file keeps its name. Vino names a producer file after a timestamp and a slug, so the name is a stable handle rather than a copy of the title; use =vulpea-rename-file= if you want to rename it anyway.
+
+Grapes, regions, appellations and countries do not feed any title, so renaming one only leaves stale link descriptions behind. =vulpea-propagate-title-change= handles those.
+
 ** Installation and Configuration
 
 For installation, our [[https://github.com/d12frosted/vino/wiki][wiki]] provides both concise and comprehensive guides suitable for various methods. It also offers detailed instructions on configuring Vino and organising your notes effectively.
