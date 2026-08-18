@@ -43,6 +43,28 @@ To search using ASCII characters (e.g., typing "Cotes" to find "Côtes"), you ha
    #+title: Côtes du Rhône
    #+end_example
 
+** Checking Your Cellar
+
+A cellar built over years drifts: a region without a country, a rating without a total, a price that is a typo. The =vino-schema= module describes every vino note type as a [[https://github.com/d12frosted/vulpea][Vulpea]] schema, so you can ask what is broken:
+
+#+begin_src emacs-lisp
+(require 'vino-schema)
+(vino-schema-setup)
+#+end_src
+
+After that the Vulpea validation functions work on wine notes: =vulpea-schema-validate-all= for one schema, =vulpea-schema-note-violations= for the note at hand, =vulpea-schema-collection-health= for the whole collection. With [[https://github.com/d12frosted/vulpea-ui][vulpea-ui]] installed, =vulpea-ui-schema-dashboard= renders the same data.
+
+The schemas follow what =vino-entry-create= writes today, which means two fields are required that older entries may lack: =volume=, which moved to the wine entry in v0.5.0, and =country=, which both origin selection strategies write. Entries created before those changes are reported as incomplete.
+
+Each schema takes its fields from a variable, so you can describe your own metadata without touching the rest:
+
+#+begin_src emacs-lisp
+(add-to-list 'vino-schema-entry-fields
+             '(:key "drink from" :type number)
+             'append)
+(vino-schema-setup)
+#+end_src
+
 ** Installation and Configuration
 
 For installation, our [[https://github.com/d12frosted/vino/wiki][wiki]] provides both concise and comprehensive guides suitable for various methods. It also offers detailed instructions on configuring Vino and organising your notes effectively.
