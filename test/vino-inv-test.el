@@ -37,6 +37,29 @@
 (require 'emacsql)
 (require 'vino-inv)
 (require 'dash)
+(require 'vino-test-utils)
+
+(defconst vino-inv-test--wine "c9937e3e-c83d-4d8d-a612-6110e6706252"
+  "Arianna Occhipinti Bombolieri BB 2017.")
+
+(defun vino-inv-test--acquire (wine amount)
+  "Purchase AMOUNT bottles of WINE, returning the first one.
+
+A bottle needs a location and a source, both `not-null' in the schema."
+  (let ((location (vino-inv-add-location "Cellar"))
+        (source (vino-inv-add-source "Shop")))
+    (car (--map (vino-inv-add-bottle :wine wine
+                                     :date "2021-01-01"
+                                     :price "10 EUR"
+                                     :price-usd "12 USD"
+                                     :location-id (vino-inv-location-id location)
+                                     :source-id (vino-inv-source-id source))
+                (-iota amount)))))
+
+(defun vino-inv-test--reload (note)
+  "Re-read NOTE from the database after its file was written."
+  (vulpea-db-update-file (vulpea-note-path note))
+  (vulpea-db-get-by-id (vulpea-note-id note)))
 
 (defun vino-inv-test--tables (db)
   "Return list of table names in DB."
@@ -73,6 +96,97 @@
                                '(location source bottle transaction))
                 :to-have-same-items-as
                 '(location source bottle transaction))))))
+
+(describe "vino-inv-count-bottles-for"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "counts purchased and consumed bottles in one go"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottle (vino-inv-test--acquire wine 3)))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
+                                 :date "2021-02-01")
+        (expect (vino-inv-count-bottles-for (vulpea-note-id wine))
+                :to-equal '(3 . 1)))))
+
+  (it "counts nothing for a wine with no bottles"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-count-bottles-for vino-inv-test--wine)
+              :to-equal '(0 . 0))))
+
+  (it "agrees with the single counters"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottle (vino-inv-test--acquire wine 2)))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
+                                 :date "2021-02-01")
+        (expect (vino-inv-count-purchased-bottles-for (vulpea-note-id wine))
+                :to-equal 2)
+        (expect (vino-inv-count-consumed-bottles-for (vulpea-note-id wine))
+                :to-equal 1)))))
+
+(describe "vino-inv-update-availability"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "writes acquired, consumed and available"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottle (vino-inv-test--acquire wine 3)))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
+                                 :date "2021-02-01")
+        (vino-inv-update-availability wine)
+        (let ((note (vino-inv-test--reload wine)))
+          (expect (vulpea-note-meta-get note "acquired" 'number) :to-equal 3)
+          (expect (vulpea-note-meta-get note "consumed" 'number) :to-equal 1)
+          (expect (vulpea-note-meta-get note "available" 'number) :to-equal 2)))))
+
+  (it "leaves the order of the other metadata alone"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (before (-map #'car (vulpea-note-meta wine))))
+        (vino-inv-test--acquire wine 1)
+        (vino-inv-update-availability wine)
+        (expect (-map #'car (vulpea-note-meta (vino-inv-test--reload wine)))
+                :to-equal before)))))
+
+
+(describe "vino-inv-add-price"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "records a public price on the wine note"
+    (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+      (vino-inv-add-price wine "42.00 EUR" "public")
+      (expect (vulpea-note-meta-get-list (vino-inv-test--reload wine) "price")
+              :to-equal '("42.00 EUR" "50.00 EUR"))))
+
+  (it "records a private price on the wine note"
+    (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+      (vino-inv-add-price wine "42.00 EUR" "private")
+      (expect (vulpea-note-meta-get-list (vino-inv-test--reload wine)
+                                         "price private")
+              :to-equal '("42.00 EUR"))))
+
+  (it "does not record the same price twice"
+    (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+      (vino-inv-add-price wine "42.00 EUR" "public")
+      (vino-inv-add-price (vino-inv-test--reload wine) "42.00 EUR" "public")
+      (expect (vulpea-note-meta-get-list (vino-inv-test--reload wine) "price")
+              :to-equal '("42.00 EUR" "50.00 EUR"))))
+
+  (it "records nothing when the price is skipped"
+    (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+      (vino-inv-add-price wine "42.00 EUR" "skip")
+      (vino-inv-add-price wine "42.00 EUR" nil)
+      (expect (vulpea-note-meta-get-list (vino-inv-test--reload wine) "price")
+              :to-equal '("50.00 EUR"))))
+
+  (it "refuses an unknown kind"
+    (expect (vino-inv-add-price (vulpea-db-get-by-id vino-inv-test--wine)
+                                "42.00 EUR" "secret")
+            :to-throw 'user-error)))
 
 (provide 'vino-inv-test)
 ;;; vino-inv-test.el ends here

@@ -806,6 +806,35 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
              id
              date-str))))
 
+(describe "vino-set-price"
+  :var ((id "c9937e3e-c83d-4d8d-a612-6110e6706252"))
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "writes the price to the wine note rather than the current buffer"
+    (with-temp-buffer
+      (vino-set-price (vulpea-db-get-by-id id) "42.00 EUR"))
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id id) "price")
+            :to-equal "42.00 EUR"))
+
+  (it "keeps the previous price as a private one"
+    (with-temp-buffer
+      (vino-set-price (vulpea-db-get-by-id id) "42.00 EUR"))
+    (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "price private")
+            :to-equal '("50.00 EUR")))
+
+  (it "stamps the date the price was set"
+    (with-temp-buffer
+      (vino-set-price (vulpea-db-get-by-id id) "42.00 EUR"))
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id id) "price date")
+            :to-equal (format-time-string "%F")))
+
+  (it "does nothing when the price has not changed"
+    (with-temp-buffer
+      (vino-set-price (vulpea-db-get-by-id id) "50.00 EUR"))
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id id) "price date")
+            :to-be nil)))
+
 (describe "vino--collect-while"
   (it "repeats a function until filter returns nil"
     (let ((n 0))
