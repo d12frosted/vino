@@ -107,8 +107,9 @@ TITLE (mandatory) is title slot of the note.
 BASENAME (optional) is basename of note file. E.g. without directory and
 extension. When omitted, BASENAME is calculated as slug of TITLE.
 
-CATEGORY (optional) is category property inside properties slot of the
-note. When omitted, equals to BASENAME.
+CATEGORY (optional) is category slot of the note. When omitted,
+equals to base name of the note file, which is how vulpea resolves
+category for notes without an explicit one.
 
 TAGS (optional) is tags slot of the future note. When omitted, equals
 to (TYPE wine) list. Unfortunately, since tags list order is fixed, but
@@ -144,8 +145,10 @@ equals to TITLE."
      :links links
      :properties `(("ID" . ,id))
      :meta meta
+     :category (or category (file-name-base path))
      :attach-dir attach-dir
-     :file-title (or file-title title))))
+     :file-title (or file-title title)
+     :title-source 'keyword)))
 
 (defun vino-test-normalize-link (link)
   "Normalize LINK by removing :pos and :description properties."
