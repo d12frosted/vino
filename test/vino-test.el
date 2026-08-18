@@ -711,7 +711,9 @@ dictum. Quisque suscipit neque dui, in efficitur quam interdum ut.
     (setq note (vino-rating--create rating))
     (setf (vino-rating-wine rating) (vulpea-db-get-by-id id))
     (expect note :not :to-be nil)
-    (expect (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note) :to-equal (list note))
+    (expect (mapcar #'vino-test-normalize-note
+                    (vulpea-note-meta-get-list (vulpea-db-get-by-id id) "ratings" 'note))
+            :to-equal (list (vino-test-normalize-note note)))
     (expect (vulpea-note-meta-get (vulpea-db-get-by-id id) "rating" 'number) :to-equal 4.0)
     (expect (vino-rating-get-by-id (vulpea-note-id note)) :to-equal rating)
     (expect (vulpea-db-get-file-by-id id)
