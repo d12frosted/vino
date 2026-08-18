@@ -62,13 +62,41 @@ The hook is called with single arguments - `vino-inv-bottle'.")
   (add-hook 'vino-entry-update-handle-functions #'vino-inv-update-availability))
 
 (defun vino-inv-update-availability (note)
-  "Update available metadata in wine NOTE."
-  (let* ((in (vino-inv-count-purchased-bottles-for (vulpea-note-id note)))
-         (out (vino-inv-count-consumed-bottles-for (vulpea-note-id note)))
-         (cur (- in out)))
-    (vulpea-meta-set note "acquired" in 'append)
-    (vulpea-meta-set note "consumed" out 'append)
-    (vulpea-meta-set note "available" cur 'append)))
+  "Update available metadata in wine NOTE.
+
+The counters are written to one buffer, which is then saved and synced.
+`vulpea-meta-set' leaves the buffer modified without saving it, so on
+the acquire path - where nothing else saved the wine - the new counts
+never reached disk."
+  (let* ((counts (vino-inv-count-bottles-for (vulpea-note-id note)))
+         (in (car counts))
+         (out (cdr counts)))
+    (vulpea-utils-with-note-sync note
+      (vulpea-buffer-meta-set "acquired" in 'append)
+      (vulpea-buffer-meta-set "consumed" out 'append)
+      (vulpea-buffer-meta-set "available" (- in out) 'append))))
+
+(defun vino-inv-add-price (note price kind)
+  "Record PRICE of wine NOTE as KIND.
+
+KIND names the metadata field the price is added to: \"public\" for
+price, \"private\" for price private.  It is also what the prompt
+offering those two answers returns, so nil and \"skip\" are accepted and
+record nothing.
+
+The note is saved and synced, and a price already recorded as KIND is
+not added twice."
+  (let ((prop (pcase kind
+                ((or 'nil "skip") nil)
+                ("public" "price")
+                ("private" "price private")
+                (_ (user-error "Unknown price kind: %s" kind)))))
+    (when prop
+      (vulpea-utils-with-note-sync note
+        (vulpea-buffer-meta-set
+         prop
+         (-uniq (cons price (vulpea-note-meta-get-list note prop)))
+         'append)))))
 
 ;; * commands
 
@@ -128,9 +156,7 @@ The hook is called with single arguments - `vino-inv-bottle'.")
          (date (format-time-string "%Y-%m-%d" (org-read-date nil t))))
 
     ;; add price if needed
-    (pcase price-add-as
-      (`"public" (vulpea-meta-set note "price" (cons price prices-public) 'append))
-      (`"private" (vulpea-meta-set note "price private" (cons price prices-private) 'append)))
+    (vino-inv-add-price note price price-add-as)
 
     (--each (-iota amount)
       (let ((bottle (vino-inv-add-bottle
@@ -469,27 +495,34 @@ are absent from the table."
         (push bottle (gethash wine-id result))))
     result))
 
+(defun vino-inv-count-bottles-for (wine-id)
+  "Return purchased and consumed bottle counts of wine with WINE-ID.
+
+The result is a cons of the two, counted in a single query.  Use this
+when both numbers are wanted, as `vino-inv-update-availability' does."
+  (let ((row (car (emacsql
+                   (vino-inv-db)
+                   [:select
+                    [(funcall sum [:case :when (= transaction-type 'purchase) :then 1
+                                   :else 0
+                                   :end])
+                     (funcall sum [:case :when (= transaction-type 'consume) :then 1
+                                   :else 0
+                                   :end])]
+                    :from [transaction]
+                    :join bottle :on (= bottle:bottle-id transaction:bottle-id)
+                    :where (= bottle:wine-id $s1)]
+                   wine-id))))
+    (cons (or (nth 0 row) 0)
+          (or (nth 1 row) 0))))
+
 (defun vino-inv-count-purchased-bottles-for (wine-id)
   "Total amount of purchased bottles of wine with WINE-ID."
-  (caar
-   (emacsql (vino-inv-db)
-            [:select (funcall count *)
-             :from [transaction]
-             :join bottle :on (= bottle:bottle-id transaction:bottle-id)
-             :where (= bottle:wine-id $s1)
-             :and (= transaction-type 'purchase)]
-            wine-id)))
+  (car (vino-inv-count-bottles-for wine-id)))
 
 (defun vino-inv-count-consumed-bottles-for (wine-id)
   "Total amount of consumed bottles of wine with WINE-ID."
-  (caar
-   (emacsql (vino-inv-db)
-            [:select (funcall count *)
-             :from [transaction]
-             :join bottle :on (= bottle:bottle-id transaction:bottle-id)
-             :where (= bottle:wine-id $s1)
-             :and (= transaction-type 'consume)]
-            wine-id)))
+  (cdr (vino-inv-count-bottles-for wine-id)))
 
 ;; * location operations
 
@@ -824,16 +857,7 @@ If OTHER-WINDOW, visit the NOTE in another window."
                             :where (= bottle-id $s1)]
              bottle-id price price-usd)
 
-    (when (and price-add-as (not (string-equal "skip" price-add-as)))
-      (vulpea-meta-set
-       note
-       (pcase price-add-as
-         (`"public" "price")
-         (`"private" "price private"))
-       (cons price (pcase price-add-as
-                     (`"public" prices-public)
-                     (`"private" prices-private)))
-       'append))
+    (vino-inv-add-price note price price-add-as)
 
     (vino-inv-ui-update)))
 

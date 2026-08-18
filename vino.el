@@ -1833,19 +1833,23 @@ Return the list of updated wine entries."
 
 ;;;###autoload;
 (defun vino-set-price (&optional note price)
-  "Interactively set a new PRICE for a wine NOTE."
+  "Interactively set a new PRICE for a wine NOTE.
+
+The previous price, if any, is kept as a private one.  Nothing happens
+when the price has not changed."
   (interactive)
   (let* ((note (or note (vino-entry-note-get-dwim)))
          (price-new (or price (vino--read-string "Price: ")))
          (price-old (vulpea-note-meta-get note "price")))
     (unless (string-equal price-new price-old)
-      (when price-old
-        (vulpea-buffer-meta-set
-         "price private"
-         (-uniq (cons price-old (vulpea-note-meta-get-list note "price private")))))
-      (vulpea-buffer-meta-set "price" price-new)
-      (vulpea-buffer-meta-set "price date" (format-time-string "%F"))
-      (vulpea-buffer-meta-sort vino-entry-meta-props-order))))
+      (vulpea-utils-with-note-sync note
+        (when price-old
+          (vulpea-buffer-meta-set
+           "price private"
+           (-uniq (cons price-old (vulpea-note-meta-get-list note "price private")))))
+        (vulpea-buffer-meta-set "price" price-new)
+        (vulpea-buffer-meta-set "price date" (format-time-string "%F"))
+        (vulpea-buffer-meta-sort vino-entry-meta-props-order)))))
 
 
 ;;; Utilities

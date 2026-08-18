@@ -14,6 +14,8 @@
 - Add =vino-entry-select-from=, which selects a wine from a given list of notes with wine annotations applied. Used by =vino-entry-note-select= and =vino-inv-find-file-available=.
 - Add =vino-producer-rename=, which renames a producer and carries the change through to the wines it made. A wine entry is titled after its producer and a rating after its wine, so renaming a producer note on its own left every wine it made, and every rating of those wines, carrying the old name until =vino-entry-update= happened to be run on each of them by hand. There was no rename command at all before this, so the only way through was to remember which wines were affected. The file keeps its name: vino names a producer file after a timestamp and a slug, so the name is a stable handle rather than a copy of the title. Renaming a grape, region, appellation or country still leaves stale link descriptions in the wines that reference them; those do not feed any title, so =vulpea-propagate-title-change= covers them.
 - Add =vino-producer-wines=, returning the wine entries made by a producer.
+- Add =vino-inv-add-price=, recording a price on a wine note as public or private. Both the acquisition flow and the inventory UI grew their own copy of this; they now share one.
+- Add =vino-inv-count-bottles-for=, returning purchased and consumed counts from a single query. =vino-inv-count-purchased-bottles-for= and =vino-inv-count-consumed-bottles-for= are now built on it, so updating availability runs one query instead of two.
 
 *Breaking changes*
 
@@ -22,6 +24,8 @@
 
 *Fixes*
 
+- Metadata written by the inventory now reaches disk. =vulpea-meta-set= leaves the buffer modified without saving it, so =vino-inv-update-availability= and the price recorded while acquiring or editing a bottle only survived if something else happened to save the wine afterwards. Acquiring a bottle and stopping there lost the new counts; the rating flow hid the bug, because =vino-entry-update= saves the note at the end. The writes now go through =vulpea-utils-with-note-sync=, which saves and syncs.
+- =vino-set-price= wrote to whatever buffer happened to be current. It called =vulpea-buffer-meta-set= without visiting the note first, so it only worked when the wine's own file was the current buffer - which is the case when the command is used from inside the wine, and not when the wine is picked from anywhere else. It now visits the note, and saves and syncs it.
 - Merge template properties with =vulpea-create-default-template= properties instead of overriding them.
 - Trim whitespace from all user input (names, prices, etc.) to prevent formatting issues ([[https://github.com/d12frosted/vino/issues/101][#101]]).
 - Fix inventory database bootstrap on fresh install: =IF NOT EXISTS= was placed after the table name, producing invalid SQL ([[https://github.com/d12frosted/vino/pull/136][#136]]).
