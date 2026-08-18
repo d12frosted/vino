@@ -5,7 +5,7 @@
 ;; Author: Boris Buliga <boris@d12frosted.io>
 ;; Maintainer: Boris Buliga <boris@d12frosted.io>
 ;; Version: 0.5.0
-;; Package-Requires: ((emacs "29.1") (vulpea "2.0.0") (dash "2.19.1") (s "1.13.0"))
+;; Package-Requires: ((emacs "29.1") (vulpea "2.5.0") (dash "2.19.1") (s "1.13.0"))
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -164,6 +164,17 @@ TEMPLATE-PROPS takes precedence over defaults."
   "Read a string from minibuffer with PROMPT, trimming the result.
 INITIAL-INPUT is passed to `read-string'."
   (string-trim (read-string prompt initial-input)))
+
+(defun vino--note-of-type-p (note type)
+  "Return non-nil if NOTE is a file level note tagged wine and TYPE.
+
+TYPE is a tag denoting one of the vino note types, e.g. \"cellar\" or
+\"producer\"."
+  (when-let* ((tags (vulpea-note-tags note))
+              (level (vulpea-note-level note)))
+    (and (equal level 0)
+         (seq-contains-p tags "wine")
+         (seq-contains-p tags type))))
 
 ;;; Rating
 ;;
@@ -377,11 +388,7 @@ Each PROP can be of one of the following types:
 
 (defun vino-rating-note-p (note)
   "Return non-nil if NOTE represents `vino-rating'."
-  (when-let* ((tags (vulpea-note-tags note))
-              (level (vulpea-note-level note)))
-    (and (equal level 0)
-         (seq-contains-p tags "wine")
-         (seq-contains-p tags "rating"))))
+  (vino--note-of-type-p note "rating"))
 
 (defun vino-rating--read-value (prop)
   "Read a rating value defined by PROP.
@@ -952,11 +959,7 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
 ;;;###autoload
 (defun vino-entry-note-p (note)
   "Return non-nil if NOTE represents vino entry."
-  (when-let ((tags (vulpea-note-tags note))
-             (level (vulpea-note-level note)))
-    (and (equal level 0)
-         (seq-contains-p tags "wine")
-         (seq-contains-p tags "cellar"))))
+  (vino--note-of-type-p note "cellar"))
 
 ;;;###autoload
 (defun vino-entry-note-select (&optional initial-prompt)
@@ -1191,6 +1194,11 @@ Return `vulpea-note'."
      :properties (vino--merge-properties (plist-get vino-appellation-template :properties)))))
 
 ;;;###autoload
+(defun vino-country-note-p (note)
+  "Return non-nil if NOTE represents a country."
+  (vino--note-of-type-p note "country"))
+
+;;;###autoload
 (defun vino-country-find-file ()
   "Select and find country note."
   (interactive)
@@ -1210,6 +1218,11 @@ Return `vulpea-note'."
     (if (vulpea-note-id note)
         note
       (vino-country-create :title (vulpea-note-title note)))))
+
+;;;###autoload
+(defun vino-region-note-p (note)
+  "Return non-nil if NOTE represents a region."
+  (vino--note-of-type-p note "region"))
 
 ;;;###autoload
 (defun vino-region-find-file ()
@@ -1243,6 +1256,11 @@ Return `vulpea-note'."
       (vino-region-create
        :title (vulpea-note-title note)
        :country country))))
+
+;;;###autoload
+(defun vino-appellation-note-p (note)
+  "Return non-nil if NOTE represents an appellation."
+  (vino--note-of-type-p note "appellation"))
 
 ;;;###autoload
 (defun vino-appellation-find-file ()
@@ -1443,6 +1461,11 @@ Return `vulpea-note'."
     note))
 
 ;;;###autoload
+(defun vino-grape-note-p (note)
+  "Return non-nil if NOTE represents a grape."
+  (vino--note-of-type-p note "grape"))
+
+;;;###autoload
 (defun vino-grape-find-file ()
   "Select and find grape note."
   (interactive)
@@ -1550,6 +1573,11 @@ Return `vulpea-note'."
     ;; sync to database for future queries
     (vulpea-db-update-file (vulpea-note-path note))
     note))
+
+;;;###autoload
+(defun vino-producer-note-p (note)
+  "Return non-nil if NOTE represents a producer."
+  (vino--note-of-type-p note "producer"))
 
 ;;;###autoload
 (defun vino-producer-find-file ()
