@@ -80,6 +80,64 @@ Orange wine is marked as white.")
                      doux))
   "List of valid sweetness levels per carbonation type.")
 
+;;; Faces
+;;
+
+(defgroup vino nil
+  "Cellar tracking with vulpea."
+  :group 'applications
+  :prefix "vino-")
+
+(defface vino-annotation-colour-red
+  '((((class color) (background light)) :foreground "#8b1a1a")
+    (((class color) (background dark)) :foreground "#e08585")
+    (t :inherit default))
+  "Face for a red wine in a selection annotation."
+  :group 'vino)
+
+(defface vino-annotation-colour-white
+  '((((class color) (background light)) :foreground "#7a6000")
+    (((class color) (background dark)) :foreground "#e0c473")
+    (t :inherit default))
+  "Face for a white wine in a selection annotation."
+  :group 'vino)
+
+(defface vino-annotation-colour-rose
+  '((((class color) (background light)) :foreground "#a03a72")
+    (((class color) (background dark)) :foreground "#eda3c6")
+    (t :inherit default))
+  "Face for a rose wine in a selection annotation."
+  :group 'vino)
+
+(defface vino-annotation-origin
+  '((t :inherit shadow))
+  "Face for the country of a wine in a selection annotation."
+  :group 'vino)
+
+(defface vino-annotation-rating
+  '((t :inherit bold))
+  "Face for the rating of a wine in a selection annotation."
+  :group 'vino)
+
+(defface vino-annotation-unrated
+  '((t :inherit shadow))
+  "Face for a wine that has no rating yet in a selection annotation."
+  :group 'vino)
+
+(defface vino-annotation-available
+  '((t :inherit success))
+  "Face for the number of bottles left in a selection annotation."
+  :group 'vino)
+
+(defvar vino-annotation-colour-faces
+  '((red . vino-annotation-colour-red)
+    (white . vino-annotation-colour-white)
+    (rose . vino-annotation-colour-rose))
+  "Face to render a wine colour with, keyed by colour.
+
+A colour absent from this alist is left unstyled, so extending
+`vino-colour-types' does not force a face on you.")
+
 ;;; Hooks
 ;;
 
@@ -972,6 +1030,15 @@ country is resolved on the spot, which costs a query."
       (when-let* ((country (vulpea-db-get-by-id id)))
         (vulpea-note-title country)))))
 
+(defun vino-entry--annotation-section (value face)
+  "Return VALUE rendered with FACE, or nil when VALUE is nil.
+
+A nil FACE leaves VALUE unstyled."
+  (when value
+    (if face
+        (propertize value 'face face)
+      value)))
+
 ;;;###autoload
 (defun vino-entry-annotate (note &optional context)
   "Annotate wine NOTE during selection.
@@ -982,16 +1049,33 @@ of them: colour, country, rating and how many bottles are left.  Since
 annotations are part of the candidate string by default (see
 `vulpea-select-annotate-matchable'), all of them are searchable too.
 
+Each section carries its own face, so a list of wines can be scanned by
+colour and by what is worth opening rather than read word by word.  See
+`vino-annotation-colour-faces' and the `vino-annotation-*' faces.
+
 CONTEXT is the value produced by `vino-entry-dyncontext'."
-  (let ((sections
-         (seq-remove
-          #'null
-          (list (vulpea-note-meta-get note "colour")
-                (vino-entry--country-title note context)
-                (vulpea-note-meta-get note "rating")
-                (when-let* ((available (vulpea-note-meta-get note "available" 'number)))
-                  (when (> available 0)
-                    (format "x%d" available)))))))
+  (let* ((colour (vulpea-note-meta-get note "colour"))
+         (rating (vulpea-note-meta-get note "rating"))
+         (available (vulpea-note-meta-get note "available" 'number))
+         (sections
+          (seq-remove
+           #'null
+           (list
+            (vino-entry--annotation-section
+             colour
+             (when colour
+               (alist-get (intern colour) vino-annotation-colour-faces)))
+            (vino-entry--annotation-section
+             (vino-entry--country-title note context)
+             'vino-annotation-origin)
+            (vino-entry--annotation-section
+             rating
+             (if (equal rating "NA")
+                 'vino-annotation-unrated
+               'vino-annotation-rating))
+            (when (and available (> available 0))
+              (propertize (format "x%d" available)
+                          'face 'vino-annotation-available))))))
     (if (null sections)
         ""
       (concat " " (string-join sections " ")))))

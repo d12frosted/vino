@@ -51,7 +51,9 @@ A wine entry is titled after its producer, name and vintage, so a list of them t
 Arianna Occhipinti Bombolieri BB 2017 red Italy 4.5 x2
 #+end_example
 
-Annotations are part of the candidate string, so they are searchable too: type =Italy= or =rose= to narrow the list. Set =vino-entry-annotate-fn= to your own function to change what is shown, or to nil to turn annotations off.
+Annotations are part of the candidate string, so they are searchable too: type =Italy= or =rose= to narrow the list.
+
+Each section has its own face, so the list can be scanned by colour and by what is worth opening: see =vino-annotation-colour-faces= and the =vino-annotation-*= faces. Set =vino-entry-annotate-fn= to your own function to change what is shown, or to nil to turn annotations off.
 
 ** Checking Your Cellar
 
