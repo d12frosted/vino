@@ -43,6 +43,16 @@ To search using ASCII characters (e.g., typing "Cotes" to find "Côtes"), you ha
    #+title: Côtes du Rhône
    #+end_example
 
+** Picking a Wine
+
+A wine entry is titled after its producer, name and vintage, so a list of them tells you nothing about which one to open. Vino annotates each candidate with colour, country, rating and how many bottles are left:
+
+#+begin_example
+Arianna Occhipinti Bombolieri BB 2017 red Italy 4.5 x2
+#+end_example
+
+Annotations are part of the candidate string, so they are searchable too: type =Italy= or =rose= to narrow the list. Set =vino-entry-annotate-fn= to your own function to change what is shown, or to nil to turn annotations off.
+
 ** Checking Your Cellar
 
 A cellar built over years drifts: a region without a country, a rating without a total, a price that is a typo. The =vino-schema= module describes every vino note type as a [[https://github.com/d12frosted/vulpea][Vulpea]] schema, so you can ask what is broken:

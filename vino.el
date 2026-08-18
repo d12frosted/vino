@@ -961,17 +961,104 @@ EXTRA-DATA is passed to `vino-rating-create-handle-functions'."
   "Return non-nil if NOTE represents vino entry."
   (vino--note-of-type-p note "cellar"))
 
+(defun vino-entry--country-title (note &optional context)
+  "Return the title of the country of NOTE, or nil when it has none.
+
+CONTEXT is the table built by `vino-entry-dyncontext'.  Without it the
+country is resolved on the spot, which costs a query."
+  (when-let* ((id (vulpea-note-meta-get note "country" 'link)))
+    (if context
+        (gethash id context)
+      (when-let* ((country (vulpea-db-get-by-id id)))
+        (vulpea-note-title country)))))
+
+;;;###autoload
+(defun vino-entry-annotate (note &optional context)
+  "Annotate wine NOTE during selection.
+
+The title of a wine entry already names the producer, the wine and the
+vintage, so the annotation carries what it takes to choose between two
+of them: colour, country, rating and how many bottles are left.  Since
+annotations are part of the candidate string by default (see
+`vulpea-select-annotate-matchable'), all of them are searchable too.
+
+CONTEXT is the value produced by `vino-entry-dyncontext'."
+  (let ((sections
+         (seq-remove
+          #'null
+          (list (vulpea-note-meta-get note "colour")
+                (vino-entry--country-title note context)
+                (vulpea-note-meta-get note "rating")
+                (when-let* ((available (vulpea-note-meta-get note "available" 'number)))
+                  (when (> available 0)
+                    (format "x%d" available)))))))
+    (if (null sections)
+        ""
+      (concat " " (string-join sections " ")))))
+
+;;;###autoload
+(defun vino-entry-dyncontext (notes)
+  "Return a table of country titles keyed by note id for NOTES.
+
+Country is a link, so naming it during selection means resolving a note
+per candidate.  This resolves all of them at once and hands the result
+to `vino-entry-annotate'."
+  (let ((ids (->> notes
+                  (--map (vulpea-note-meta-get it "country" 'link))
+                  (-non-nil)
+                  (-uniq)))
+        (table (make-hash-table :test 'equal)))
+    (when ids
+      (--each (vulpea-db-query-by-ids ids)
+        (puthash (vulpea-note-id it) (vulpea-note-title it) table)))
+    table))
+
+(defvar vino-entry-annotate-fn #'vino-entry-annotate
+  "Function to annotate a wine entry during selection.
+
+It is bound to `vulpea-select-annotate-fn' by
+`vino-entry-select-from', so it follows the same contract: it accepts
+a `vulpea-note' and, when it takes a second argument, the value
+returned by `vino-entry-dyncontext-fn'.  Set to nil to leave wine
+entries unannotated.")
+
+(defvar vino-entry-dyncontext-fn #'vino-entry-dyncontext
+  "Function computing shared context for a wine entry selection.
+
+It is bound to `vulpea-select-dyncontext-fn' by
+`vino-entry-select-from', so it follows the same contract: it is called
+once per selection with the notes being presented and its result is
+passed to `vino-entry-annotate-fn'.")
+
+;;;###autoload
+(cl-defun vino-entry-select-from (prompt notes &key require-match initial-prompt)
+  "Select a wine entry from NOTES, annotated as a wine.
+
+PROMPT, NOTES, REQUIRE-MATCH and INITIAL-PROMPT are passed to
+`vulpea-select-from', with aliases expanded.
+
+Annotation is controlled by `vino-entry-annotate-fn' and
+`vino-entry-dyncontext-fn', bound only for the duration of the
+selection so that selecting anything else is unaffected."
+  (let ((vulpea-select-annotate-fn vino-entry-annotate-fn)
+        (vulpea-select-dyncontext-fn vino-entry-dyncontext-fn))
+    (vulpea-select-from
+     prompt
+     notes
+     :require-match require-match
+     :initial-prompt initial-prompt
+     :expand-aliases t)))
+
 ;;;###autoload
 (defun vino-entry-note-select (&optional initial-prompt)
   "Select and return a `vulpea-note' representing `vino-entry'.
 
 Optionally provide INITIAL-PROMPT."
-  (vulpea-select-from
+  (vino-entry-select-from
    "Wine"
    (vulpea-db-query-by-tags-every '("wine" "cellar"))
    :require-match t
-   :initial-prompt initial-prompt
-   :expand-aliases t))
+   :initial-prompt initial-prompt))
 
 ;;;###autoload
 (defun vino-entry-note-get-dwim (&optional note-or-id)
