@@ -1791,9 +1791,8 @@ Return `vulpea-note'."
 
 A wine entry is titled after its producer, and a rating after its wine,
 so renaming a producer on its own leaves every wine it made, and every
-rating of those wines, carrying the old name.  This runs
-`vino-entry-update' on each of those wines afterwards, which recomputes
-the titles and rewrites the link descriptions pointing at the producer.
+rating of those wines, carrying the old name.  This is `vino-rename'
+narrowed to producers, kept for the return value.
 
 The file keeps its name.  Vino names a producer file after a timestamp
 and a slug, so the name is a stable handle rather than a copy of the
@@ -1818,15 +1817,103 @@ Return the list of updated wine entries."
                         (vino--read-string
                          (format "Rename %s to: " (vulpea-note-title note))
                          (vulpea-note-title note)))))
-    (vulpea-utils-with-note note
-      (vulpea-buffer-title-set new-title)
-      (save-buffer)
-      ;; wines read the producer back from the database to build their own
-      ;; titles, so it has to know the new one before they are updated
-      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))
-    (let ((wines (vino-producer-wines note)))
-      (--each wines (vino-entry-update (vulpea-note-id it)))
-      wines)))
+    (vino-rename note new-title)
+    (vino-producer-wines note)))
+
+(defvar vino-rename-note-types '("producer" "grape" "country" "region" "appellation")
+  "Note types `vino-rename' accepts.
+
+A wine entry is titled after its producer, name and vintage, and a
+rating after its wine and date, so a title given to one directly is
+undone by the next `vino-entry-update'.  Those two are renamed by
+changing the metadata they are built from.")
+
+(defun vino--rename-note-p (note)
+  "Return non-nil when NOTE is of a type `vino-rename' accepts."
+  (--some (vino--note-of-type-p note it) vino-rename-note-types))
+
+(defun vino--rename-select ()
+  "Select a note `vino-rename' can rename."
+  (vulpea-select-from
+   "Note"
+   (seq-filter #'vino--rename-note-p
+               (vulpea-db-query-by-tags-some vino-rename-note-types))
+   :require-match t
+   :expand-aliases t))
+
+(defun vino--rename-propagate-links (note old-title)
+  "Rewrite links to NOTE that still describe it as OLD-TITLE.
+
+Only a description reading exactly like OLD-TITLE is rewritten; one that
+reads differently was written that way on purpose and is left alone.
+Both metadata and prose are covered, since both spell the title out.
+
+Return the paths of the files that changed."
+  (let* ((id (vulpea-note-id note))
+         (old-link (format "[[id:%s][%s]]" id old-title))
+         (new-link (format "[[id:%s][%s]]" id (vulpea-note-title note)))
+         (paths (->> (vulpea-db-query-by-links-some (list id) "id")
+                     (--remove (string-equal (vulpea-note-id it) id))
+                     (-map #'vulpea-note-path)
+                     (-uniq)))
+         changed)
+    (dolist (path paths)
+      (when (vulpea-utils-with-file path
+              (goto-char (point-min))
+              (let (found)
+                (while (search-forward old-link nil t)
+                  (replace-match new-link t t)
+                  (setq found t))
+                (when found
+                  (save-buffer))
+                found))
+        (vulpea-db-update-file path)
+        (push path changed)))
+    (nreverse changed)))
+
+;;;###autoload
+(defun vino-rename (&optional note-or-id new-title)
+  "Rename NOTE-OR-ID to NEW-TITLE and follow the change through.
+
+Every link description that reads exactly like the old title is
+rewritten, so a wine keeps naming its grapes correctly, a region its
+country, and prose the note it points at.  A description that reads
+differently is left alone.
+
+Renaming a producer additionally retitles the wines it made and their
+ratings, since those titles are derived from the producer.
+
+Only the note types in `vino-rename-note-types' can be renamed this way.
+
+When NOTE-OR-ID is nil, the user is prompted for a note.  When NEW-TITLE
+is nil, the user is prompted for it.
+
+Return the renamed note."
+  (interactive)
+  (let* ((note (cond
+                ((vulpea-note-p note-or-id) note-or-id)
+                ((stringp note-or-id) (vulpea-db-get-by-id note-or-id))
+                (t (vino--rename-select))))
+         (old-title (vulpea-note-title note))
+         (new-title (or new-title
+                        (vino--read-string
+                         (format "Rename %s to: " old-title)
+                         old-title))))
+    (unless (vino--rename-note-p note)
+      (user-error "Cannot rename %s directly, its title is derived from metadata"
+                  (vulpea-note-title note)))
+    (if (string-equal old-title new-title)
+        note
+      (vulpea-utils-with-note-sync note
+        (vulpea-buffer-title-set new-title))
+      (setq note (vulpea-db-get-by-id (vulpea-note-id note)))
+      (vino--rename-propagate-links note old-title)
+      ;; a wine is titled after its producer, so those titles - and the
+      ;; titles of their ratings - have to be recomputed
+      (when (vino-producer-note-p note)
+        (--each (vino-producer-wines note)
+          (vino-entry-update (vulpea-note-id it))))
+      note)))
 
 
 ;;; Price

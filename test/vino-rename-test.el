@@ -125,5 +125,77 @@
 
 
 
+(describe "vino-rename"
+  :var ((grape "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa")
+        (appellation "6a0819f3-0770-4481-9754-754ca397800b")
+        country region)
+
+  (before-each
+    (vino-test-init)
+    (setq country (vulpea-create "Sicily" "wine/country/${id}.org"
+                                 :tags '("wine" "country")))
+    (setq region (vulpea-create "Vittoria" "wine/region/${id}.org"
+                                :tags '("wine" "region")
+                                :meta `(("country" . ,country)))))
+  (after-each (vino-test-teardown))
+
+  (it "gives the note its new title"
+    (vino-rename grape "Frappato di Vittoria")
+    (expect (vulpea-note-title (vulpea-db-get-by-id grape))
+            :to-equal "Frappato di Vittoria"))
+
+  (it "refreshes the link description in a wine that references it"
+    (vino-rename grape "Frappato di Vittoria")
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id vino-rename-test--wine)
+                                  "grapes")
+            :to-equal
+            (format "[[id:%s][Frappato di Vittoria]]" grape)))
+
+  (it "refreshes link descriptions in prose too"
+    (vino-rename grape "Frappato di Vittoria")
+    (expect (vulpea-utils-with-note (vulpea-db-get-by-id appellation)
+              (buffer-string))
+            :to-match (regexp-quote
+                       (format "[[id:%s][Frappato di Vittoria]]" grape))))
+
+  (it "leaves a description that reads differently alone"
+    (let ((note (vulpea-create
+                 "Tasting" "wine/note/${id}.org"
+                 :tags '("wine")
+                 :body (format "Mostly [[id:%s][the local grape]].\n" grape))))
+      (vino-rename grape "Frappato di Vittoria")
+      (expect (vulpea-utils-with-note (vulpea-db-get-by-id (vulpea-note-id note))
+                (buffer-string))
+              :to-match (regexp-quote (format "[[id:%s][the local grape]]" grape)))))
+
+  (it "refreshes a country referenced by a region"
+    (vino-rename country "Sicilia")
+    (expect (vulpea-note-meta-get (vulpea-db-get-by-id (vulpea-note-id region))
+                                  "country")
+            :to-equal
+            (format "[[id:%s][Sicilia]]" (vulpea-note-id country))))
+
+  (it "retitles the wines when the note is a producer"
+    (vino-rename vino-rename-test--producer "Occhipinti")
+    (expect (vulpea-note-title (vulpea-db-get-by-id vino-rename-test--wine))
+            :to-equal "Occhipinti Bombolieri BB 2017"))
+
+  (it "does nothing when the title has not changed"
+    (let ((before (vulpea-note-meta-get
+                   (vulpea-db-get-by-id vino-rename-test--wine) "grapes")))
+      (vino-rename grape "Frappato")
+      (expect (vulpea-note-meta-get (vulpea-db-get-by-id vino-rename-test--wine)
+                                    "grapes")
+              :to-equal before)))
+
+  (it "refuses a wine entry, whose title is derived"
+    (expect (vino-rename vino-rename-test--wine "Something Else")
+            :to-throw 'user-error))
+
+  (it "refuses a rating, whose title is derived"
+    (expect (vino-rename (car vino-rename-test--ratings) "Something Else")
+            :to-throw 'user-error)))
+
+
 (provide 'vino-rename-test)
 ;;; vino-rename-test.el ends here
