@@ -77,15 +77,15 @@ Each schema takes its fields from a variable, so you can describe your own metad
 (vino-schema-setup)
 #+end_src
 
-** Renaming a Producer
+** Renaming
 
-A wine entry is titled after its producer, and a rating after its wine. Renaming a producer note on its own therefore leaves every wine it made, and every rating of those wines, carrying the old name.
+=vino-rename= renames a producer, grape, country, region or appellation and follows the change through the collection. Every link description that reads exactly like the old title is rewritten, so a wine keeps naming its grapes correctly, a region its country, and prose the note it points at. A description that reads differently is left alone, on the assumption it was written that way on purpose.
 
-=vino-producer-rename= does the whole cascade: it sets the new title and then updates each wine by that producer, which recomputes the wine and rating titles and rewrites the link descriptions.
+A wine entry is titled after its producer, and a rating after its wine, so renaming a producer also retitles every wine it made and every rating of those wines. =vino-producer-rename= is the same thing narrowed to producers, returning the wines it touched.
 
-The file keeps its name. Vino names a producer file after a timestamp and a slug, so the name is a stable handle rather than a copy of the title; use =vulpea-rename-file= if you want to rename it anyway.
+Wine entries and ratings cannot be renamed this way, since their titles are derived from metadata and a title given directly is undone by the next =vino-entry-update=. Rename those by changing the metadata they are built from: the name or vintage of a wine, the date of a rating.
 
-Grapes, regions, appellations and countries do not feed any title, so renaming one only leaves stale link descriptions behind. =vulpea-propagate-title-change= handles those.
+Files keep their names. Vino names a producer file after a timestamp and a slug, and a wine entry after its id, so a file name is a stable handle rather than a copy of the title; use =vulpea-rename-file= if you want to rename one anyway.
 
 ** Installation and Configuration
 
