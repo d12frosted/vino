@@ -68,7 +68,9 @@
      'completing-read
      :and-return-value
      (completion-for :title "Arianna Occhipinti Bombolieri BB 2017"
-                     :tags '("cellar")))
+                     :tags '("cellar")
+                     :annotate-fn vino-entry-annotate-fn
+                     :dyncontext-fn vino-entry-dyncontext-fn))
     (expect (vino-test-normalize-note (vino-entry-note-select))
             :to-equal
             (mk-vulpea-note

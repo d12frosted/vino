@@ -305,8 +305,13 @@ as ORIGINAL."
 
 
 
-(cl-defun completion-for (&key title tags)
-  "Return completion for TITLE and TAGS matchers."
+(cl-defun completion-for (&key title tags annotate-fn dyncontext-fn)
+  "Return completion for TITLE and TAGS matchers.
+
+ANNOTATE-FN and DYNCONTEXT-FN mirror `vulpea-select-annotate-fn' and
+`vulpea-select-dyncontext-fn'.  Pass them for a selection that binds
+them, e.g. `vino-entry-select-from', so that the candidate string
+matches the one the selection builds."
   (when-let ((note
               (seq-find
                (lambda (note)
@@ -318,7 +323,11 @@ as ORIGINAL."
                                       tags)))))
                    res))
                (vulpea-db-query))))
-    (vulpea-select-describe note)))
+    (let* ((vulpea-select-annotate-fn (or annotate-fn vulpea-select-annotate-fn))
+           (vulpea-select-dyncontext-fn (or dyncontext-fn vulpea-select-dyncontext-fn))
+           (context (when vulpea-select-dyncontext-fn
+                      (funcall vulpea-select-dyncontext-fn (list note)))))
+      (vulpea-select-describe note context))))
 
 
 
