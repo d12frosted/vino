@@ -53,6 +53,13 @@
 
 
 
+(defun vino-select-test--face-at (string substring)
+  "Return the `face' property at the start of SUBSTRING within STRING."
+  (when-let* ((pos (string-match (regexp-quote substring) string)))
+    (get-text-property pos 'face string)))
+
+
+
 (describe "vino-entry-annotate"
   :var (italy)
 
@@ -117,6 +124,66 @@
       (puthash (vulpea-note-id italy) "Italia" context)
       (expect (vino-entry-annotate wine context)
               :to-equal " red Italia 4.5"))))
+
+
+
+(describe "vino-entry-annotate faces"
+  :var (italy)
+
+  (before-all
+    (vino-test-init)
+    (setq italy (vino-select-test--country "Italy")))
+  (after-all (vino-test-teardown))
+
+  (it "renders each wine colour with its own face"
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "Red Wine" `(("colour" . red)
+                                     ("country" . ,italy)
+                                     ("rating" . "4.5"))))))
+      (expect (vino-select-test--face-at annotation "red")
+              :to-equal 'vino-annotation-colour-red))
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "White Wine" '(("colour" . white))))))
+      (expect (vino-select-test--face-at annotation "white")
+              :to-equal 'vino-annotation-colour-white)))
+
+  (it "leaves an unknown colour unstyled"
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "Odd Wine" '(("colour" . chartreuse))))))
+      (expect (vino-select-test--face-at annotation "chartreuse")
+              :to-be nil)))
+
+  (it "renders the country as an origin"
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "Origin Wine" `(("colour" . red)
+                                        ("country" . ,italy))))))
+      (expect (vino-select-test--face-at annotation "Italy")
+              :to-equal 'vino-annotation-origin)))
+
+  (it "emphasises a rating"
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "Rated Wine" '(("colour" . red) ("rating" . "4.5"))))))
+      (expect (vino-select-test--face-at annotation "4.5")
+              :to-equal 'vino-annotation-rating)))
+
+  (it "plays down an unrated wine"
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "Unrated Wine" '(("colour" . red) ("rating" . "NA"))))))
+      (expect (vino-select-test--face-at annotation "NA")
+              :to-equal 'vino-annotation-unrated)))
+
+  (it "renders the bottle count as availability"
+    (let ((annotation (vino-entry-annotate
+                       (vino-select-test--wine
+                        "Stocked Wine" '(("colour" . red) ("available" . 3))))))
+      (expect (vino-select-test--face-at annotation "x3")
+              :to-equal 'vino-annotation-available))))
 
 
 
