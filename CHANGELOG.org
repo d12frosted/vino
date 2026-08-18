@@ -24,6 +24,7 @@
 
 *Fixes*
 
+- =vino-set-price= is autoloaded again. Its cookie carried a trailing semicolon (=;;;###autoload;=), which stops it being recognised, so the command was missing until vino happened to be loaded for another reason.
 - Metadata written by the inventory now reaches disk. =vulpea-meta-set= leaves the buffer modified without saving it, so =vino-inv-update-availability= and the price recorded while acquiring or editing a bottle only survived if something else happened to save the wine afterwards. Acquiring a bottle and stopping there lost the new counts; the rating flow hid the bug, because =vino-entry-update= saves the note at the end. The writes now go through =vulpea-utils-with-note-sync=, which saves and syncs.
 - =vino-set-price= wrote to whatever buffer happened to be current. It called =vulpea-buffer-meta-set= without visiting the note first, so it only worked when the wine's own file was the current buffer - which is the case when the command is used from inside the wine, and not when the wine is picked from anywhere else. It now visits the note, and saves and syncs it.
 - Merge template properties with =vulpea-create-default-template= properties instead of overriding them.

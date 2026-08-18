@@ -1831,7 +1831,7 @@ Return the list of updated wine entries."
 
 ;;; Price
 
-;;;###autoload;
+;;;###autoload
 (defun vino-set-price (&optional note price)
   "Interactively set a new PRICE for a wine NOTE.
 
