@@ -79,21 +79,21 @@
              :links '((:dest "9462dfad-603c-4094-9aca-a9042cec5dd2" :type "id")
                       (:dest "8353e2fc-8034-4540-8254-4b63fb5a421a" :type "id")
                       (:dest "cb1eb3b9-6233-4916-8c05-a3a4739e0cfa" :type "id"))
-             :meta '(("rating" "NA")
-                     ("available" "1")
-                     ("consumed" "1")
-                     ("acquired" "2")
-                     ("price" "50.00 EUR")
-                     ("sugar" "1")
-                     ("alcohol" "13")
-                     ("grapes" "[[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]")
-                     ("appellation" "[[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]")
-                     ("vintage" "2017")
-                     ("name" "Bombolieri BB")
-                     ("producer" "[[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]")
-                     ("sweetness" "dry")
+             :meta '(("carbonation" "still")
                      ("colour" "red")
-                     ("carbonation" "still"))))))
+                     ("sweetness" "dry")
+                     ("producer" "[[id:9462dfad-603c-4094-9aca-a9042cec5dd2][Arianna Occhipinti]]")
+                     ("name" "Bombolieri BB")
+                     ("vintage" "2017")
+                     ("appellation" "[[id:8353e2fc-8034-4540-8254-4b63fb5a421a][IGP Terre Siciliane]]")
+                     ("grapes" "[[id:cb1eb3b9-6233-4916-8c05-a3a4739e0cfa][Frappato]]")
+                     ("alcohol" "13")
+                     ("sugar" "1")
+                     ("price" "50.00 EUR")
+                     ("acquired" "2")
+                     ("consumed" "1")
+                     ("available" "1")
+                     ("rating" "NA"))))))
 
 (describe "vino-entry-note-get-dwim"
   (before-all
@@ -316,8 +316,8 @@
              :basename-prefix "new_zealand/"
              :links '((:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id")
                       (:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id"))
-             :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
-                     ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
+             :meta '(("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
+                     ("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
             (vino-test-normalize-note
              (vino-region-create
@@ -336,8 +336,8 @@
              :basename-prefix "new_zealand/"
              :links '((:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id")
                       (:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id"))
-             :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
-                     ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
+             :meta '(("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
+                     ("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
             (vino-test-normalize-note
              (vino-appellation-create
@@ -383,8 +383,8 @@
              :basename-prefix "new_zealand/"
              :links '((:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id")
                       (:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id"))
-             :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
-                     ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
+             :meta '(("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
+                     ("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
             (vino-test-normalize-note
              (vino-region-select
@@ -400,8 +400,8 @@
              :basename-prefix "new_zealand/"
              :links '((:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id")
                       (:dest "437298dc-39d9-42e6-8d0f-1838e9a007f9" :type "id"))
-             :meta '(("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
-                     ("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
+             :meta '(("country" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")
+                     ("parent" "[[id:437298dc-39d9-42e6-8d0f-1838e9a007f9][New Zealand]]")))
             :to-equal
             (vino-test-normalize-note
              (vino-appellation-select
