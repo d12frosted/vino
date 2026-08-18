@@ -1776,6 +1776,58 @@ Return `vulpea-note'."
           (vino-producer-create (vulpea-note-title note))
         note))))
 
+;;;###autoload
+(defun vino-producer-wines (note-or-id)
+  "Return the wine entries made by producer NOTE-OR-ID."
+  (let ((id (if (stringp note-or-id)
+                note-or-id
+              (vulpea-note-id note-or-id))))
+    (seq-filter #'vino-entry-note-p
+                (vulpea-db-query-by-links-some (list id) "id"))))
+
+;;;###autoload
+(defun vino-producer-rename (&optional note-or-id new-title)
+  "Rename producer NOTE-OR-ID to NEW-TITLE.
+
+A wine entry is titled after its producer, and a rating after its wine,
+so renaming a producer on its own leaves every wine it made, and every
+rating of those wines, carrying the old name.  This runs
+`vino-entry-update' on each of those wines afterwards, which recomputes
+the titles and rewrites the link descriptions pointing at the producer.
+
+The file keeps its name.  Vino names a producer file after a timestamp
+and a slug, so the name is a stable handle rather than a copy of the
+title; use `vulpea-rename-file' to rename one anyway.
+
+When NOTE-OR-ID is nil, the user is prompted for an existing producer.
+When NEW-TITLE is nil, the user is prompted for it.
+
+Return the list of updated wine entries."
+  (interactive)
+  (let* ((note (cond
+                ((vulpea-note-p note-or-id) note-or-id)
+                ((stringp note-or-id) (vulpea-db-get-by-id note-or-id))
+                (t (vulpea-select-from
+                    "Producer"
+                    (vulpea-db-query-by-tags-every '("wine" "producer"))
+                    :require-match t
+                    :expand-aliases t))))
+         (_ (unless (vino-producer-note-p note)
+              (user-error "Not a producer note: %s" (vulpea-note-title note))))
+         (new-title (or new-title
+                        (vino--read-string
+                         (format "Rename %s to: " (vulpea-note-title note))
+                         (vulpea-note-title note)))))
+    (vulpea-utils-with-note note
+      (vulpea-buffer-title-set new-title)
+      (save-buffer)
+      ;; wines read the producer back from the database to build their own
+      ;; titles, so it has to know the new one before they are updated
+      (vulpea-db-update-file (buffer-file-name (buffer-base-buffer))))
+    (let ((wines (vino-producer-wines note)))
+      (--each wines (vino-entry-update (vulpea-note-id it)))
+      wines)))
+
 
 ;;; Price
 
