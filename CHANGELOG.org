@@ -17,6 +17,7 @@
 
 - Merge template properties with =vulpea-create-default-template= properties instead of overriding them.
 - Trim whitespace from all user input (names, prices, etc.) to prevent formatting issues ([[https://github.com/d12frosted/vino/issues/101][#101]]).
+- Fix inventory database bootstrap on fresh install: =IF NOT EXISTS= was placed after the table name, producing invalid SQL ([[https://github.com/d12frosted/vino/pull/136][#136]]).
 
 *Documentation*
 
