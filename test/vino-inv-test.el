@@ -188,5 +188,51 @@ A bottle needs a location and a source, both `not-null' in the schema."
                                 "42.00 EUR" "secret")
             :to-throw 'user-error)))
 
+(defun vino-inv-test--face-at (string substring)
+  "Return the `face' property at the start of SUBSTRING within STRING."
+  (when-let* ((pos (string-match (regexp-quote substring) string)))
+    (get-text-property pos 'face string)))
+
+(defun vino-inv-test--bottle ()
+  "Return a bottle to describe, built without touching any database."
+  (make-vino-inv-bottle
+   :id 12
+   :wine (vulpea-db-get-by-id vino-inv-test--wine)
+   :purchase-date "2021-01-01"
+   :price "10 EUR"
+   :price-usd "12 USD"
+   :location (make-vino-inv-location :id 1 :name "Cellar")
+   :source (make-vino-inv-source :id 1 :name "Shop")))
+
+(describe "vino-inv-bottle-describe"
+  (before-all (vino-test-init))
+  (after-all (vino-test-teardown))
+
+  (it "names the bottle, when it was bought, where it is, and from whom"
+    (expect (substring-no-properties
+             (vino-inv-bottle-describe (vino-inv-test--bottle)))
+            :to-equal "12 #12 [2021-01-01] @Cellar - 10 EUR from Shop"))
+
+  (it "hides the leading id that identifies the selected candidate"
+    (let ((described (vino-inv-bottle-describe (vino-inv-test--bottle))))
+      (expect (get-text-property 0 'invisible described) :to-be t)
+      (expect (string-to-number described) :to-equal 12)))
+
+  (it "renders the bottle number with a vino face"
+    (expect (vino-inv-test--face-at
+             (vino-inv-bottle-describe (vino-inv-test--bottle)) "#12")
+            :to-equal 'vino-inv-annotation-id))
+
+  (it "renders the separators with a vino face"
+    (let ((described (vino-inv-bottle-describe (vino-inv-test--bottle))))
+      (--each '(" [" "] @" " - " " from ")
+        (expect (vino-inv-test--face-at described it)
+                :to-equal 'vino-inv-annotation-separator))))
+
+  (it "leaves the values themselves unstyled"
+    (let ((described (vino-inv-bottle-describe (vino-inv-test--bottle))))
+      (--each '("2021-01-01" "Cellar" "10 EUR" "Shop")
+        (expect (vino-inv-test--face-at described it) :to-be nil)))))
+
 (provide 'vino-inv-test)
 ;;; vino-inv-test.el ends here

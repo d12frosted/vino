@@ -170,6 +170,37 @@ not added twice."
 
     (vino-inv-update-availability note)))
 
+(defface vino-inv-annotation-id
+  '((t :inherit font-lock-constant-face))
+  "Face for the number of a bottle when picking one."
+  :group 'vino)
+
+(defface vino-inv-annotation-separator
+  '((t :inherit shadow))
+  "Face for the punctuation between bottle details when picking one."
+  :group 'vino)
+
+(defun vino-inv-bottle-describe (bottle)
+  "Describe BOTTLE as a completion candidate.
+
+The candidate opens with the bottle id followed by a space, made
+invisible, so that `string-to-number' on the chosen candidate recovers
+the id."
+  (let ((id (number-to-string (vino-inv-bottle-id bottle)))
+        (separator (lambda (text)
+                     (propertize text 'face 'vino-inv-annotation-separator))))
+    (concat
+     (propertize (concat id " ") 'invisible t)
+     (propertize (concat "#" id) 'face 'vino-inv-annotation-id)
+     (funcall separator " [")
+     (vino-inv-bottle-purchase-date bottle)
+     (funcall separator "] @")
+     (vino-inv-location-name (vino-inv-bottle-location bottle))
+     (funcall separator " - ")
+     (vino-inv-bottle-price bottle)
+     (funcall separator " from ")
+     (vino-inv-source-name (vino-inv-bottle-source bottle)))))
+
 ;;;###autoload
 (defun vino-inv-consume (&optional note)
   "Consume wine represented as NOTE."
@@ -179,21 +210,7 @@ not added twice."
          (_ (unless bottles (user-error "There are no bottles to consume")))
          (bottle (completing-read
                   "Bottle: "
-                  (--map
-                   (concat
-                    (propertize (concat (number-to-string (vino-inv-bottle-id it)) " ")
-                                'invisible t)
-                    (propertize (concat "#" (number-to-string (vino-inv-bottle-id it)))
-                                'face 'barberry-theme-face-salient)
-                    (propertize " [" 'face 'barberry-theme-face-faded)
-                    (vino-inv-bottle-purchase-date it)
-                    (propertize "] @" 'face 'barberry-theme-face-faded)
-                    (vino-inv-location-name (vino-inv-bottle-location it))
-                    (propertize " - " 'face 'barberry-theme-face-faded)
-                    (vino-inv-bottle-price it)
-                    (propertize " from " 'face 'barberry-theme-face-faded)
-                    (vino-inv-source-name (vino-inv-bottle-source it)))
-                   bottles)
+                  (-map #'vino-inv-bottle-describe bottles)
                   nil t))
          ;; we use invisible part as a hack
          (bottle-id (string-to-number bottle))
