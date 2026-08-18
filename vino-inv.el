@@ -211,13 +211,13 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
 
 (defun vino-inv-db--setup (db)
   "Setup inventory database DB."
-  (emacsql db [:create-table location :if :not :exists
+  (emacsql db [:create-table :if-not-exists location
                ([(location-id integer :primary-key :autoincrement)
                  (name :not-null :unique)])])
-  (emacsql db [:create-table source :if :not :exists
+  (emacsql db [:create-table :if-not-exists source
                ([(source-id integer :primary-key :autoincrement)
                  (name :not-null :unique)])])
-  (emacsql db [:create-table bottle :if :not :exists
+  (emacsql db [:create-table :if-not-exists bottle
                ([(bottle-id integer :primary-key :autoincrement)
                  (wine-id :not-null)
                  (purchase-date :not-null)
@@ -228,7 +228,7 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
                  (comment)]
                 (:foreign-key [location-id] :references location [location-id])
                 (:foreign-key [source-id] :references source [source-id]))])
-  (emacsql db [:create-table transaction :if :not :exists
+  (emacsql db [:create-table :if-not-exists transaction
                ([(transaction-id integer :primary-key :autoincrement)
                  (bottle-id integer :not-null)
                  ;; purchase, consume, move
