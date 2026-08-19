@@ -64,17 +64,23 @@ The hook is called with single arguments - `vino-inv-bottle'.")
 (defun vino-inv-update-availability (note)
   "Update available metadata in wine NOTE.
 
-The counters are written to one buffer, which is then saved and synced.
-`vulpea-meta-set' leaves the buffer modified without saving it, so on
-the acquire path - where nothing else saved the wine - the new counts
-never reached disk."
+The counters are written in a single pass over the buffer, which is then
+saved and synced.  `vulpea-meta-set' leaves the buffer modified without
+saving it, so on the acquire path - where nothing else saved the wine -
+the new counts never reached disk.
+
+A counter the wine does not carry yet opens its metadata block, the way
+any newly set property does.  Wines made by `vino-entry-create' carry
+all three from the start, and `vino-entry-update' sorts the block by
+`vino-entry-meta-props-order' anyway."
   (let* ((counts (vino-inv-count-bottles-for (vulpea-note-id note)))
          (in (car counts))
          (out (cdr counts)))
     (vulpea-utils-with-note-sync note
-      (vulpea-buffer-meta-set "acquired" in 'append)
-      (vulpea-buffer-meta-set "consumed" out 'append)
-      (vulpea-buffer-meta-set "available" (- in out) 'append))))
+      (vulpea-buffer-meta-set-batch
+       `(("acquired" . ,in)
+         ("consumed" . ,out)
+         ("available" . ,(- in out)))))))
 
 (defun vino-inv-add-price (note price kind)
   "Record PRICE of wine NOTE as KIND.
