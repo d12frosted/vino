@@ -301,55 +301,51 @@ The connection is cached. Use `vino-inv-db--close' to reset it."
 ;; * queries
 
 (defun vino-inv-get-source (id)
-  "Get source by ID."
-  (let ((row (car (emacsql (vino-inv-db)
-                           [:select [source-id name]
-                            :from source
-                            :where (= source-id $s1)]
-                           id))))
+  "Get source by ID, or nil when there is no such source."
+  (when-let* ((row (car (emacsql (vino-inv-db)
+                                 [:select [source-id name]
+                                  :from source
+                                  :where (= source-id $s1)]
+                                 id))))
     (make-vino-inv-source
      :id (nth 0 row)
      :name (nth 1 row))))
 
 (defun vino-inv-get-location (id)
-  "Get location by ID."
-  (let ((row (car (emacsql (vino-inv-db)
-                           [:select [location-id name]
-                            :from location
-                            :where (= location-id $s1)]
-                           id))))
+  "Get location by ID, or nil when there is no such location."
+  (when-let* ((row (car (emacsql (vino-inv-db)
+                                 [:select [location-id name]
+                                  :from location
+                                  :where (= location-id $s1)]
+                                 id))))
     (make-vino-inv-location
      :id (nth 0 row)
      :name (nth 1 row))))
 
 (defun vino-inv-get-bottle (id)
-  "Get bottle by ID."
-  (let* ((rows (->> (emacsql
-                     (vino-inv-db)
-                     [:select
-                      [bottle-id     ; 0
-                       wine-id       ; 1
-                       purchase-date ; 2
-                       price         ; 3
-                       price-usd     ; 4
-                       location-id   ; 5
-                       source-id     ; 6
-                       comment]      ; 7
-                      :from [bottle]
-                      :where (= bottle:bottle-id $s1)]
-                     id)))
-         (row (car rows))
-         (wine (vulpea-db-get-by-id (nth 1 row)))
-         (location (vino-inv-get-location (nth 5 row)))
-         (source (vino-inv-get-source (nth 6 row))))
+  "Get bottle by ID, or nil when there is no such bottle."
+  (when-let* ((row (car (emacsql
+                         (vino-inv-db)
+                         [:select
+                          [bottle-id     ; 0
+                           wine-id       ; 1
+                           purchase-date ; 2
+                           price         ; 3
+                           price-usd     ; 4
+                           location-id   ; 5
+                           source-id     ; 6
+                           comment]      ; 7
+                          :from [bottle]
+                          :where (= bottle:bottle-id $s1)]
+                         id))))
     (make-vino-inv-bottle
      :id (nth 0 row)
-     :wine wine
+     :wine (vulpea-db-get-by-id (nth 1 row))
      :purchase-date (nth 2 row)
      :price (nth 3 row)
      :price-usd (nth 4 row)
-     :location location
-     :source source
+     :location (vino-inv-get-location (nth 5 row))
+     :source (vino-inv-get-source (nth 6 row))
      :comment (nth 7 row))))
 
 (defun vino-inv-query-sources ()
@@ -625,7 +621,12 @@ when both numbers are wanted, as `vino-inv-update-availability' does."
      :comment comment)))
 
 (cl-defun vino-inv-consume-bottle (&key bottle-id date)
-  "Consume BOTTLE-ID on a DATE."
+  "Consume BOTTLE-ID on a DATE.
+
+Refuses a bottle that does not exist rather than recording a
+consumption nothing can be traced back to."
+  (unless (vino-inv-get-bottle bottle-id)
+    (user-error "There is no bottle with id %s" bottle-id))
   (emacsql (vino-inv-db)
            [:insert :into transaction [bottle-id
                                        transaction-type
