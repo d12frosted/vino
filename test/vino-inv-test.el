@@ -142,6 +142,22 @@ A bottle needs a location and a source, both `not-null' in the schema."
           (expect (vulpea-note-meta-get note "consumed" 'number) :to-equal 1)
           (expect (vulpea-note-meta-get note "available" 'number) :to-equal 2)))))
 
+  (it "adds the counters to a wine that carries none"
+    (vino-inv-test--with-fresh-db
+      (let ((wine (vulpea-create "Bare Wine" "wine/cellar/${id}.org"
+                                 :tags '("wine" "cellar")
+                                 :meta '(("colour" . red)
+                                         ("name" . "Bare")))))
+        (vino-inv-test--acquire wine 2)
+        (vino-inv-update-availability wine)
+        (let ((note (vino-inv-test--reload wine)))
+          (expect (vulpea-note-meta-get note "acquired" 'number) :to-equal 2)
+          ;; a counter the wine did not have opens the block, the way any
+          ;; newly set property does
+          (expect (-map #'car (vulpea-note-meta note))
+                  :to-equal '("acquired" "consumed" "available"
+                              "colour" "name"))))))
+
   (it "leaves the order of the other metadata alone"
     (vino-inv-test--with-fresh-db
       (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
