@@ -42,19 +42,48 @@
 (defconst vino-inv-test--wine "c9937e3e-c83d-4d8d-a612-6110e6706252"
   "Arianna Occhipinti Bombolieri BB 2017.")
 
-(defun vino-inv-test--acquire (wine amount)
-  "Purchase AMOUNT bottles of WINE, returning the first one.
+(defun vino-inv-test--location-id (name)
+  "Return the id of location NAME, creating it when it does not exist.
+Location names are unique, so a second `vino-inv-add-location' with the
+same name fails."
+  (if-let ((existing (--find (string-equal (vino-inv-location-name it) name)
+                             (vino-inv-query-locations))))
+      (vino-inv-location-id existing)
+    (vino-inv-location-id (vino-inv-add-location name))))
 
-A bottle needs a location and a source, both `not-null' in the schema."
-  (let ((location (vino-inv-add-location "Cellar"))
-        (source (vino-inv-add-source "Shop")))
-    (car (--map (vino-inv-add-bottle :wine wine
-                                     :date "2021-01-01"
-                                     :price "10 EUR"
-                                     :price-usd "12 USD"
-                                     :location-id (vino-inv-location-id location)
-                                     :source-id (vino-inv-source-id source))
-                (-iota amount)))))
+(defun vino-inv-test--source-id (name)
+  "Return the id of source NAME, creating it when it does not exist."
+  (if-let ((existing (--find (string-equal (vino-inv-source-name it) name)
+                             (vino-inv-query-sources))))
+      (vino-inv-source-id existing)
+    (vino-inv-source-id (vino-inv-add-source name))))
+
+(cl-defun vino-inv-test--acquire (wine amount &key (location "Cellar")
+                                              (source "Shop")
+                                              (date "2021-01-01")
+                                              (price "10 EUR"))
+  "Purchase AMOUNT bottles of WINE, returning them oldest first.
+
+A bottle needs a LOCATION and a SOURCE, both `not-null' in the schema;
+each is created on first use.  DATE and PRICE are recorded on every
+bottle."
+  (let ((location-id (vino-inv-test--location-id location))
+        (source-id (vino-inv-test--source-id source)))
+    (--map (vino-inv-add-bottle :wine wine
+                                :date date
+                                :price price
+                                :price-usd "12 USD"
+                                :location-id location-id
+                                :source-id source-id)
+           (-iota amount))))
+
+(defun vino-inv-test--wine-note (title)
+  "Create a wine entry note titled TITLE."
+  (vulpea-create title "wine/cellar/${id}.org" :tags '("wine" "cellar")))
+
+(defun vino-inv-test--bottle-ids (bottles)
+  "Return sorted ids of BOTTLES."
+  (sort (-map #'vino-inv-bottle-id bottles) #'<))
 
 (defun vino-inv-test--reload (note)
   "Re-read NOTE from the database after its file was written."
@@ -104,7 +133,7 @@ A bottle needs a location and a source, both `not-null' in the schema."
   (it "counts purchased and consumed bottles in one go"
     (vino-inv-test--with-fresh-db
       (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
-             (bottle (vino-inv-test--acquire wine 3)))
+             (bottle (car (vino-inv-test--acquire wine 3))))
         (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
                                  :date "2021-02-01")
         (expect (vino-inv-count-bottles-for (vulpea-note-id wine))
@@ -118,7 +147,7 @@ A bottle needs a location and a source, both `not-null' in the schema."
   (it "agrees with the single counters"
     (vino-inv-test--with-fresh-db
       (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
-             (bottle (vino-inv-test--acquire wine 2)))
+             (bottle (car (vino-inv-test--acquire wine 2))))
         (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
                                  :date "2021-02-01")
         (expect (vino-inv-count-purchased-bottles-for (vulpea-note-id wine))
@@ -133,7 +162,7 @@ A bottle needs a location and a source, both `not-null' in the schema."
   (it "writes acquired, consumed and available"
     (vino-inv-test--with-fresh-db
       (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
-             (bottle (vino-inv-test--acquire wine 3)))
+             (bottle (car (vino-inv-test--acquire wine 3))))
         (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
                                  :date "2021-02-01")
         (vino-inv-update-availability wine)
@@ -249,6 +278,217 @@ A bottle needs a location and a source, both `not-null' in the schema."
     (let ((described (vino-inv-bottle-describe (vino-inv-test--bottle))))
       (--each '("2021-01-01" "Cellar" "10 EUR" "Shop")
         (expect (vino-inv-test--face-at described it) :to-be nil)))))
+
+(describe "vino-inv locations and sources"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "returns what was added"
+    (vino-inv-test--with-fresh-db
+      (vino-inv-add-location "Cellar")
+      (vino-inv-add-location "Fridge")
+      (vino-inv-add-source "Shop")
+      (expect (-map #'vino-inv-location-name (vino-inv-query-locations))
+              :to-have-same-items-as '("Cellar" "Fridge"))
+      (expect (-map #'vino-inv-source-name (vino-inv-query-sources))
+              :to-equal '("Shop"))))
+
+  (it "has nothing to return on a fresh database"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-query-locations) :to-be nil)
+      (expect (vino-inv-query-sources) :to-be nil)))
+
+  (it "reads a location back by id"
+    (vino-inv-test--with-fresh-db
+      (let ((id (vino-inv-location-id (vino-inv-add-location "Cellar"))))
+        (expect (vino-inv-location-name (vino-inv-get-location id))
+                :to-equal "Cellar"))))
+
+  (it "reads a source back by id"
+    (vino-inv-test--with-fresh-db
+      (let ((id (vino-inv-source-id (vino-inv-add-source "Shop"))))
+        (expect (vino-inv-source-name (vino-inv-get-source id))
+                :to-equal "Shop"))))
+
+  (it "returns nothing for a location that does not exist"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-get-location 404) :to-be nil)))
+
+  (it "returns nothing for a source that does not exist"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-get-source 404) :to-be nil))))
+
+(describe "vino-inv-get-bottle"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "reads a bottle back with its wine, location and source resolved"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (added (car (vino-inv-test--acquire wine 1 :location "Fridge"
+                                                 :source "Auction"
+                                                 :date "2021-03-04"
+                                                 :price "25 EUR")))
+             (bottle (vino-inv-get-bottle (vino-inv-bottle-id added))))
+        (expect (vulpea-note-id (vino-inv-bottle-wine bottle))
+                :to-equal vino-inv-test--wine)
+        (expect (vino-inv-location-name (vino-inv-bottle-location bottle))
+                :to-equal "Fridge")
+        (expect (vino-inv-source-name (vino-inv-bottle-source bottle))
+                :to-equal "Auction")
+        (expect (vino-inv-bottle-purchase-date bottle) :to-equal "2021-03-04")
+        (expect (vino-inv-bottle-price bottle) :to-equal "25 EUR"))))
+
+  (it "returns nothing for a bottle that does not exist"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-get-bottle 404) :to-be nil))))
+
+(describe "vino-inv-consume-bottle"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "records the consumption of a bottle that exists"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottle (car (vino-inv-test--acquire wine 1))))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id bottle)
+                                 :date "2021-02-01")
+        (expect (vino-inv-count-bottles-for vino-inv-test--wine)
+                :to-equal '(1 . 1)))))
+
+  (it "refuses a bottle that does not exist"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-consume-bottle :bottle-id 404 :date "2021-02-01")
+              :to-throw 'user-error)))
+
+  (it "records nothing when it refuses"
+    (vino-inv-test--with-fresh-db
+      (ignore-errors
+        (vino-inv-consume-bottle :bottle-id 404 :date "2021-02-01"))
+      (expect (caar (emacsql (vino-inv-db)
+                             [:select (funcall count *) :from transaction]))
+              :to-equal 0))))
+
+(describe "vino-inv-query-available-wines"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "names a wine once however many bottles are held"
+    (vino-inv-test--with-fresh-db
+      (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+        (vino-inv-test--acquire wine 3)
+        (expect (-map #'vulpea-note-id (vino-inv-query-available-wines))
+                :to-equal (list vino-inv-test--wine)))))
+
+  (it "drops a wine once its last bottle is consumed"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottles (vino-inv-test--acquire wine 2)))
+        (--each bottles
+          (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id it)
+                                   :date "2021-02-01"))
+        (expect (vino-inv-query-available-wines) :to-be nil))))
+
+  (it "keeps a wine that still has one bottle left"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottles (vino-inv-test--acquire wine 2)))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id (car bottles))
+                                 :date "2021-02-01")
+        (expect (-map #'vulpea-note-id (vino-inv-query-available-wines))
+                :to-equal (list vino-inv-test--wine)))))
+
+  (it "has nothing to return before anything is acquired"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-query-available-wines) :to-be nil))))
+
+(describe "vino-inv-query-available-bottles"
+  (before-each (vino-test-init))
+  (after-each (vino-test-teardown))
+
+  (it "returns the bottles still held, resolved"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottles (vino-inv-test--acquire wine 3)))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id (car bottles))
+                                 :date "2021-02-01")
+        (let ((available (vino-inv-query-available-bottles)))
+          (expect (vino-inv-test--bottle-ids available)
+                  :to-equal (vino-inv-test--bottle-ids (cdr bottles)))
+          (expect (-map (lambda (b)
+                          (vino-inv-location-name (vino-inv-bottle-location b)))
+                        available)
+                  :to-equal '("Cellar" "Cellar"))
+          (expect (-map (lambda (b) (vulpea-note-id (vino-inv-bottle-wine b)))
+                        available)
+                  :to-equal (list vino-inv-test--wine vino-inv-test--wine))))))
+
+  (it "has nothing to return before anything is acquired"
+    (vino-inv-test--with-fresh-db
+      (expect (vino-inv-query-available-bottles) :to-be nil))))
+
+(describe "vino-inv-query-available-bottles-for-many"
+  :var (other)
+
+  (before-each
+    (vino-test-init)
+    (setq other (vino-inv-test--wine-note "Another Wine 2019")))
+  (after-each (vino-test-teardown))
+
+  (it "groups bottles by the wine they belong to"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (mine (vino-inv-test--acquire wine 2))
+             (theirs (vino-inv-test--acquire other 1))
+             (table (vino-inv-query-available-bottles-for-many
+                     (list vino-inv-test--wine (vulpea-note-id other)))))
+        (expect (vino-inv-test--bottle-ids (gethash vino-inv-test--wine table))
+                :to-equal (vino-inv-test--bottle-ids mine))
+        (expect (vino-inv-test--bottle-ids
+                 (gethash (vulpea-note-id other) table))
+                :to-equal (vino-inv-test--bottle-ids theirs)))))
+
+  (it "leaves out a wine with no bottles left"
+    (vino-inv-test--with-fresh-db
+      (let* ((wine (vulpea-db-get-by-id vino-inv-test--wine))
+             (bottles (vino-inv-test--acquire wine 1)))
+        (vino-inv-consume-bottle :bottle-id (vino-inv-bottle-id (car bottles))
+                                 :date "2021-02-01")
+        (vino-inv-test--acquire other 1)
+        (let ((table (vino-inv-query-available-bottles-for-many
+                      (list vino-inv-test--wine (vulpea-note-id other)))))
+          (expect (gethash vino-inv-test--wine table) :to-be nil)
+          (expect (length (gethash (vulpea-note-id other) table))
+                  :to-equal 1)))))
+
+  (it "asks for nothing and gets nothing"
+    (vino-inv-test--with-fresh-db
+      (expect (hash-table-count
+               (vino-inv-query-available-bottles-for-many nil))
+              :to-equal 0)))
+
+  (it "agrees with the single wine query"
+    (vino-inv-test--with-fresh-db
+      (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+        (vino-inv-test--acquire wine 2)
+        (vino-inv-test--acquire other 1)
+        (expect (vino-inv-test--bottle-ids
+                 (vino-inv-query-available-bottles-for vino-inv-test--wine))
+                :to-equal
+                (vino-inv-test--bottle-ids
+                 (gethash vino-inv-test--wine
+                          (vino-inv-query-available-bottles-for-many
+                           (list vino-inv-test--wine))))))))
+
+  (it "resolves the wine on every bottle it returns"
+    (vino-inv-test--with-fresh-db
+      (let ((wine (vulpea-db-get-by-id vino-inv-test--wine)))
+        (vino-inv-test--acquire wine 1)
+        (expect (--map (vulpea-note-title (vino-inv-bottle-wine it))
+                       (gethash vino-inv-test--wine
+                                (vino-inv-query-available-bottles-for-many
+                                 (list vino-inv-test--wine))))
+                :to-equal '("Arianna Occhipinti Bombolieri BB 2017"))))))
 
 (provide 'vino-inv-test)
 ;;; vino-inv-test.el ends here

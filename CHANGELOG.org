@@ -26,6 +26,8 @@
 
 *Fixes*
 
+- =vino-inv-get-bottle=, =vino-inv-get-location= and =vino-inv-get-source= return nil for an id that does not exist, instead of a struct with every slot set to nil. A caller had no way to tell the two apart, and a bottle read from a bad id came back carrying no wine.
+- =vino-inv-consume-bottle= refuses a bottle that does not exist. It used to record the consumption anyway, leaving a transaction row pointing at nothing. The id it is called with comes from parsing a completion candidate, so a bad one was possible without any corrupt data being involved.
 - Availability counters are written in one pass over the wine note instead of three. This needs a Vulpea newer than 2.7.0, where =vulpea-buffer-meta-set-batch= keeps the order of the properties it touches ([[https://github.com/d12frosted/vulpea/issues/488][vulpea#488]]); on 2.7.0 or older the three counters move to the top of the metadata block on every bottle acquired or consumed, until the next =vino-entry-update= sorts it. A counter the wine does not carry yet opens the block either way, the same as any newly set property.
 - =vino-set-price= is autoloaded again. Its cookie carried a trailing semicolon (=;;;###autoload;=), which stops it being recognised, so the command was missing until vino happened to be loaded for another reason.
 - The bottle prompt no longer asks for faces from my personal theme. Picking a bottle to consume styled the candidates with =barberry-theme-face-salient= and =barberry-theme-face-faded=, which exist nowhere else, so for anyone else the prompt rendered plain. It now uses =vino-inv-annotation-id= and =vino-inv-annotation-separator=, which inherit from standard faces and can be themed like anything else.
