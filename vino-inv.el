@@ -634,6 +634,77 @@ consumption nothing can be traced back to."
             :values $v1]
            `([,bottle-id consume ,date])))
 
+(cl-defun vino-inv-move-bottle (&key bottle-id location-id date)
+  "Move bottle with BOTTLE-ID to LOCATION-ID on DATE.
+
+DATE defaults to today.  Refuses a bottle that does not exist, the way
+`vino-inv-consume-bottle' does."
+  (unless (vino-inv-get-bottle bottle-id)
+    (user-error "There is no bottle with id %s" bottle-id))
+  (let ((db (vino-inv-db))
+        (date (or date (format-time-string "%Y-%m-%d"))))
+    (emacsql-with-transaction db
+      (emacsql db [:update bottle
+                   :set (= location-id $s2)
+                   :where (= bottle-id $s1)]
+               bottle-id location-id)
+      (emacsql db
+               [:insert :into transaction [bottle-id
+                                           transaction-type
+                                           transaction-date
+                                           destination-location-id]
+                :values $v1]
+               `([,bottle-id move ,date ,location-id])))))
+
+(cl-defun vino-inv-set-bottle-price (&key bottle-id price price-usd)
+  "Record PRICE and PRICE-USD as what bottle with BOTTLE-ID cost."
+  (unless (vino-inv-get-bottle bottle-id)
+    (user-error "There is no bottle with id %s" bottle-id))
+  (emacsql (vino-inv-db)
+           [:update bottle
+            :set [(= price $s2) (= price-usd $s3)]
+            :where (= bottle-id $s1)]
+           bottle-id price price-usd))
+
+(cl-defun vino-inv-set-bottle-date (&key bottle-id date)
+  "Set purchase DATE of bottle with BOTTLE-ID.
+
+The purchase transaction is moved to DATE as well, so that the bottle
+and the transaction that brought it in do not disagree.  A bottle with
+more than one purchase transaction is refused, since there is no
+telling which of them the date belongs to."
+  (unless (vino-inv-get-bottle bottle-id)
+    (user-error "There is no bottle with id %s" bottle-id))
+  (let* ((db (vino-inv-db))
+         (txn-ids (-map #'car
+                        (emacsql db [:select [transaction-id]
+                                     :from transaction
+                                     :where (and (= bottle-id $s1)
+                                                 (= transaction-type 'purchase))]
+                                 bottle-id))))
+    (unless (= 1 (seq-length txn-ids))
+      (user-error "The bottle has %s purchase transactions"
+                  (seq-length txn-ids)))
+    (emacsql-with-transaction db
+      (emacsql db [:update bottle
+                   :set [(= purchase-date $s2)]
+                   :where (= bottle-id $s1)]
+               bottle-id date)
+      (emacsql db [:update transaction
+                   :set [(= transaction-date $s2)]
+                   :where (= transaction-id $s1)]
+               (car txn-ids) date))))
+
+(cl-defun vino-inv-set-bottle-comment (&key bottle-id comment)
+  "Record COMMENT on bottle with BOTTLE-ID."
+  (unless (vino-inv-get-bottle bottle-id)
+    (user-error "There is no bottle with id %s" bottle-id))
+  (emacsql (vino-inv-db)
+           [:update bottle
+            :set [(= comment $s2)]
+            :where (= bottle-id $s1)]
+           bottle-id comment))
+
 ;; * inventory ui
 
 (defvar-local vino-inv-ui--columns-idx nil)
@@ -647,30 +718,27 @@ itself."
     (let ((idx (alist-get name vino-inv-ui--columns-idx nil nil #'string-equal)))
       (funcall comp (elt (elt a 1) idx) (elt (elt b 1) idx)))))
 
+(defun vino-inv-ui--price-lessp (a b)
+  "Return non-nil when price A comes before price B.
+
+A price is an amount followed by a currency, so prices in different
+currencies are ordered by currency first and only then by amount."
+  (let ((c1 (nth 1 (s-split " " a)))
+        (c2 (nth 1 (s-split " " b))))
+    (if (equal c1 c2)
+        (< (string-to-number a) (string-to-number b))
+      (string-lessp c1 c2))))
+
 (defvar vino-inv-ui-columns
   `[("ID" 5 t)
     ("Producer" 26 t . (:pad-right 2))
     ("Wine" 44 t . (:pad-right 2))
     ("Vintage" 8 t . (:right-align t))
     ("Price Public" 12
-     ,(vino-inv-ui--column-sort-fn
-       "Price"
-       (lambda (a b)
-         (let ((c1 (nth 1 (s-split " " a)))
-               (c2 (nth 1 (s-split " " b))))
-          (if (string-equal c1 c2)
-              (< (string-to-number a) (string-to-number b))
-            (string-lessp c1 c2)))))
+     ,(vino-inv-ui--column-sort-fn "Price Public" #'vino-inv-ui--price-lessp)
      . (:right-align t))
     ("Price" 12
-     ,(vino-inv-ui--column-sort-fn
-       "Price"
-       (lambda (a b)
-         (let ((c1 (nth 1 (s-split " " a)))
-               (c2 (nth 1 (s-split " " b))))
-          (if (string-equal c1 c2)
-              (< (string-to-number a) (string-to-number b))
-            (string-lessp c1 c2)))))
+     ,(vino-inv-ui--column-sort-fn "Price" #'vino-inv-ui--price-lessp)
      . (:right-align t))
     ("Price USD" 12
      ,(vino-inv-ui--column-sort-fn
@@ -711,10 +779,14 @@ itself."
     (pcase (s-downcase key)
       (`"id" (propertize (number-to-string (vino-inv-bottle-id bottle))
                          'face 'font-lock-comment-face))
-      (`"producer" (let ((str (vulpea-note-meta-get wine "producer")))
-                     (string-match org-link-bracket-re str)
-                     (match-string 2 str)))
-      (`"wine" (propertize (vulpea-note-meta-get wine "name")
+      (`"producer" (let ((str (or (vulpea-note-meta-get wine "producer") "")))
+                     ;; a failed `string-match' leaves the match data of
+                     ;; whatever ran before it, so the match has to be
+                     ;; checked rather than trusted
+                     (if (string-match org-link-bracket-re str)
+                         (or (match-string 2 str) str)
+                       str)))
+      (`"wine" (propertize (or (vulpea-note-meta-get wine "name") "")
                            'face 'link))
       (`"vintage" (or (vulpea-note-meta-get wine "vintage") "NV"))
       (`"price public" (or (vulpea-note-meta-get wine "price") ""))
@@ -770,9 +842,7 @@ itself."
                                 (vulpea-note-title (vino-inv-bottle-wine other))))
                (--map
                 (list
-                 (concat (vulpea-note-id (vino-inv-bottle-wine it))
-                         ":"
-                         (number-to-string (vino-inv-bottle-id it)))
+                 (vino-inv-ui-entry-id it)
                  (apply
                   #'vector
                   (-map (lambda (col)
@@ -788,25 +858,57 @@ itself."
 
 ;; ** utils
 
+(defun vino-inv-ui-entry-id (bottle)
+  "Return the Tabulated List entry id of BOTTLE.
+
+The id carries the wine and the bottle, so that both can be recovered
+from the entry under point."
+  (concat (vulpea-note-id (vino-inv-bottle-wine bottle))
+          ":"
+          (number-to-string (vino-inv-bottle-id bottle))))
+
+(defun vino-inv-ui--entry-separator (id)
+  "Return the position separating wine from bottle in entry ID.
+
+A note id can carry a colon of its own, as it does when `org-id-prefix'
+is set, so the last colon is the one that matters."
+  (or (cl-position ?: id :from-end t)
+      (user-error "Malformed inventory entry id: %s" id)))
+
+(defun vino-inv-ui-entry-wine-id (id)
+  "Return the wine id of Tabulated List entry ID."
+  (substring id 0 (vino-inv-ui--entry-separator id)))
+
+(defun vino-inv-ui-entry-bottle-id (id)
+  "Return the bottle id of Tabulated List entry ID."
+  (string-to-number (substring id (1+ (vino-inv-ui--entry-separator id)))))
+
+(defun vino-inv-ui-entry-id-at (&optional pos)
+  "Return the id of the Tabulated List entry at POS.
+
+POS, if omitted or nil, defaults to point.  Signals when there is no
+entry there, which is what an empty inventory offers."
+  (or (tabulated-list-get-id pos)
+      (user-error "There is no bottle here")))
+
 (defsubst vino-inv-ui-get-wine-id (&optional pos)
   "Return the wine ID of the Tabulated List entry at POS.
 
 POS, if omitted or nil, defaults to point."
-  (let ((id (tabulated-list-get-id pos)))
-    (car (s-split ":" id))))
+  (vino-inv-ui-entry-wine-id (vino-inv-ui-entry-id-at pos)))
 
 (defsubst vino-inv-ui-get-bottle-id (&optional pos)
   "Return the bottle ID of the Tabulated List entry at POS.
 
 POS, if omitted or nil, defaults to point."
-  (let ((id (tabulated-list-get-id pos)))
-    (string-to-number (nth 1 (s-split ":" id)))))
+  (vino-inv-ui-entry-bottle-id (vino-inv-ui-entry-id-at pos)))
 
 (defun vino-inv-ui-read-location (&optional require-match)
   "Read and return location.
 
-If REQUIRE-MATCH is non nil and the user select a non-existing
-location, it will be created automatically."
+REQUIRE-MATCH is passed to `completing-read', so a name that names no
+location can only be entered when it is nil; such a name creates the
+location."
   (let* ((locations (vino-inv-query-locations))
          (location (completing-read "Initial location: "
                                     (-map #'vino-inv-location-name locations)
@@ -833,24 +935,13 @@ If OTHER-WINDOW, visit the NOTE in another window."
   "Edit location of the bottle at point."
   (interactive)
   (let ((location-id (vino-inv-location-id (vino-inv-ui-read-location)))
-        (db (vino-inv-db))
         (date (format-time-string "%Y-%m-%d")))
     (vino-inv-ui-dispatch-action
      (lambda (bottle)
-       (let ((bottle-id (vino-inv-bottle-id bottle)))
-         (emacsql-with-transaction db
-           (emacsql db [:update bottle
-                        :set (= location-id $s2)
-                        :where (= bottle-id $s1)]
-                    bottle-id location-id)
-           (emacsql db
-                    [:insert :into transaction [bottle-id
-                                                transaction-type
-                                                transaction-date
-                                                destination-location-id]
-                     :values $v1]
-                    `([,bottle-id move ,date ,location-id])))
-         (run-hook-with-args 'vino-inv-edit-location-handle-functions bottle))))
+       (vino-inv-move-bottle :bottle-id (vino-inv-bottle-id bottle)
+                             :location-id location-id
+                             :date date)
+       (run-hook-with-args 'vino-inv-edit-location-handle-functions bottle)))
     (vino-inv-ui-update)))
 
 (defun vino-inv-ui-edit-price ()
@@ -876,10 +967,9 @@ If OTHER-WINDOW, visit the NOTE in another window."
                         (t (completing-read "Add this price as: "
                                             '(private public skip) nil t)))))
 
-    (emacsql (vino-inv-db) [:update bottle
-                            :set [(= price $s2) (= price-usd $s3)]
-                            :where (= bottle-id $s1)]
-             bottle-id price price-usd)
+    (vino-inv-set-bottle-price :bottle-id bottle-id
+                               :price price
+                               :price-usd price-usd)
 
     (vino-inv-add-price note price price-add-as)
 
@@ -893,25 +983,8 @@ If OTHER-WINDOW, visit the NOTE in another window."
          (date (format-time-string
                 "%Y-%m-%d"
                 (org-read-date nil t nil nil
-                               (date-to-time (vino-inv-bottle-purchase-date bottle)))))
-         (db (vino-inv-db))
-         (txn-ids (emacsql db [:select [transaction-id]
-                               :from transaction
-                               :where (and (= bottle-id $s1)
-                                           (= transaction-type 'purchase))]
-                           bottle-id))
-         (txn-id (car txn-ids)))
-    (unless (= 1 (seq-length txn-ids))
-      (user-error "The bottle has multiple purchase transactions"))
-    (emacsql-with-transaction db
-      (emacsql db [:update bottle
-                   :set [(= purchase-date $s2)]
-                   :where (= bottle-id $s1)]
-               bottle-id date)
-      (emacsql db [:update transaction
-                   :set [(= transaction-date $s2)]
-                   :where (= transaction-id $s1)]
-               txn-id date))
+                               (date-to-time (vino-inv-bottle-purchase-date bottle))))))
+    (vino-inv-set-bottle-date :bottle-id bottle-id :date date)
     (vino-inv-ui-update)))
 
 (defun vino-inv-ui-edit-comment ()
@@ -919,11 +992,7 @@ If OTHER-WINDOW, visit the NOTE in another window."
   (interactive)
   (let* ((bottle-id (vino-inv-ui-get-bottle-id))
          (comment (vino--read-string "Comment: ")))
-    (emacsql (vino-inv-db)
-             [:update bottle
-              :set [(= comment $s2)]
-              :where (= bottle-id $s1)]
-             bottle-id comment)
+    (vino-inv-set-bottle-comment :bottle-id bottle-id :comment comment)
     (vino-inv-ui-update)))
 
 (defun vino-inv-ui-mark ()
@@ -953,7 +1022,7 @@ FN is called with `vino-inv-bottle' as its only argument."
           (setq bottle (tabulated-list-get-id))
           (push bottle print-list))
         (forward-line)))
-    (-each (->> (or (--map (string-to-number (nth 1 (s-split ":" it))) print-list)
+    (-each (->> (or (-map #'vino-inv-ui-entry-bottle-id print-list)
                     (list (vino-inv-ui-get-bottle-id)))
                 (-map #'vino-inv-get-bottle))
       fn)))

@@ -18,6 +18,8 @@
 - Add =vino-inv-add-price=, recording a price on a wine note as public or private. Both the acquisition flow and the inventory UI grew their own copy of this; they now share one.
 - Add =vino-inv-count-bottles-for=, returning purchased and consumed counts from a single query. =vino-inv-count-purchased-bottles-for= and =vino-inv-count-consumed-bottles-for= are now built on it, so updating availability runs one query instead of two.
 - Add =vino-inv-bottle-describe=, rendering a bottle as a completion candidate. Pulled out of the consume prompt so the format is stated in one place.
+- Add =vino-inv-move-bottle=, =vino-inv-set-bottle-price=, =vino-inv-set-bottle-date= and =vino-inv-set-bottle-comment=. The inventory UI wrote SQL inline in each of its edit commands, so the writes could only be reached through a prompt. Each of them refuses a bottle that does not exist, the way =vino-inv-consume-bottle= does.
+- Add =vino-inv-ui-entry-id=, =vino-inv-ui-entry-wine-id= and =vino-inv-ui-entry-bottle-id=, which build and read the id an inventory row carries. Both halves of that format lived in three places.
 
 *Breaking changes*
 
@@ -26,6 +28,11 @@
 
 *Fixes*
 
+- The =Price Public= column of the inventory sorts by its own values. It sorted by the =Price= column instead, so clicking its header reordered the list by a number that is not in it.
+- The inventory renders a producer that is not a link, and a wine that carries no producer or no name. The producer cell read the link description out of the match data without checking that the match succeeded, so a plain producer name came out as a leftover fragment of whatever regexp ran before it, and a wine missing either field brought the whole listing down.
+- =vino-inv-ui-edit-date= moves the purchase transaction along with the bottle. It picked the transaction id out of a query result without unwrapping the row, so the id it updated on never matched anything and the transaction kept the old date silently.
+- The inventory reads the wine and the bottle out of a row by the last colon in it. A note id can carry a colon of its own, which it does whenever =org-id-prefix= is set, and then every row in the listing pointed at the wrong wine and a bottle number parsed out of a UUID.
+- The inventory says there is no bottle here instead of failing on a nil id, which is what editing or visiting in an empty listing did.
 - =vino-inv-get-bottle=, =vino-inv-get-location= and =vino-inv-get-source= return nil for an id that does not exist, instead of a struct with every slot set to nil. A caller had no way to tell the two apart, and a bottle read from a bad id came back carrying no wine.
 - =vino-inv-consume-bottle= refuses a bottle that does not exist. It used to record the consumption anyway, leaving a transaction row pointing at nothing. The id it is called with comes from parsing a completion candidate, so a bad one was possible without any corrupt data being involved.
 - Availability counters are written in one pass over the wine note instead of three. This needs a Vulpea newer than 2.7.0, where =vulpea-buffer-meta-set-batch= keeps the order of the properties it touches ([[https://github.com/d12frosted/vulpea/issues/488][vulpea#488]]); on 2.7.0 or older the three counters move to the top of the metadata block on every bottle acquired or consumed, until the next =vino-entry-update= sorts it. A counter the wine does not carry yet opens the block either way, the same as any newly set property.
